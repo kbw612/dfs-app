@@ -1,0 +1,8 @@
+{"team_abbrev":"ARI","position":"RB","player":"Jeremiyah Love","field":null,"change_type":"status_change","previous":{"status":null,"rank":1},"current":{"status":"Q","rank":1},"severity":"low"}
+{"team_abbrev":"DET","position":"SCB","player":"Ennis Rakestraw","field":null,"change_type":"status_change","previous":{"status":null,"rank":3},"current":{"status":"Q","rank":3},"severity":"low"}
+{"team_abbrev":"HOU","position":"QB","player":"Graham Mertz","field":null,"change_type":"status_change","previous":{"status":null,"rank":3},"current":{"status":"Q","rank":3},"severity":"low"}
+{"team_abbrev":"HOU","position":"SS","player":"Ja'Marcus Ingram","field":null,"change_type":"status_change","previous":{"status":null,"rank":4},"current":{"status":"Q","rank":4},"severity":"low"}
+{"team_abbrev":"SF","position":"RCB","player":"Nate Hobbs","field":null,"change_type":"status_change","previous":{"status":null,"rank":2},"current":{"status":"Q","rank":2},"severity":"low"}
+{"team_abbrev":"TEN","position":"LDE","player":"Jaylen Harrell","field":null,"change_type":"status_change","previous":{"status":null,"rank":4},"current":{"status":"Q","rank":4},"severity":"low"}
+{"team_abbrev":"TEN","position":"TE","player":"Jaren Kanak","field":null,"change_type":"status_change","previous":{"status":null,"rank":4},"current":{"status":"Q","rank":4},"severity":"low"}
+{"team_abbrev":"TEN","position":"RB","player":"Tyjae Spears","field":null,"change_type":"status_change","previous":{"status":"Q","rank":2},"current":{"status":null,"rank":2},"severity":"low"}

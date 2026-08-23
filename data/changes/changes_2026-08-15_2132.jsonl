@@ -1,0 +1,6 @@
+{"team_abbrev":"BAL","position":"LILB","player":"Jay Higgins","field":null,"change_types":["status"],"previous":{"status":null,"rank":2},"current":{"status":"Q","rank":2}}
+{"team_abbrev":"TEN","position":"RG","player":"Fernando Carmona","field":null,"change_types":["other"],"previous":null,"current":{"status":null,"rank":1}}
+{"team_abbrev":"TEN","position":"RG","player":"Zach Thomas","field":null,"change_types":["rank"],"previous":{"status":null,"rank":4},"current":{"status":null,"rank":5}}
+{"team_abbrev":"TEN","position":"RG","player":"Jackson Slater","field":null,"change_types":["rank"],"previous":{"status":null,"rank":2},"current":{"status":null,"rank":3}}
+{"team_abbrev":"TEN","position":"RG","player":"Garrett Dellinger","field":null,"change_types":["rank"],"previous":{"status":null,"rank":3},"current":{"status":null,"rank":4}}
+{"team_abbrev":"TEN","position":"RG","player":"Cordell Volson","field":null,"change_types":["rank"],"previous":{"status":null,"rank":1},"current":{"status":null,"rank":2}}
