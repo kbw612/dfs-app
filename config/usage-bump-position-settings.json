@@ -1,0 +1,11 @@
+{
+  "settings": [
+    { "outPosition": "QB1", "usageBumpPositions": ["QB2"] },
+    { "outPosition": "RB1", "usageBumpPositions": ["RB2", "RB3", "WR1", "WR2", "TE1", "WR3"] },
+    { "outPosition": "RB2", "usageBumpPositions": ["RB1", "RB3", "WR1", "WR2", "TE1", "WR3"] },
+    { "outPosition": "WR1", "usageBumpPositions": ["WR2", "WR3", "TE1", "RB1"] },
+    { "outPosition": "WR2", "usageBumpPositions": ["WR1", "WR3", "TE1", "RB1"] },
+    { "outPosition": "WR3", "usageBumpPositions": ["WR4", "WR2", "WR1", "TE1", "RB1"] },
+    { "outPosition": "TE1", "usageBumpPositions": ["TE2", "WR1", "WR2", "WR3", "RB1"] }
+  ]
+}

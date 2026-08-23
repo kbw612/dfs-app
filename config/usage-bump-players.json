@@ -1,0 +1,54 @@
+{
+  "teams": [
+    {
+      "teamAbbrev": "CAR",
+      "players": [
+        {
+          "name": "Jalen Coker",
+          "moreUsagePlayers": [
+            "Tetairoa McMillan",
+            "Xavier Legette",
+            "David Moore",
+            "Hunter Renfrow",
+            "Ja'Tavion Sanders"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "TB",
+      "players": [
+        {
+          "name": "Emeka Egbuka",
+          "moreUsagePlayers": [
+            "Chris Godwin",
+            "Jalen McMillan",
+            "Kenny Gainwell",
+            "Cade Otton",
+            "Bucky Irving"
+          ]
+        },
+        {
+          "name": "Jalen McMillan",
+          "moreUsagePlayers": [
+            "Ted Hurst",
+            "Emeka Egbuka",
+            "Chris Godwin",
+            "Kenny Gainwell",
+            "Cade Otton"
+          ]
+        },
+        {
+          "name": "Cade Otton",
+          "moreUsagePlayers": [
+            "Payne Durham",
+            "Emeka Egbuka",
+            "Chris Godwin",
+            "Kenny Gainwell",
+            "Jalen McMillan"
+          ]
+        }
+      ]
+    }
+  ]
+}

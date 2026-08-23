@@ -1,0 +1,742 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+/* Phones (~375px and up). Everything above this breakpoint keeps the
+   wider desktop layout; below it, stack things that would otherwise
+   overflow or get too cramped to tap accurately. */
+@media (max-width: 480px) {
+  .app {
+    padding: 12px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
+}
+
+.view-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.view-tab {
+  background: white;
+  color: #444;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-height: 44px;
+  font-size: 0.9rem;
+}
+
+.view-tab.selected {
+  background: #2b6cb0;
+  color: white;
+  border-color: #2b6cb0;
+}
+
+@media (max-width: 480px) {
+  .view-tabs {
+    flex-direction: column;
+  }
+
+  .view-tab {
+    width: 100%;
+  }
+}
+
+.snapshot-picker {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.calendar-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.filter-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #444;
+  margin-bottom: 4px;
+}
+
+.position-filter label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.position-filter select {
+  min-height: 44px;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  background: white;
+  color: #444;
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  padding: 6px 12px;
+  min-height: 36px;
+  font-size: 0.8rem;
+}
+
+.chip.selected {
+  background: #2b6cb0;
+  color: white;
+  border-color: #2b6cb0;
+}
+
+.status-key-toggle {
+  background: transparent;
+  color: #2b6cb0;
+  border: none;
+  padding: 6px 0;
+  font-size: 0.85rem;
+}
+
+.status-key-list {
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.status-key-row {
+  display: flex;
+  gap: 8px;
+}
+
+.status-key-row dt {
+  font-weight: 600;
+  min-width: 48px;
+}
+
+.status-key-row dd {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .position-filter label {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .position-filter select {
+    width: 100%;
+  }
+
+  .chip {
+    padding: 8px 12px;
+  }
+
+  .status-key-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .status-key-row dt {
+    min-width: 0;
+  }
+}
+
+select,
+button {
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+button {
+  cursor: pointer;
+  background: #2b6cb0;
+  color: white;
+  border: none;
+}
+
+button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+}
+
+/* Comfortable tap size (~44px) for the main actions on any touch screen,
+   not just narrow ones -- this is a phone/tablet app too. */
+.picker-actions button,
+.retrieve-button button {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+.picker-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .picker-actions {
+    flex-direction: column;
+  }
+
+  .picker-actions button {
+    width: 100%;
+  }
+
+  .retrieve-button {
+    align-items: stretch;
+  }
+
+  .retrieve-button button {
+    width: 100%;
+  }
+}
+
+.error {
+  color: #c53030;
+}
+
+.hint {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.retrieve-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.diff-results h2 {
+  font-size: 1.1rem;
+  margin: 16px 0 12px;
+}
+
+.team-group {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 480px) {
+  .team-group {
+    padding: 10px 12px;
+  }
+}
+
+.team-group h3 {
+  margin: 0 0 8px;
+}
+
+.position-group {
+  margin-bottom: 8px;
+}
+
+.position-group h4 {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.position-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.position-group li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.player-name {
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.change-types {
+  color: #2b6cb0;
+  min-width: 100px;
+}
+
+.change-values {
+  color: #333;
+}
+
+/* Fixed min-widths above assume a wide row; on a phone that leaves the
+   change-values column almost no room, so drop them and let each piece
+   take its own line instead. */
+@media (max-width: 480px) {
+  .position-group li {
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 0;
+  }
+
+  .player-name,
+  .change-types {
+    min-width: 0;
+  }
+}
+
+.month-calendar {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.calendar-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.calendar-nav button {
+  padding: 2px 8px;
+  min-height: 32px;
+  min-width: 32px;
+  background: #e2e8f0;
+  color: #1a1a1a;
+  line-height: 1.2;
+}
+
+.calendar-nav button:disabled {
+  background: #f0f0f0;
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .calendar-nav button {
+    min-height: 36px;
+    min-width: 36px;
+    font-size: 1.1rem;
+  }
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 0.7rem;
+  color: #888;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.calendar-cell {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.calendar-cell.empty {
+  visibility: hidden;
+}
+
+button.calendar-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 3px 2px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: white;
+  gap: 2px;
+}
+
+button.calendar-cell.no-data {
+  color: #ccc;
+  background: #f2f2f2;
+  cursor: default;
+}
+
+button.calendar-cell.has-data {
+  cursor: pointer;
+  border-color: #cbd5e0;
+}
+
+button.calendar-cell.has-data:hover {
+  border-color: #2b6cb0;
+}
+
+button.calendar-cell.selected {
+  border-color: #2b6cb0;
+  background: #ebf4ff;
+}
+
+.day-number {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+button.calendar-cell.no-data .day-number {
+  color: #ccc;
+}
+
+.calendar-selected-hint {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-dialog {
+  background: white;
+  border-radius: 8px;
+  min-width: 220px;
+  max-width: 90vw;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 12px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.modal-close {
+  background: transparent;
+  color: #444;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 2px 6px;
+}
+
+.modal-times {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-time {
+  text-align: left;
+  background: #f7f7f8;
+  color: #1a1a1a;
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  min-height: 44px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .modal-backdrop {
+    padding: 16px;
+  }
+
+  .modal-dialog {
+    min-width: 0;
+    width: 100%;
+    max-width: 340px;
+  }
+}
+
+.modal-time:hover {
+  border-color: #2b6cb0;
+}
+
+.modal-time.selected {
+  background: #2b6cb0;
+  color: white;
+  border-color: #2b6cb0;
+}
+
+.bump-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.min-score-control,
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.min-score-control input {
+  width: 64px;
+  min-height: 44px;
+}
+
+.sort-control select {
+  min-height: 44px;
+}
+
+.bump-list-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 16px 6px;
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bump-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bump-row {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 12px 16px;
+}
+
+.bump-row + .bump-row {
+  border-top: none;
+}
+
+.bump-row:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.bump-row:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.bump-row-summary {
+  cursor: pointer;
+}
+
+.bump-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.bump-score {
+  color: #2b6cb0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.bump-row-meta {
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.bump-causes {
+  color: #444;
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.bump-math-toggle {
+  background: transparent;
+  color: #2b6cb0;
+  border: none;
+  padding: 6px 0 0;
+  font-size: 0.8rem;
+}
+
+.bump-math {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bump-math-cause {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.bump-math-cause-header {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+.bump-math-source {
+  color: #555;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.bump-math-combo {
+  color: #666;
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+.bump-math-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.bump-math-table th,
+.bump-math-table td {
+  text-align: left;
+  padding: 4px 16px 4px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* Depth and Value only ever hold a short number -- keep them narrow and
+   fixed so the Player column (name + status + role label, variable
+   length) gets the rest of the row's width. Column order is
+   Depth / Value / Player. */
+.bump-math-table th:nth-child(1),
+.bump-math-table td:nth-child(1) {
+  width: 3em;
+  padding-right: 28px;
+}
+
+.bump-math-table th:nth-child(2),
+.bump-math-table td:nth-child(2) {
+  width: 4em;
+}
+
+.bump-math-table th {
+  color: #666;
+  font-weight: 600;
+}
+
+.bump-math-row-self td {
+  font-weight: 600;
+  color: #2b6cb0;
+}
+
+.bump-math-total {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+@media (max-width: 480px) {
+  .bump-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .min-score-control,
+  .sort-control {
+    justify-content: space-between;
+  }
+
+  .sort-control select {
+    flex: 1;
+  }
+
+  .bump-row {
+    padding: 10px 12px;
+  }
+}
