@@ -1,0 +1,27 @@
+,Player,Position,Team,Opponent,Salary,% ownership
+32,Texans,DST,HOU,ARI,"$3,600",8.8%
+35,Jaguars,DST,JAX,NYJ,"$3,900",8.7%
+40,Eagles,DST,PHI,LV,"$3,800",7.3%
+48,Seahawks,DST,SEA,IND,"$3,700",6.5%
+49,Bears,DST,CHI,CLE,"$3,500",6.2%
+51,Panthers,DST,CAR,@NO,"$3,100",5.8%
+56,Saints,DST,NO,CAR,"$2,500",5.3%
+57,Raiders,DST,LV,@PHI,"$2,000",5.2%
+64,Packers,DST,GB,@DEN,"$2,800",4.8%
+65,Chiefs,DST,KC,LAC,"$3,300",4.7%
+67,Chargers,DST,LAC,@KC,"$2,500",4.5%
+69,Giants,DST,NYG,WAS,"$2,700",4.3%
+74,Commanders,DST,WAS,@NYG,"$2,600",3.9%
+77,Bills,DST,BUF,@NE,"$2,900",3.7%
+90,Jets,DST,NYJ,@JAX,"$2,100",3.0%
+95,49ers,DST,SF,TEN,"$4,000",2.8%
+105,Cardinals,DST,ARI,@HOU,"$2,400",2.2%
+107,Browns,DST,CLE,@CHI,"$2,700",2.1%
+110,Patriots,DST,NE,BUF,"$2,800",2.1%
+114,Bengals,DST,CIN,BAL,"$2,400",2.0%
+122,Rams,DST,LAR,DET,"$3,000",1.6%
+135,Colts,DST,IND,@SEA,"$2,200",1.3%
+138,Ravens,DST,BAL,@CIN,"$3,200",1.1%
+156,Titans,DST,TEN,@SF,"$2,300",0.8%
+162,Lions,DST,DET,LAR,"$2,600",0.6%
+164,Broncos,DST,DEN,GB,"$3,400",0.5%

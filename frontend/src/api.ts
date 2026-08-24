@@ -1,4 +1,11 @@
-import type { DiffResult, ScrapeResult, SnapshotSummary, UsageBumpsResult } from "./types";
+import type {
+  DiffResult,
+  OwnershipImportResult,
+  OwnershipLatestResult,
+  ScrapeResult,
+  SnapshotSummary,
+  UsageBumpsResult,
+} from "./types";
 
 // Falls back to the backend's default local port -- see .env.example if
 // you're running the API somewhere else.
@@ -49,4 +56,18 @@ export function triggerScrape(): Promise<ScrapeResult> {
 
 export function fetchUsageBumpsLatest(): Promise<UsageBumpsResult> {
   return apiGet<UsageBumpsResult>("/api/opportunities/latest");
+}
+
+// Temporary stand-in for a live ownership scrape -- reads the mock CSVs in
+// data/ownership_mock/ instead (see import_csv.py's docstring). Swapping
+// this for a real POST /api/ownership/scrape later is a one-line change
+// here; nothing else in OwnershipView needs to know which one ran.
+export function importOwnershipCsv(season: number, week: number): Promise<OwnershipImportResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiPost<OwnershipImportResult>(`/api/ownership/import-csv?${params.toString()}`);
+}
+
+export function fetchOwnershipLatest(season: number, week: number): Promise<OwnershipLatestResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiGet<OwnershipLatestResult>(`/api/ownership/latest?${params.toString()}`);
 }

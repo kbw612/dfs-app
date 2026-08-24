@@ -9,4 +9,12 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  // __BUILD_TIME__ is baked into the bundle at build/dev-start time (see
+  // src/version.ts, which reads it) -- shown in the header so it's obvious
+  // from the running page itself whether you're looking at a freshly built
+  // bundle or a stale cached one, without having to guess from a manually
+  // maintained number alone.
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
 });

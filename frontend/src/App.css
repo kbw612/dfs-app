@@ -23,6 +23,12 @@ h1 {
   margin: 0;
 }
 
+.app-version {
+  margin: 2px 0 0;
+  font-size: 0.7rem;
+  color: #999;
+}
+
 /* Phones (~375px and up). Everything above this breakpoint keeps the
    wider desktop layout; below it, stack things that would otherwise
    overflow or get too cramped to tap accurately. */
@@ -738,5 +744,317 @@ button.calendar-cell.no-data .day-number {
 
   .bump-row {
     padding: 10px 12px;
+  }
+}
+
+.ownership-load-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.ownership-load-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.ownership-load-form input {
+  width: 90px;
+  min-height: 44px;
+  font: inherit;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.ownership-load-form button {
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+@media (max-width: 480px) {
+  .ownership-load-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ownership-load-form input {
+    width: 100%;
+  }
+}
+
+.ownership-section {
+  margin-bottom: 20px;
+}
+
+.ownership-section h2 {
+  font-size: 1.1rem;
+  margin: 16px 0 12px;
+}
+
+.ownership-game-group {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.ownership-game-group h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.ownership-game-subgroup {
+  margin-bottom: 10px;
+}
+
+.ownership-game-subgroup:last-child {
+  margin-bottom: 0;
+}
+
+/* Chalk's label is a plain heading; the pivot-candidates subgroup instead
+   uses an .ownership-pivot-toggle button (below) -- same "Pivots ▾/▴"
+   toggle styling as the Pivots section itself. */
+.ownership-game-subgroup h4 {
+  margin: 0 0 4px;
+  font-size: 0.8rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ownership-player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A CSS grid, not flexbox -- fixed pixel tracks for name/salary/pct can't
+   drift row-to-row the way flex items with only a `width` (and default
+   flex-shrink:1) can under slight width pressure, which is what was
+   causing salary/ownership% to start at a slightly different x-position
+   on different rows. There used to be a 4th (meta) track for each pivot
+   candidate's own team+opponent, but that read as its own "team playing"
+   column and extra whitespace, so it's gone -- every row is just
+   name/salary/ownership% now, hugging the left at a constant total width,
+   with any leftover row space falling after the last column instead of
+   being distributed between columns. */
+.ownership-player-row {
+  display: grid;
+  grid-template-columns: 200px 64px 48px;
+  column-gap: 8px;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.ownership-player-row:last-child {
+  border-bottom: none;
+}
+
+/* Name + role badge. Sizing comes entirely from context: as a grid item
+   here it stretches to fill the fixed 200px name column (grid's default
+   justify-self:stretch), so a name too long for that box truncates with
+   "..." -- the role badge sits outside the truncated span so it's always
+   fully visible even when the name itself is cut off. `overflow: hidden`
+   on the item itself (not just the inner name span) is a deliberate
+   belt-and-suspenders against the classic grid/flexbox gotcha where an
+   unbreakable nowrap child's min-content size can force its track wider
+   than the declared 200px for that one row -- exactly the kind of thing
+   that would show up as "salary/pct is off for some players, not others."
+   As a plain flex item elsewhere (the Pivots trigger header), this sizes
+   to the name's own content instead ("dynamic width" -- see
+   .ownership-pivot-header). Click (or Enter/Space) toggles .expanded,
+   which wraps the full name onto extra lines within the same column
+   rather than growing past it. */
+.ownership-player-name-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.ownership-player-name-wrap.expanded {
+  overflow: visible;
+}
+
+.ownership-player-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.ownership-player-name-wrap.expanded .ownership-player-name {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ownership-role {
+  color: #2b6cb0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  flex: 0 0 auto;
+}
+
+/* tabular-nums keeps every digit the same width (a plain proportional
+   font renders "1" narrower than "8", etc.) -- without it, two
+   right-aligned numbers with the same digit count can still look
+   slightly "off" from each other even though their right edges are
+   pixel-identical, since the digit shapes themselves don't line up. */
+.ownership-player-salary {
+  color: #333;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ownership-player-pct {
+  color: #2b6cb0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.ownership-pivot-list {
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+}
+
+/* Leverage & pivot plays section's expanded "why" list -- plain text
+   rows (not the PlayerRow grid, since each line is a full sentence
+   combining two players' info) explaining each specific reason a player
+   made the list. */
+.ownership-leverage-reasons {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 4px 10px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ownership-leverage-reason {
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.ownership-leverage-reason:last-child {
+  border-bottom: none;
+}
+
+/* Leverage & pivot plays section: one of these per distinct reason count
+   (3 players, 2 players, ...), most reasons first -- each one's own
+   .ownership-pivot-groups list is sorted by salary within it. */
+.ownership-leverage-count-group {
+  margin-bottom: 16px;
+}
+
+.ownership-leverage-count-group:last-child {
+  margin-bottom: 0;
+}
+
+.ownership-leverage-count-group h3 {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Pivots section's trigger cards -- deliberately its own classes rather
+   than reusing .bump-row/.bump-* (shared with the Usage Bump page) so
+   tightening this section's spacing doesn't also change that page's. */
+.ownership-pivot-groups {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ownership-pivot-group {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 10px 16px;
+}
+
+.ownership-pivot-group + .ownership-pivot-group {
+  border-top: none;
+}
+
+.ownership-pivot-group:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.ownership-pivot-group:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.ownership-pivot-summary {
+  cursor: pointer;
+}
+
+/* Deliberately a plain flex row (not the grid PlayerRow uses) and no
+   justify-content:space-between -- PlayerNameCell has no grid column to
+   stretch to here, so it sizes to the name's own content ("dynamic
+   width"), and dropping space-between keeps ownership% sitting right next
+   to it instead of being pushed to the far edge of the card. */
+.ownership-pivot-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ownership-pivot-meta {
+  color: #666;
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.ownership-pivot-toggle {
+  background: transparent;
+  color: #2b6cb0;
+  border: none;
+  padding: 4px 0 0;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 480px) {
+  .ownership-player-row {
+    grid-template-columns: 120px 56px 42px;
+    column-gap: 6px;
+    padding: 6px 0;
+  }
+
+  .ownership-pivot-group {
+    padding: 8px 12px;
   }
 }

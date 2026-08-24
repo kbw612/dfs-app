@@ -119,3 +119,90 @@ export interface UsageBumpsResult {
 export function isPlayerChangeValue(value: ChangeValue): value is PlayerChangeValue {
   return value !== null && typeof value === "object";
 }
+
+// Mirrors backend/schemas/ownership/ownership.py and the response models in
+// backend/api/ownership/*.py. Unlike depth charts (nested team -> position
+// -> players) this is a flat player list -- position/team/opponent are just
+// columns on each row, same shape whether it came from a live scrape or the
+// CSV mock loader (see csv_loader.py's docstring).
+export interface OwnershipPlayer {
+  player: string;
+  position: string;
+  team: string;
+  opponent: string;
+  // True if playing at the opponent's stadium; null only if the source row
+  // couldn't be parsed as home/away.
+  is_home: boolean | null;
+  salary: number;
+  ownership_pct: number;
+  // Depth-chart rank (e.g. RB1's "1"), cross-referenced server-side from
+  // the latest depth-chart snapshot by player name -- null if there's no
+  // depth-chart snapshot yet or this name didn't match one.
+  rank: number | null;
+}
+
+// One NFL game with at least one chalk player on either side. chalk_players
+// is every high-owned player from both teams; pivot_candidates is every
+// player from both teams under the slate's leverage point.
+export interface GameLeverageGroup {
+  team: string;
+  opponent: string;
+  chalk_players: OwnershipPlayer[];
+  pivot_candidates: OwnershipPlayer[];
+}
+
+// One higher-owned trigger player and every same-position, similar-salary
+// player who's owned meaningfully less -- see engine.py's compute_pivots().
+export interface PivotGroup {
+  trigger: OwnershipPlayer;
+  pivots: OwnershipPlayer[];
+}
+
+// One concrete reason a player counts toward MultiLeveragePlayer -- either
+// they're the pivot for a specific higher-owned `against` ("pivot", from a
+// PivotGroup), or they're a contrarian pick against one specific chalk
+// player `against` in their game ("game", from a GameLeverageGroup --
+// `team`/`opponent` identify which game). team/opponent are only set for
+// kind "game".
+export interface LeverageReason {
+  kind: "pivot" | "game";
+  against: OwnershipPlayer;
+  team: string | null;
+  opponent: string | null;
+}
+
+// A player who's worth fading/pivoting off of 2+ other players at once --
+// see engine.py's compute_multi_leverage() for how `reasons` is built and
+// counted (backend-computed; the frontend only buckets this list by
+// reason count for display, see OwnershipView.tsx's
+// groupMultiLeveragePlayers).
+export interface MultiLeveragePlayer {
+  player: OwnershipPlayer;
+  reasons: LeverageReason[];
+}
+
+export interface OwnershipLatestResult {
+  snapshot_id: string;
+  scraped_at: string;
+  season: number;
+  week: number;
+  leverage_point: number;
+  players: OwnershipPlayer[];
+  high_owned: OwnershipPlayer[];
+  game_leverage: GameLeverageGroup[];
+  pivots: PivotGroup[];
+  multi_leverage: MultiLeveragePlayer[];
+}
+
+// Result of POST /api/ownership/import-csv -- the temporary stand-in for a
+// live scrape (see import_csv.py's docstring). Same message shape as
+// ScrapeResult above.
+export interface OwnershipImportResult {
+  snapshot_path: string;
+  scraped_at: string;
+  season: number;
+  week: number;
+  player_count: number;
+  message_counts: Record<string, number>;
+  messages: Message[];
+}

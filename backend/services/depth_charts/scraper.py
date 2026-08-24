@@ -151,6 +151,6 @@ def scrape() -> Snapshot:
     team_abbrev and defensive_formation are NOT set here -- see
     app.services.depth_charts.enrich, which runs next.
     """
-    html = fetch_html(settings.source_url)
+    html = fetch_html(settings.nfl_depth_chart_url)
     teams, messages = parse_teams(html)
-    return build_json(teams, messages, settings.source_url)
+    return build_json(teams, messages, settings.nfl_depth_chart_url)

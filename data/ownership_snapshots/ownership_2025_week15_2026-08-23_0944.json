@@ -1,0 +1,1538 @@
+{
+  "scraped_at": "2026-08-23T09:44:48-04:00",
+  "source_url": "file://data/ownership_mock/ownership-projections-week15.csv",
+  "season": 2025,
+  "week": 15,
+  "players": [
+    {
+      "player": "Woody Marks",
+      "position": "RB",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 5600,
+      "ownership_pct": 30.5
+    },
+    {
+      "player": "Puka Nacua",
+      "position": "WR",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 8700,
+      "ownership_pct": 29.5
+    },
+    {
+      "player": "Christian McCaffrey",
+      "position": "RB",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 9000,
+      "ownership_pct": 27.2
+    },
+    {
+      "player": "Ja'Marr Chase",
+      "position": "WR",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 8100,
+      "ownership_pct": 24.0
+    },
+    {
+      "player": "Jaxon Smith-Njigba",
+      "position": "WR",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 8600,
+      "ownership_pct": 18.6
+    },
+    {
+      "player": "Jahmyr Gibbs",
+      "position": "RB",
+      "team": "DET",
+      "opponent": "LAR",
+      "is_home": true,
+      "salary": 8800,
+      "ownership_pct": 16.9
+    },
+    {
+      "player": "Derrick Henry",
+      "position": "RB",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 7300,
+      "ownership_pct": 16.3
+    },
+    {
+      "player": "Kenneth Walker III",
+      "position": "RB",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 5600,
+      "ownership_pct": 16.2
+    },
+    {
+      "player": "Harold Fannin Jr.",
+      "position": "TE",
+      "team": "CLE",
+      "opponent": "CHI",
+      "is_home": false,
+      "salary": 4000,
+      "ownership_pct": 16.2
+    },
+    {
+      "player": "Amon-Ra St. Brown",
+      "position": "WR",
+      "team": "DET",
+      "opponent": "LAR",
+      "is_home": true,
+      "salary": 7900,
+      "ownership_pct": 15.7
+    },
+    {
+      "player": "Nico Collins",
+      "position": "WR",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 6700,
+      "ownership_pct": 15.6
+    },
+    {
+      "player": "George Kittle",
+      "position": "TE",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 5400,
+      "ownership_pct": 14.1
+    },
+    {
+      "player": "Theo Johnson",
+      "position": "TE",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 3500,
+      "ownership_pct": 13.9
+    },
+    {
+      "player": "Saquon Barkley",
+      "position": "RB",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 7100,
+      "ownership_pct": 13.5
+    },
+    {
+      "player": "Wan'Dale Robinson",
+      "position": "WR",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 5900,
+      "ownership_pct": 12.3
+    },
+    {
+      "player": "Mark Andrews",
+      "position": "TE",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 3900,
+      "ownership_pct": 12.2
+    },
+    {
+      "player": "Jauan Jennings",
+      "position": "WR",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 5200,
+      "ownership_pct": 11.9
+    },
+    {
+      "player": "C.J. Stroud",
+      "position": "QB",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 5200,
+      "ownership_pct": 11.8
+    },
+    {
+      "player": "Michael Wilson",
+      "position": "WR",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 6600,
+      "ownership_pct": 11.7
+    },
+    {
+      "player": "Mitch Tinsley",
+      "position": "WR",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 3100,
+      "ownership_pct": 11.6
+    },
+    {
+      "player": "Davante Adams",
+      "position": "WR",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 7200,
+      "ownership_pct": 11.3
+    },
+    {
+      "player": "AJ Barner",
+      "position": "TE",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 3200,
+      "ownership_pct": 11.0
+    },
+    {
+      "player": "Terry McLaurin",
+      "position": "WR",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 5400,
+      "ownership_pct": 11.0
+    },
+    {
+      "player": "Lamar Jackson",
+      "position": "QB",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 6400,
+      "ownership_pct": 10.9
+    },
+    {
+      "player": "Jameson Williams",
+      "position": "WR",
+      "team": "DET",
+      "opponent": "LAR",
+      "is_home": true,
+      "salary": 6100,
+      "ownership_pct": 10.3
+    },
+    {
+      "player": "Travis Etienne Jr.",
+      "position": "RB",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 6500,
+      "ownership_pct": 10.1
+    },
+    {
+      "player": "Zay Flowers",
+      "position": "WR",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 6300,
+      "ownership_pct": 10.0
+    },
+    {
+      "player": "Jakobi Meyers",
+      "position": "WR",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 5600,
+      "ownership_pct": 9.8
+    },
+    {
+      "player": "Tetairoa McMillan",
+      "position": "WR",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 6000,
+      "ownership_pct": 9.7
+    },
+    {
+      "player": "Mike Gesicki",
+      "position": "TE",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 3300,
+      "ownership_pct": 9.4
+    },
+    {
+      "player": "Isaiah Likely",
+      "position": "TE",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 3400,
+      "ownership_pct": 9.1
+    },
+    {
+      "player": "Ashton Jeanty",
+      "position": "RB",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 5800,
+      "ownership_pct": 9.1
+    },
+    {
+      "player": "Colby Parkinson",
+      "position": "TE",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 3200,
+      "ownership_pct": 8.8
+    },
+    {
+      "player": "Jaxson Dart",
+      "position": "QB",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 5600,
+      "ownership_pct": 8.8
+    },
+    {
+      "player": "Matthew Stafford",
+      "position": "QB",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 7000,
+      "ownership_pct": 8.0
+    },
+    {
+      "player": "Devin Neal",
+      "position": "RB",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 5300,
+      "ownership_pct": 7.7
+    },
+    {
+      "player": "Brock Purdy",
+      "position": "QB",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 6200,
+      "ownership_pct": 7.5
+    },
+    {
+      "player": "A.J. Brown",
+      "position": "WR",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 6800,
+      "ownership_pct": 7.4
+    },
+    {
+      "player": "Trevor Lawrence",
+      "position": "QB",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 5700,
+      "ownership_pct": 7.2
+    },
+    {
+      "player": "Christian Watson",
+      "position": "WR",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 5500,
+      "ownership_pct": 7.2
+    },
+    {
+      "player": "Josh Jacobs",
+      "position": "RB",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 6900,
+      "ownership_pct": 7.1
+    },
+    {
+      "player": "RJ Harvey",
+      "position": "RB",
+      "team": "DEN",
+      "opponent": "GB",
+      "is_home": true,
+      "salary": 6000,
+      "ownership_pct": 6.9
+    },
+    {
+      "player": "Marcus Mariota",
+      "position": "QB",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 5000,
+      "ownership_pct": 6.8
+    },
+    {
+      "player": "Tyrone Tracy Jr.",
+      "position": "RB",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 5500,
+      "ownership_pct": 6.7
+    },
+    {
+      "player": "Dalton Schultz",
+      "position": "TE",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 4100,
+      "ownership_pct": 6.5
+    },
+    {
+      "player": "Adonai Mitchell",
+      "position": "WR",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 4400,
+      "ownership_pct": 5.9
+    },
+    {
+      "player": "James Cook III",
+      "position": "RB",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 8000,
+      "ownership_pct": 5.7
+    },
+    {
+      "player": "Juwan Johnson",
+      "position": "TE",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 3700,
+      "ownership_pct": 5.7
+    },
+    {
+      "player": "Quinshon Judkins",
+      "position": "RB",
+      "team": "CLE",
+      "opponent": "CHI",
+      "is_home": false,
+      "salary": 6300,
+      "ownership_pct": 5.5
+    },
+    {
+      "player": "Brenton Strange",
+      "position": "TE",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 4200,
+      "ownership_pct": 5.5
+    },
+    {
+      "player": "Jayden Higgins",
+      "position": "WR",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 4200,
+      "ownership_pct": 5.2
+    },
+    {
+      "player": "DeVonta Smith",
+      "position": "WR",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 5800,
+      "ownership_pct": 5.1
+    },
+    {
+      "player": "Chase Brown",
+      "position": "RB",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 6700,
+      "ownership_pct": 5.1
+    },
+    {
+      "player": "Jayden Reed",
+      "position": "WR",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 4500,
+      "ownership_pct": 5.0
+    },
+    {
+      "player": "Sam Darnold",
+      "position": "QB",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 5800,
+      "ownership_pct": 4.9
+    },
+    {
+      "player": "Rashee Rice",
+      "position": "WR",
+      "team": "KC",
+      "opponent": "LAC",
+      "is_home": true,
+      "salary": 7700,
+      "ownership_pct": 4.9
+    },
+    {
+      "player": "Joe Burrow",
+      "position": "QB",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 6600,
+      "ownership_pct": 4.7
+    },
+    {
+      "player": "Chris Olave",
+      "position": "WR",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 6200,
+      "ownership_pct": 4.5
+    },
+    {
+      "player": "Chuba Hubbard",
+      "position": "RB",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 4600,
+      "ownership_pct": 4.3
+    },
+    {
+      "player": "Deebo Samuel Sr.",
+      "position": "WR",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 5300,
+      "ownership_pct": 4.0
+    },
+    {
+      "player": "Courtland Sutton",
+      "position": "WR",
+      "team": "DEN",
+      "opponent": "GB",
+      "is_home": true,
+      "salary": 5500,
+      "ownership_pct": 3.9
+    },
+    {
+      "player": "Evan Engram",
+      "position": "TE",
+      "team": "DEN",
+      "opponent": "GB",
+      "is_home": true,
+      "salary": 3100,
+      "ownership_pct": 3.9
+    },
+    {
+      "player": "Breece Hall",
+      "position": "RB",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 6200,
+      "ownership_pct": 3.8
+    },
+    {
+      "player": "John Metchie III",
+      "position": "WR",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 4300,
+      "ownership_pct": 3.8
+    },
+    {
+      "player": "Dallas Goedert",
+      "position": "TE",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 3800,
+      "ownership_pct": 3.7
+    },
+    {
+      "player": "Hunter Henry",
+      "position": "TE",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 4400,
+      "ownership_pct": 3.7
+    },
+    {
+      "player": "Gunnar Helm",
+      "position": "TE",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 2800,
+      "ownership_pct": 3.4
+    },
+    {
+      "player": "Dalton Kincaid",
+      "position": "TE",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 4500,
+      "ownership_pct": 3.4
+    },
+    {
+      "player": "Josh Allen",
+      "position": "QB",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 7500,
+      "ownership_pct": 3.4
+    },
+    {
+      "player": "Brian Thomas Jr.",
+      "position": "WR",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 5700,
+      "ownership_pct": 3.4
+    },
+    {
+      "player": "Colston Loveland",
+      "position": "TE",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 3600,
+      "ownership_pct": 3.3
+    },
+    {
+      "player": "Kyren Williams",
+      "position": "RB",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 6800,
+      "ownership_pct": 3.3
+    },
+    {
+      "player": "Stefon Diggs",
+      "position": "WR",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 6000,
+      "ownership_pct": 3.2
+    },
+    {
+      "player": "Drake Maye",
+      "position": "QB",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 6700,
+      "ownership_pct": 3.1
+    },
+    {
+      "player": "Elic Ayomanor",
+      "position": "WR",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 3500,
+      "ownership_pct": 3.1
+    },
+    {
+      "player": "Travis Kelce",
+      "position": "TE",
+      "team": "KC",
+      "opponent": "LAC",
+      "is_home": true,
+      "salary": 4900,
+      "ownership_pct": 3.1
+    },
+    {
+      "player": "Jalen Hurts",
+      "position": "QB",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 6800,
+      "ownership_pct": 3.0
+    },
+    {
+      "player": "Zonovan Knight",
+      "position": "RB",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 4900,
+      "ownership_pct": 3.0
+    },
+    {
+      "player": "Jared Goff",
+      "position": "QB",
+      "team": "DET",
+      "opponent": "LAR",
+      "is_home": true,
+      "salary": 6100,
+      "ownership_pct": 3.0
+    },
+    {
+      "player": "Jordan Love",
+      "position": "QB",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 5400,
+      "ownership_pct": 2.9
+    },
+    {
+      "player": "Mason Taylor",
+      "position": "TE",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 3100,
+      "ownership_pct": 2.8
+    },
+    {
+      "player": "Xavier Worthy",
+      "position": "WR",
+      "team": "KC",
+      "opponent": "LAC",
+      "is_home": true,
+      "salary": 4500,
+      "ownership_pct": 2.7
+    },
+    {
+      "player": "Caleb Williams",
+      "position": "QB",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 5300,
+      "ownership_pct": 2.4
+    },
+    {
+      "player": "Devaughn Vele",
+      "position": "WR",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 4200,
+      "ownership_pct": 2.4
+    },
+    {
+      "player": "Trey McBride",
+      "position": "TE",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 7400,
+      "ownership_pct": 2.4
+    },
+    {
+      "player": "Chris Rodriguez Jr.",
+      "position": "RB",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 4900,
+      "ownership_pct": 2.3
+    },
+    {
+      "player": "Patrick Mahomes",
+      "position": "QB",
+      "team": "KC",
+      "opponent": "LAC",
+      "is_home": true,
+      "salary": 6500,
+      "ownership_pct": 2.3
+    },
+    {
+      "player": "Tyler Shough",
+      "position": "QB",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 4900,
+      "ownership_pct": 2.3
+    },
+    {
+      "player": "Rico Dowdle",
+      "position": "RB",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 6600,
+      "ownership_pct": 2.3
+    },
+    {
+      "player": "TreVeyon Henderson",
+      "position": "RB",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 6100,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "Tony Pollard",
+      "position": "RB",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 5200,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "Cooper Kupp",
+      "position": "WR",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 4100,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "Jalen Coker",
+      "position": "WR",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 3900,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "D'Andre Swift",
+      "position": "RB",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 5700,
+      "ownership_pct": 2.0
+    },
+    {
+      "player": "Ricky Pearsall",
+      "position": "WR",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 5100,
+      "ownership_pct": 2.0
+    },
+    {
+      "player": "Chimere Dike",
+      "position": "WR",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 4300,
+      "ownership_pct": 1.8
+    },
+    {
+      "player": "Jerry Jeudy",
+      "position": "WR",
+      "team": "CLE",
+      "opponent": "CHI",
+      "is_home": false,
+      "salary": 4400,
+      "ownership_pct": 1.8
+    },
+    {
+      "player": "Khalil Shakir",
+      "position": "WR",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 5300,
+      "ownership_pct": 1.7
+    },
+    {
+      "player": "Bryce Young",
+      "position": "QB",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 5100,
+      "ownership_pct": 1.7
+    },
+    {
+      "player": "Bo Nix",
+      "position": "QB",
+      "team": "DEN",
+      "opponent": "GB",
+      "is_home": true,
+      "salary": 5900,
+      "ownership_pct": 1.7
+    },
+    {
+      "player": "Brandin Cooks",
+      "position": "WR",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 3100,
+      "ownership_pct": 1.7
+    },
+    {
+      "player": "Tyler Warren",
+      "position": "TE",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 4700,
+      "ownership_pct": 1.6
+    },
+    {
+      "player": "Rashid Shaheed",
+      "position": "WR",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 4600,
+      "ownership_pct": 1.6
+    },
+    {
+      "player": "Luther Burden III",
+      "position": "WR",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 4800,
+      "ownership_pct": 1.6
+    },
+    {
+      "player": "Mack Hollins",
+      "position": "WR",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 4000,
+      "ownership_pct": 1.6
+    },
+    {
+      "player": "Kyle Monangai",
+      "position": "RB",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 5200,
+      "ownership_pct": 1.5
+    },
+    {
+      "player": "Noah Brown",
+      "position": "WR",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 3200,
+      "ownership_pct": 1.5
+    },
+    {
+      "player": "Tyjae Spears",
+      "position": "RB",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 4700,
+      "ownership_pct": 1.5
+    },
+    {
+      "player": "Jacoby Brissett",
+      "position": "QB",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 5500,
+      "ownership_pct": 1.4
+    },
+    {
+      "player": "Rhamondre Stevenson",
+      "position": "RB",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 5100,
+      "ownership_pct": 1.4
+    },
+    {
+      "player": "Rashod Bateman",
+      "position": "WR",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 3400,
+      "ownership_pct": 1.4
+    },
+    {
+      "player": "Tre Tucker",
+      "position": "WR",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 4200,
+      "ownership_pct": 1.3
+    },
+    {
+      "player": "Devin Singletary",
+      "position": "RB",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 5000,
+      "ownership_pct": 1.3
+    },
+    {
+      "player": "John Bates",
+      "position": "TE",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 2900,
+      "ownership_pct": 1.3
+    },
+    {
+      "player": "Cole Kmet",
+      "position": "TE",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 2600,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Isaiah Hodgins",
+      "position": "WR",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 3400,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Romeo Doubs",
+      "position": "WR",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 4700,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Jack Bech",
+      "position": "WR",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 3200,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "DJ Moore",
+      "position": "WR",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 5000,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Oronde Gadsden II",
+      "position": "TE",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 4300,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Brock Bowers",
+      "position": "TE",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 5900,
+      "ownership_pct": 1.0
+    },
+    {
+      "player": "Kayshon Boutte",
+      "position": "WR",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 5000,
+      "ownership_pct": 1.0
+    },
+    {
+      "player": "Jonathan Taylor",
+      "position": "RB",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 8500,
+      "ownership_pct": 1.0
+    },
+    {
+      "player": "Andrei Iosivas",
+      "position": "WR",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 4100,
+      "ownership_pct": 0.9
+    },
+    {
+      "player": "Blake Corum",
+      "position": "RB",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 4800,
+      "ownership_pct": 0.9
+    },
+    {
+      "player": "Cam Ward",
+      "position": "QB",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 4600,
+      "ownership_pct": 0.9
+    },
+    {
+      "player": "Darius Slayton",
+      "position": "WR",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 4400,
+      "ownership_pct": 0.9
+    },
+    {
+      "player": "Quentin Johnston",
+      "position": "WR",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 4900,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Xavier Legette",
+      "position": "WR",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 3700,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Ja'Tavion Sanders",
+      "position": "TE",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 2500,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Zach Charbonnet",
+      "position": "RB",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 5100,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Tim Patrick",
+      "position": "WR",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 3700,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Alec Pierce",
+      "position": "WR",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 4900,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Michael Pittman Jr.",
+      "position": "WR",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 5100,
+      "ownership_pct": 0.7
+    },
+    {
+      "player": "Keenan Allen",
+      "position": "WR",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 4800,
+      "ownership_pct": 0.7
+    },
+    {
+      "player": "Shedeur Sanders",
+      "position": "QB",
+      "team": "CLE",
+      "opponent": "CHI",
+      "is_home": false,
+      "salary": 4700,
+      "ownership_pct": 0.6
+    },
+    {
+      "player": "Olamide Zaccheaus",
+      "position": "WR",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 3300,
+      "ownership_pct": 0.6
+    },
+    {
+      "player": "Michael Carter",
+      "position": "RB",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 4200,
+      "ownership_pct": 0.6
+    },
+    {
+      "player": "Ladd McConkey",
+      "position": "WR",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 6400,
+      "ownership_pct": 0.6
+    },
+    {
+      "player": "Xavier Smith",
+      "position": "WR",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 3000,
+      "ownership_pct": 0.5
+    },
+    {
+      "player": "Justin Herbert",
+      "position": "QB",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 6300,
+      "ownership_pct": 0.3
+    },
+    {
+      "player": "Philip Rivers",
+      "position": "QB",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 4900,
+      "ownership_pct": 0.2
+    },
+    {
+      "player": "Brady Cook",
+      "position": "QB",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 4300,
+      "ownership_pct": 0.1
+    },
+    {
+      "player": "Kenny Pickett",
+      "position": "QB",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 4500,
+      "ownership_pct": 0.1
+    },
+    {
+      "player": "Texans",
+      "position": "DST",
+      "team": "HOU",
+      "opponent": "ARI",
+      "is_home": true,
+      "salary": 3600,
+      "ownership_pct": 8.8
+    },
+    {
+      "player": "Jaguars",
+      "position": "DST",
+      "team": "JAX",
+      "opponent": "NYJ",
+      "is_home": true,
+      "salary": 3900,
+      "ownership_pct": 8.7
+    },
+    {
+      "player": "Eagles",
+      "position": "DST",
+      "team": "PHI",
+      "opponent": "LV",
+      "is_home": true,
+      "salary": 3800,
+      "ownership_pct": 7.3
+    },
+    {
+      "player": "Seahawks",
+      "position": "DST",
+      "team": "SEA",
+      "opponent": "IND",
+      "is_home": true,
+      "salary": 3700,
+      "ownership_pct": 6.5
+    },
+    {
+      "player": "Bears",
+      "position": "DST",
+      "team": "CHI",
+      "opponent": "CLE",
+      "is_home": true,
+      "salary": 3500,
+      "ownership_pct": 6.2
+    },
+    {
+      "player": "Panthers",
+      "position": "DST",
+      "team": "CAR",
+      "opponent": "NO",
+      "is_home": false,
+      "salary": 3100,
+      "ownership_pct": 5.8
+    },
+    {
+      "player": "Saints",
+      "position": "DST",
+      "team": "NO",
+      "opponent": "CAR",
+      "is_home": true,
+      "salary": 2500,
+      "ownership_pct": 5.3
+    },
+    {
+      "player": "Raiders",
+      "position": "DST",
+      "team": "LV",
+      "opponent": "PHI",
+      "is_home": false,
+      "salary": 2000,
+      "ownership_pct": 5.2
+    },
+    {
+      "player": "Packers",
+      "position": "DST",
+      "team": "GB",
+      "opponent": "DEN",
+      "is_home": false,
+      "salary": 2800,
+      "ownership_pct": 4.8
+    },
+    {
+      "player": "Chiefs",
+      "position": "DST",
+      "team": "KC",
+      "opponent": "LAC",
+      "is_home": true,
+      "salary": 3300,
+      "ownership_pct": 4.7
+    },
+    {
+      "player": "Chargers",
+      "position": "DST",
+      "team": "LAC",
+      "opponent": "KC",
+      "is_home": false,
+      "salary": 2500,
+      "ownership_pct": 4.5
+    },
+    {
+      "player": "Giants",
+      "position": "DST",
+      "team": "NYG",
+      "opponent": "WAS",
+      "is_home": true,
+      "salary": 2700,
+      "ownership_pct": 4.3
+    },
+    {
+      "player": "Commanders",
+      "position": "DST",
+      "team": "WAS",
+      "opponent": "NYG",
+      "is_home": false,
+      "salary": 2600,
+      "ownership_pct": 3.9
+    },
+    {
+      "player": "Bills",
+      "position": "DST",
+      "team": "BUF",
+      "opponent": "NE",
+      "is_home": false,
+      "salary": 2900,
+      "ownership_pct": 3.7
+    },
+    {
+      "player": "Jets",
+      "position": "DST",
+      "team": "NYJ",
+      "opponent": "JAX",
+      "is_home": false,
+      "salary": 2100,
+      "ownership_pct": 3.0
+    },
+    {
+      "player": "49ers",
+      "position": "DST",
+      "team": "SF",
+      "opponent": "TEN",
+      "is_home": true,
+      "salary": 4000,
+      "ownership_pct": 2.8
+    },
+    {
+      "player": "Cardinals",
+      "position": "DST",
+      "team": "ARI",
+      "opponent": "HOU",
+      "is_home": false,
+      "salary": 2400,
+      "ownership_pct": 2.2
+    },
+    {
+      "player": "Browns",
+      "position": "DST",
+      "team": "CLE",
+      "opponent": "CHI",
+      "is_home": false,
+      "salary": 2700,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "Patriots",
+      "position": "DST",
+      "team": "NE",
+      "opponent": "BUF",
+      "is_home": true,
+      "salary": 2800,
+      "ownership_pct": 2.1
+    },
+    {
+      "player": "Bengals",
+      "position": "DST",
+      "team": "CIN",
+      "opponent": "BAL",
+      "is_home": true,
+      "salary": 2400,
+      "ownership_pct": 2.0
+    },
+    {
+      "player": "Rams",
+      "position": "DST",
+      "team": "LAR",
+      "opponent": "DET",
+      "is_home": true,
+      "salary": 3000,
+      "ownership_pct": 1.6
+    },
+    {
+      "player": "Colts",
+      "position": "DST",
+      "team": "IND",
+      "opponent": "SEA",
+      "is_home": false,
+      "salary": 2200,
+      "ownership_pct": 1.3
+    },
+    {
+      "player": "Ravens",
+      "position": "DST",
+      "team": "BAL",
+      "opponent": "CIN",
+      "is_home": false,
+      "salary": 3200,
+      "ownership_pct": 1.1
+    },
+    {
+      "player": "Titans",
+      "position": "DST",
+      "team": "TEN",
+      "opponent": "SF",
+      "is_home": false,
+      "salary": 2300,
+      "ownership_pct": 0.8
+    },
+    {
+      "player": "Lions",
+      "position": "DST",
+      "team": "DET",
+      "opponent": "LAR",
+      "is_home": true,
+      "salary": 2600,
+      "ownership_pct": 0.6
+    },
+    {
+      "player": "Broncos",
+      "position": "DST",
+      "team": "DEN",
+      "opponent": "GB",
+      "is_home": true,
+      "salary": 3400,
+      "ownership_pct": 0.5
+    }
+  ]
+}

@@ -28,6 +28,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.depth_charts import router as depth_charts_router
+from backend.api.ownership import router as ownership_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.config import settings
 
@@ -42,6 +43,7 @@ app.add_middleware(
 
 app.include_router(depth_charts_router, prefix="/api")
 app.include_router(usage_bump_router, prefix="/api")
+app.include_router(ownership_router, prefix="/api")
 
 
 @app.get("/health")

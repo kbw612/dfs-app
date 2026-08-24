@@ -1,0 +1,9 @@
+{
+  "tiers": [
+    { "min_games": 1, "max_games": 1, "leverage_point": 50.0 },
+    { "min_games": 2, "max_games": 2, "leverage_point": 40.0 },
+    { "min_games": 3, "max_games": 4, "leverage_point": 35.0 },
+    { "min_games": 5, "max_games": 7, "leverage_point": 30.0 },
+    { "min_games": 8, "max_games": null, "leverage_point": 20.0 }
+  ]
+}

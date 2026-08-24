@@ -1,10 +1,12 @@
 import { useState } from "react";
 import "./App.css";
 import { CompareView } from "./components/CompareView";
+import { OwnershipView } from "./components/OwnershipView";
 import { RetrieveButton } from "./components/RetrieveButton";
 import { UsageBumpView } from "./components/UsageBumpView";
+import { BUILD_TIME, FRONTEND_VERSION } from "./version";
 
-type View = "compare" | "bump";
+type View = "compare" | "bump" | "ownership";
 
 function App() {
   const [view, setView] = useState<View>("compare");
@@ -16,7 +18,12 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>DFS</h1>
+        <div>
+          <h1>DFS</h1>
+          <p className="app-version" title={`Built ${new Date(BUILD_TIME).toLocaleString()}`}>
+            v{FRONTEND_VERSION} · built {new Date(BUILD_TIME).toLocaleString()}
+          </p>
+        </div>
         <RetrieveButton onScraped={() => setRefreshSignal((n) => n + 1)} />
       </header>
 
@@ -37,13 +44,19 @@ function App() {
         >
           Usage Bump Players
         </button>
+        <button
+          type="button"
+          className={`view-tab${view === "ownership" ? " selected" : ""}`}
+          aria-pressed={view === "ownership"}
+          onClick={() => setView("ownership")}
+        >
+          Ownership Leverage/Pivots
+        </button>
       </div>
 
-      {view === "compare" ? (
-        <CompareView refreshSignal={refreshSignal} />
-      ) : (
-        <UsageBumpView refreshSignal={refreshSignal} />
-      )}
+      {view === "compare" && <CompareView refreshSignal={refreshSignal} />}
+      {view === "bump" && <UsageBumpView refreshSignal={refreshSignal} />}
+      {view === "ownership" && <OwnershipView />}
     </div>
   );
 }
