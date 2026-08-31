@@ -29,6 +29,43 @@ h1 {
   color: #999;
 }
 
+/* Single shared season/week control, lives in the header -- Ownership,
+   Salary Blocks, and Player Pool all read this instead of each keeping
+   their own copy (see App.tsx). */
+.current-week-control {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.current-week-control label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.current-week-control input {
+  width: 80px;
+  min-height: 40px;
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+@media (max-width: 480px) {
+  .current-week-control {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .current-week-control input {
+    width: 100%;
+  }
+}
+
 /* Phones (~375px and up). Everything above this breakpoint keeps the
    wider desktop layout; below it, stack things that would otherwise
    overflow or get too cramped to tap accurately. */
@@ -141,6 +178,77 @@ h1 {
   background: #2b6cb0;
   color: white;
   border-color: #2b6cb0;
+}
+
+/* PlayerSearchSelect: a search-to-select filter for option lists too long
+   to lay out as a flat chip row (every player at a position, unlike the
+   short team/game/salary-bucket lists ChipMultiSelect handles). The box
+   is positioned so the dropdown of matches can sit directly under the
+   input; selected players render below as removable chips instead of
+   toggling within the option row itself. */
+.player-search-box {
+  position: relative;
+  max-width: 320px;
+}
+
+.player-search-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.player-search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.player-search-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+}
+
+.player-search-option:hover,
+.player-search-option:focus {
+  background: #f0f4f8;
+}
+
+.player-chip-row {
+  margin-top: 8px;
+}
+
+.player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.player-chip-remove {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
 }
 
 .status-key-toggle {
@@ -801,17 +909,55 @@ button.calendar-cell.no-data .day-number {
   margin: 16px 0 12px;
 }
 
-.ownership-game-group {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin-bottom: 12px;
+/* Extra breathing room above this section's heading specifically -- it
+   sits right under the team/position filter chips, and 16px (the shared
+   .ownership-section h2 margin) read as too tight against them. */
+.ownership-pivot-players-heading {
+  margin-top: 28px;
 }
 
-.ownership-game-group h3 {
-  margin: 0 0 8px;
-  font-size: 1rem;
+/* Game leverage: one compact row per game (matchup + chalk/pivot counts),
+   collapsed by default -- clicking it reveals both the Chalk and Pivots
+   subgroups together underneath. One rounded card holds the whole list
+   (rows separated by hairlines inside it) rather than a separate card per
+   game (the old .ownership-game-group treatment), so scanning the whole
+   slate top-to-bottom doesn't require scrolling past every game's full
+   player lists first. */
+.ownership-game-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.ownership-game-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.ownership-game-list li:last-child > .ownership-game-summary {
+  border-bottom: none;
+}
+
+.ownership-game-matchup {
+  font-weight: 600;
+}
+
+.ownership-game-counts {
+  color: #666;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.ownership-game-detail {
+  padding: 4px 0 10px;
 }
 
 .ownership-game-subgroup {
@@ -822,9 +968,6 @@ button.calendar-cell.no-data .day-number {
   margin-bottom: 0;
 }
 
-/* Chalk's label is a plain heading; the pivot-candidates subgroup instead
-   uses an .ownership-pivot-toggle button (below) -- same "Pivots ▾/▴"
-   toggle styling as the Pivots section itself. */
 .ownership-game-subgroup h4 {
   margin: 0 0 4px;
   font-size: 0.8rem;
@@ -837,6 +980,17 @@ button.calendar-cell.no-data .day-number {
   list-style: none;
   margin: 0;
   padding: 0;
+}
+
+/* Shared card wrapper -- same rounded-card-with-internal-hairlines
+   treatment as .ownership-game-list, reused here for Pivot Players and
+   Chalk (high-owned) so all three top-level lists in this view read as
+   consistent bounded cards rather than bare lists floating on the page. */
+.pivot-card-list {
+  padding: 0 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
 }
 
 /* A CSS grid, not flexbox -- fixed pixel tracks for name/salary/pct can't
@@ -934,12 +1088,12 @@ button.calendar-cell.no-data .day-number {
   font-variant-numeric: tabular-nums;
 }
 
+/* Flat, no box -- matches Game Pivots' expanded Chalk/Pivots lists
+   (.ownership-game-detail), which flow directly on the card's own white
+   background instead of sitting in a separate inset box. */
 .ownership-pivot-list {
-  margin-top: 6px;
-  padding: 4px 10px;
-  background: #fafafa;
-  border: 1px solid #eee;
-  border-radius: 6px;
+  margin-top: 4px;
+  padding: 0;
 }
 
 /* Leverage & pivot plays section's expanded "why" list -- plain text
@@ -968,54 +1122,60 @@ button.calendar-cell.no-data .day-number {
   border-bottom: none;
 }
 
-/* Leverage & pivot plays section: one of these per distinct reason count
-   (3 players, 2 players, ...), most reasons first -- each one's own
-   .ownership-pivot-groups list is sorted by salary within it. */
-.ownership-leverage-count-group {
-  margin-bottom: 16px;
+/* Pivot Players section: a .ownership-player-row (same fixed-width grid
+   every other list in this view uses) with a small pointer cursor to
+   signal it's clickable, plus a 4th column -- the reason-count badge --
+   appended after the usual name/salary/ownership% columns, inline instead
+   of a separate "leverage for N players" heading. */
+.ownership-multi-leverage-row {
+  grid-template-columns: 200px 64px 48px 34px;
+  cursor: pointer;
 }
 
-.ownership-leverage-count-group:last-child {
-  margin-bottom: 0;
+/* Marks where the ×N badge count drops to the next tier (×3 rows to ×2
+   rows, etc.) -- a plain rule, not a text heading, since group headings
+   were explicitly dropped in favor of the inline badge carrying that
+   info. Margin-top (rather than just a border) gives the boundary some
+   breathing room so it doesn't read as just another row divider. */
+.ownership-leverage-group-divider {
+  margin-top: 10px;
+  border-top: 1px solid #ddd;
 }
 
-.ownership-leverage-count-group h3 {
-  margin: 0 0 8px;
-  font-size: 0.85rem;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.ownership-leverage-group-divider .ownership-player-row {
+  padding-top: 10px;
 }
 
-/* Pivots section's trigger cards -- deliberately its own classes rather
-   than reusing .bump-row/.bump-* (shared with the Usage Bump page) so
-   tightening this section's spacing doesn't also change that page's. */
+.ownership-leverage-badge {
+  background: #ebf4ff;
+  color: #2b6cb0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-align: center;
+  border-radius: 999px;
+  padding: 2px 4px;
+}
+
+/* Salary Pivots -- deliberately its own classes rather than reusing
+   .bump-row/.bump-* (shared with the Usage Bump page) so tightening this
+   section's spacing doesn't also change that page's. .pivot-card-list
+   (shared with Pivot Players/Chalk/Game Pivots) supplies the single
+   rounded card + horizontal padding; each trigger is just a compact row
+   inside it, separated by hairlines, rather than its own bordered box. */
 .ownership-pivot-groups {
   list-style: none;
   margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
 }
 
 .ownership-pivot-group {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 10px 16px;
-}
-
-.ownership-pivot-group + .ownership-pivot-group {
-  border-top: none;
-}
-
-.ownership-pivot-group:first-child {
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
 }
 
 .ownership-pivot-group:last-child {
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-bottom: none;
 }
 
 .ownership-pivot-summary {
@@ -1039,12 +1199,41 @@ button.calendar-cell.no-data .day-number {
   margin-top: 2px;
 }
 
-.ownership-pivot-toggle {
-  background: transparent;
-  color: #2b6cb0;
-  border: none;
-  padding: 4px 0 0;
-  font-size: 0.8rem;
+/* Salary Blocks: reuses .ownership-pivot-group's row/divider styling.
+   The summary row itself stays dense -- every player's name and
+   individual salary is shown inline, not just on expand -- but the row
+   is still a click-to-expand trigger (like Salary Pivots) that opens a
+   PlayerRow list below showing each player's ownership % too, since that
+   doesn't fit in the one-line summary. Total salary leads (fixed width,
+   so it lines up column-to-column across blocks the way every other list
+   in this view aligns its numbers), then the player names + per-player
+   salaries, then the expand/collapse arrow. */
+.block-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.block-total {
+  width: 64px;
+  flex: 0 0 auto;
+  color: #333;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.block-names {
+  font-size: 0.9rem;
+}
+
+.block-arrow {
+  color: #666;
+  font-size: 0.85rem;
+  margin-left: auto;
+  padding-left: 8px;
 }
 
 @media (max-width: 480px) {
@@ -1054,7 +1243,347 @@ button.calendar-cell.no-data .day-number {
     padding: 6px 0;
   }
 
-  .ownership-pivot-group {
-    padding: 8px 12px;
+  .ownership-multi-leverage-row {
+    grid-template-columns: 120px 56px 42px 30px;
   }
+}
+
+/* Player Pool: DK salary CSV upload row. */
+.player-pool-upload {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.player-pool-upload-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+/* Player Pool grid: a spreadsheet-style table -- Name stays pinned via
+   position:sticky while the score columns scroll horizontally on narrow
+   screens, every score cell is a plain number input (no expand/collapse
+   needed to edit, per the design), and Total recomputes live from
+   whatever's currently typed (see PlayerPoolView.tsx's liveTotal) rather
+   than waiting on a round trip. A row picks up .player-pool-row-dirty
+   the moment any of its cells change and loses it once that row's save
+   resolves -- the header's save-status line (all/saving/unsaved) is the
+   same signal at a glance. */
+.player-pool-grid-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.player-pool-save-status {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.settings-panel {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.settings-panel h2 {
+  margin-top: 0;
+}
+
+.settings-panel .ownership-load-form,
+.settings-panel .player-pool-upload {
+  margin-bottom: 8px;
+}
+
+.settings-file-status {
+  display: inline-block;
+  font-size: 0.9rem;
+  color: #555;
+  margin: 4px 0 0;
+}
+
+.current-week-readout {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #333;
+  margin: 2px 0 0;
+}
+
+.player-selection-row-excluded {
+  opacity: 0.5;
+}
+
+.player-selection-name-col {
+  width: 150px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* .player-pool-grid td's own text-align: center (higher specificity than
+   the plain .player-pool-grid-sticky class) would otherwise win over it --
+   this compound selector is what actually left-justifies the name. */
+.player-pool-grid td.player-selection-name-col {
+  text-align: left;
+}
+
+/* No explicit width here on purpose -- a *percentage* width on any table
+   column (the old "width: 1%") flips the browser's auto-layout algorithm
+   into resolving that percentage against the full container width first,
+   then spreading the remaining space across the other "auto" columns.
+   That's what was stretching Team/Game Info out to ~180px each despite
+   having only a few characters of content -- table.player-selection-grid's
+   own width: auto wasn't enough to stop it. A plain checkbox cell has no
+   competing content, so it naturally sizes to its 14px box without any
+   width rule at all. */
+.player-selection-checkbox-col {
+  padding-right: 0;
+}
+
+.player-selection-grid-wrap {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+}
+
+/* .player-pool-grid's own width: 100% (declared later in this file, same
+   0,1,0 specificity as a plain .player-selection-grid class) would
+   otherwise win on source order alone -- the element-qualified selector
+   here is what actually keeps this grid at its natural width. */
+table.player-selection-grid {
+  width: auto;
+}
+
+/* table.player-selection-grid (element + class = 0,1,2) is required here
+   to beat .player-pool-grid th / .player-pool-grid td (class + type =
+   0,1,1, declared later in this file) -- a plain .player-selection-grid
+   th/td selector ties on specificity and loses on source order, which is
+   why earlier padding tweaks here had no visible effect. */
+table.player-selection-grid th,
+table.player-selection-grid td {
+  padding: 3px 4px 3px 0;
+}
+
+table.player-selection-grid th:first-child,
+table.player-selection-grid td:first-child {
+  padding-left: 6px;
+  padding-right: 2px;
+}
+
+table.player-selection-grid th:last-child,
+table.player-selection-grid td:last-child {
+  padding-right: 6px;
+}
+
+/* A little extra breathing room between Salary/Team/Game Info (columns
+   3-5 -- checkbox and Name stay tight) -- otherwise identical to the 4px
+   the general rule above gives every other column gap. */
+table.player-selection-grid th:nth-child(3),
+table.player-selection-grid td:nth-child(3),
+table.player-selection-grid th:nth-child(4),
+table.player-selection-grid td:nth-child(4) {
+  padding-right: 14px;
+}
+
+/* Sticky header -- stays visible at the top of the viewport while the
+   page scrolls down through the player rows, instead of scrolling away
+   with the rest of the table. Scoped to this grid only (not the shared
+   .player-pool-grid class) since Player Pool's own grid already has its
+   own horizontal-scroll wrapper this pattern isn't tuned for. */
+table.player-selection-grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fafafa;
+}
+
+table.player-selection-grid thead th.player-pool-grid-sticky {
+  z-index: 2;
+}
+
+table.player-selection-grid td.player-selection-name-col {
+  padding-left: 2px;
+}
+
+/* Fully custom checkbox -- native checkboxes render at inconsistent,
+   often much larger sizes across browsers/platforms regardless of
+   width/height/transform, so this draws its own small box + checkmark
+   instead of trying to shrink the native control. */
+.player-selection-checkbox-wrap {
+  display: inline-flex;
+  position: relative;
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+/* .player-pool-grid input (0,1,1 -- meant for the score-entry number
+   inputs elsewhere in this grid) would otherwise win over a plain
+   .player-selection-checkbox-input class (0,1,0) and force this
+   invisible checkbox input to 56px x 32px, well past the 14px box it's
+   supposed to fill -- that oversized, out-of-flow hit target was both
+   the "checkbox looks too big" and the "extra whitespace" symptom.
+   table.player-selection-grid .player-selection-checkbox-input (0,2,1)
+   is what actually wins. */
+table.player-selection-grid .player-selection-checkbox-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.player-selection-checkbox-box {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #2b6cb0;
+  border-radius: 3px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-selection-checkbox-input:checked + .player-selection-checkbox-box {
+  background: #2b6cb0;
+}
+
+.player-selection-checkbox-input:disabled + .player-selection-checkbox-box {
+  opacity: 0.5;
+}
+
+.player-pool-grid-wrap {
+  overflow-x: auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+}
+
+.player-pool-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.player-pool-grid th,
+.player-pool-grid td {
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+  border-top: 1px solid #eee;
+}
+
+.player-pool-grid thead th {
+  background: #fafafa;
+  border-top: none;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  text-align: center;
+}
+
+.player-pool-grid-sticky {
+  position: sticky;
+  left: 0;
+  background: white;
+  text-align: left;
+  font-weight: 500;
+}
+
+.player-pool-grid thead th.player-pool-grid-sticky {
+  background: #fafafa;
+  text-align: left;
+}
+
+.player-pool-grid-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.player-pool-grid-total {
+  font-weight: 600;
+}
+
+.player-pool-grid input {
+  width: 56px;
+  min-height: 32px;
+  padding: 2px 4px;
+  text-align: center;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.player-pool-row-dirty input {
+  border-color: #d99a1f;
+}
+
+.player-pool-save-button {
+  min-height: 36px;
+  padding: 6px 16px;
+  background: #2b6cb0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.player-pool-save-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.player-pool-game-environment {
+  margin-bottom: 16px;
+}
+
+.player-pool-game-environment-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2b6cb0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.player-pool-game-environment-list {
+  margin-top: 10px;
+}
+
+.player-pool-game-environment-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.player-pool-game-environment-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.player-pool-game-environment-row input {
+  width: 72px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.player-pool-game-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 110px;
 }

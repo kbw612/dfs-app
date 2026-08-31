@@ -30,7 +30,14 @@ class OwnershipPlayer(BaseModel):
     # itself is still useful to display).
     is_home: Optional[bool] = None
     salary: int
-    ownership_pct: float
+    # None means ownership isn't known yet -- ownership projections are
+    # only available later in the week (see csv_loader.py's docstring),
+    # while salary/position/team data can be loaded as soon as DK
+    # publishes the slate. Every view that ranks/filters by ownership
+    # (compute_high_owned, compute_game_leverage, compute_pivots) treats a
+    # None here as "can't classify this player, leave them out" rather
+    # than raising or defaulting to 0 -- see engine.py.
+    ownership_pct: Optional[float] = None
     # 1-indexed depth-chart rank (e.g. RB1, RB2) -- not part of the
     # ownership source data itself, filled in afterward by cross-referencing
     # the latest depth-chart snapshot by player name (see
@@ -91,6 +98,17 @@ class MultiLeveragePlayer(BaseModel):
 
     player: OwnershipPlayer
     reasons: list[LeverageReason]
+
+
+class PositionBlock(BaseModel):
+    """One same-position combination of `block_size` players (e.g. all
+    3-RB groups) plus their combined salary -- see
+    backend/services/ownership/position_blocks.py's compute_position_blocks().
+    `players` is sorted by salary descending within the block; the list of
+    blocks itself is sorted by total_salary descending."""
+
+    players: list[OwnershipPlayer]
+    total_salary: int
 
 
 class OwnershipChange(BaseModel):

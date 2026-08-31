@@ -80,8 +80,27 @@ def _get_position_players(depth_chart_tag: Tag, position: str) -> list[Player]:
     return players
 
 
+# requests' default User-Agent ("python-requests/x.x.x") plus no
+# cache-control headers is a common trigger for sites to serve a cached
+# copy to non-browser clients -- which would explain three consecutive
+# real scrapes (spanning 2 full days) coming back byte-for-byte identical
+# even after a real, known roster change (Ashton Jeanty -> Questionable)
+# should have shown up sooner. A realistic browser User-Agent plus
+# explicit no-cache headers make this request look like a normal browser
+# hit instead of a bot/script hit, which is the most common fix for
+# exactly this symptom.
+_BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    ),
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+}
+
+
 def fetch_html(url: str) -> str:
-    response = requests.get(url, timeout=settings.request_timeout_seconds)
+    response = requests.get(url, headers=_BROWSER_HEADERS, timeout=settings.request_timeout_seconds)
     response.raise_for_status()
     return response.text
 

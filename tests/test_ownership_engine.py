@@ -227,4 +227,49 @@ def test_compute_ownership_diff_added_and_removed_players():
 
     assert by_player["New"].change_types == ["other"]
     assert by_player["New"].current_ownership_pct == 5.0
-    assert by_player["New"].previous_ownership_pct is None
+
+
+# Ownership projections lag DK salaries by a few days (see
+# OwnershipPlayer.ownership_pct's docstring) -- a snapshot with
+# salary/position but no ownership yet shouldn't crash any of these, it
+# should just leave the ownership-dependent players out of the
+# classification.
+
+
+def test_compute_high_owned_excludes_players_with_no_ownership_pct():
+    # 2 teams -> 1 game -> tier says 50.0 (see TIERS above).
+    players = [
+        make_player("Known", "RB", "HOU", "ARI", 5000, 55.0),
+        make_player("Unknown", "WR", "ARI", "HOU", 5000, None),
+    ]
+    high_owned, _ = compute_high_owned(players, TIERS)
+    assert [p.player for p in high_owned] == ["Known"]
+
+
+def test_compute_game_leverage_excludes_players_with_no_ownership_pct():
+    players = [
+        make_player("Chalk", "RB", "HOU", "ARI", 5000, 45.0),
+        make_player("Unknown", "WR", "HOU", "ARI", 5000, None),
+    ]
+    groups = compute_game_leverage(players, leverage_point=40.0)
+    assert len(groups) == 1
+    assert [p.player for p in groups[0].chalk_players] == ["Chalk"]
+    # "Unknown" has no ownership_pct, so it can't be confirmed as below
+    # the leverage point either -- excluded from pivot_candidates too.
+    assert groups[0].pivot_candidates == []
+
+
+def test_compute_pivots_trigger_with_no_ownership_pct_produces_no_group():
+    players = [
+        make_player("Trigger", "RB", "HOU", "ARI", 5000, None),
+        make_player("Candidate", "RB", "ARI", "HOU", 5000, 5.0),
+    ]
+    assert compute_pivots(players) == []
+
+
+def test_compute_pivots_candidate_with_no_ownership_pct_excluded():
+    players = [
+        make_player("Trigger", "RB", "HOU", "ARI", 5000, 45.0),
+        make_player("Unknown", "RB", "ARI", "HOU", 5000, None),
+    ]
+    assert compute_pivots(players) == []

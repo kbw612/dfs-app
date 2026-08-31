@@ -40,6 +40,16 @@ def parse_salary(raw: str) -> int:
     return int(re.sub(r"[^\d]", "", raw))
 
 
-def parse_ownership_pct(raw: str) -> float:
-    # "30.5%" -> 30.5
-    return float(raw.strip().rstrip("%"))
+def parse_ownership_pct(raw: str | None) -> float | None:
+    # "30.5%" -> 30.5. Ownership projections aren't available until later
+    # in the week (see backend/services/ownership/csv_loader.py's
+    # docstring) -- a missing column (raw is None) or a present-but-empty
+    # cell both mean "not known yet", not a parse failure, so both return
+    # None rather than raising. A genuinely malformed value (e.g. "abc%")
+    # still raises ValueError, same as before.
+    if raw is None:
+        return None
+    stripped = raw.strip()
+    if not stripped:
+        return None
+    return float(stripped.rstrip("%"))

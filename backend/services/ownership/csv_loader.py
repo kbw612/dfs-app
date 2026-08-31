@@ -14,11 +14,18 @@ Salary/% ownership -- an extra leading empty-header index column (from
 pandas' `to_csv(index=True)`) is harmless and ignored. Reuses
 parsing.py's salary/ownership/team/opponent parsing so a row parses
 identically whether it came from this CSV path or the live HTML table.
+
+"% ownership" itself is optional -- DK salaries are typically available
+earlier in the week than ownership projections, so a CSV missing that
+column entirely (or with blank cells in it) still loads fine, just with
+every player's ownership_pct set to None. See OwnershipPlayer.ownership_pct
+and engine.py for how the derived views handle that.
 """
 
 from __future__ import annotations
 
 import csv
+import io
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -27,41 +34,58 @@ from backend.schemas.ownership.ownership import OwnershipPlayer, OwnershipSnapsh
 from backend.services.ownership.parsing import normalize_team_abbrev, parse_opponent, parse_ownership_pct, parse_salary
 
 
-def _parse_csv_rows(path: Path, label: str) -> tuple[list[OwnershipPlayer], list[Message]]:
+def _parse_csv_rows_from_text(csv_text: str, label: str) -> tuple[list[OwnershipPlayer], list[Message]]:
     players: list[OwnershipPlayer] = []
     messages: list[Message] = []
 
-    with path.open(newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            player_name = row.get("Player", "?")
-            try:
-                team = normalize_team_abbrev(row["Team"])
-                opponent, is_home = parse_opponent(row["Opponent"])
-                salary = parse_salary(row["Salary"])
-                ownership_pct = parse_ownership_pct(row["% ownership"])
-            except (KeyError, ValueError):
-                messages.append(
-                    Message(
-                        level="warning",
-                        step="import-csv",
-                        message=f"Couldn't parse {label} row for {player_name!r} -- row skipped",
-                    )
-                )
-                continue
-
-            players.append(
-                OwnershipPlayer(
-                    player=player_name,
-                    position=row["Position"],
-                    team=team,
-                    opponent=opponent,
-                    is_home=is_home,
-                    salary=salary,
-                    ownership_pct=ownership_pct,
+    for row in csv.DictReader(io.StringIO(csv_text)):
+        player_name = row.get("Player", "?")
+        try:
+            team = normalize_team_abbrev(row["Team"])
+            opponent, is_home = parse_opponent(row["Opponent"])
+            salary = parse_salary(row["Salary"])
+            # .get(), not [] -- a salary-only CSV (loaded before
+            # ownership projections exist for the week) may not have
+            # this column at all; parse_ownership_pct treats that the
+            # same as a present-but-blank cell (None).
+            ownership_pct = parse_ownership_pct(row.get("% ownership"))
+        except (KeyError, ValueError):
+            messages.append(
+                Message(
+                    level="warning",
+                    step="import-csv",
+                    message=f"Couldn't parse {label} row for {player_name!r} -- row skipped",
                 )
             )
+            continue
+
+        players.append(
+            OwnershipPlayer(
+                player=player_name,
+                position=row["Position"],
+                team=team,
+                opponent=opponent,
+                is_home=is_home,
+                salary=salary,
+                ownership_pct=ownership_pct,
+            )
+        )
 
     return players, messages
+
+
+def _parse_csv_rows(path: Path, label: str) -> tuple[list[OwnershipPlayer], list[Message]]:
+    return _parse_csv_rows_from_text(path.read_text(encoding="utf-8"), label)
+
+
+def parse_ownership_projections_csv(csv_text: str) -> tuple[list[OwnershipPlayer], list[Message]]:
+    """Settings tab's single-file ownership projections upload -- same
+    columns/parsing as the two-file mock loader below (_parse_csv_rows),
+    just from one uploaded file's text instead of two fixed filenames on
+    disk. DST rows are expected to already be included in this file
+    (Position is just another column, same as DK's own native salary
+    export) -- there's no separate DST file in this path."""
+    return _parse_csv_rows_from_text(csv_text, "ownership projections")
 
 
 def load_ownership_csv(season: int, week: int, mock_dir: Path) -> tuple[OwnershipSnapshot, list[Message]]:

@@ -87,7 +87,12 @@ def compute_high_owned(
     num_games = num_teams / 2
     leverage_point = _resolve_leverage_point(num_games, tiers)
 
-    high_owned = [p for p in players if p.ownership_pct > leverage_point]
+    # A player with no ownership_pct yet (see OwnershipPlayer.ownership_pct
+    # -- ownership projections lag DK salaries by a few days) can't be
+    # classified as chalk one way or the other, so they're left out of
+    # high_owned entirely rather than defaulting to "not chalk" via a
+    # crash or a silent 0.
+    high_owned = [p for p in players if p.ownership_pct is not None and p.ownership_pct > leverage_point]
     return high_owned, leverage_point
 
 
@@ -108,11 +113,18 @@ def compute_game_leverage(players: list[OwnershipPlayer], leverage_point: float)
 
     groups: list[GameLeverageGroup] = []
     for game_key, game_players in games.items():
-        chalk_players = [p for p in game_players if p.ownership_pct > leverage_point]
+        # Same null-handling as compute_high_owned -- a player with no
+        # ownership_pct yet can't be confidently called chalk or a pivot
+        # candidate, so they're excluded from both lists (they still count
+        # toward the game existing at all, just not toward either side of
+        # the leverage split).
+        chalk_players = [p for p in game_players if p.ownership_pct is not None and p.ownership_pct > leverage_point]
         if not chalk_players:
             continue
 
-        pivot_candidates = [p for p in game_players if p.ownership_pct < leverage_point]
+        pivot_candidates = [
+            p for p in game_players if p.ownership_pct is not None and p.ownership_pct < leverage_point
+        ]
         team, opponent = sorted(game_key) if len(game_key) == 2 else (next(iter(game_key)), "")
         groups.append(
             GameLeverageGroup(
@@ -134,15 +146,22 @@ def compute_pivots(
     """One PivotGroup per player who has at least one same-position,
     similar-salary, meaningfully-less-owned alternative -- players with no
     qualifying pivot are omitted entirely rather than appearing with an
-    empty list."""
+    empty list. A trigger with no ownership_pct yet has no defined
+    "meaningfully less owned" threshold, so it never produces a group;
+    likewise a candidate with no ownership_pct can't be confirmed as
+    meaningfully less owned, so it never qualifies as a pivot."""
     groups: list[PivotGroup] = []
     for trigger in players:
+        if trigger.ownership_pct is None:
+            continue
+
         pivots = [
             candidate
             for candidate in players
             if candidate.player != trigger.player
             and candidate.position == trigger.position
             and abs(candidate.salary - trigger.salary) <= salary_tolerance
+            and candidate.ownership_pct is not None
             and candidate.ownership_pct <= trigger.ownership_pct - ownership_gap
         ]
         if not pivots:

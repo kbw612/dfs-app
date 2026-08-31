@@ -86,6 +86,37 @@ def test_missing_dst_csv_warns_but_offense_still_loads(tmp_path: Path):
     assert any(m.level == "warning" and "DST CSV not found" in m.message for m in messages)
 
 
+def test_blank_ownership_cell_parses_as_none(tmp_path: Path):
+    # DK salaries are typically available before ownership projections --
+    # a blank "% ownership" cell shouldn't fail the row. (No DST CSV is
+    # written here, hence the expected warning -- see
+    # test_missing_dst_csv_warns_but_offense_still_loads -- that's not
+    # what this test is checking.)
+    write_offense_csv(tmp_path, 15, ['0,Woody Marks,RB,HOU,ARI,"$5,600",\n'])
+    snapshot, messages = load_ownership_csv(2025, 15, tmp_path)
+
+    assert all(m.level != "error" for m in messages)
+    assert snapshot.players[0].player == "Woody Marks"
+    assert snapshot.players[0].salary == 5600
+    assert snapshot.players[0].ownership_pct is None
+
+
+def test_missing_ownership_column_entirely_parses_as_none(tmp_path: Path):
+    # A salary-only export (no "% ownership" column at all, not just an
+    # empty one) is the realistic early-in-the-week case.
+    path = tmp_path / "ownership-projections-week15.csv"
+    path.write_text(
+        ",Player,Position,Team,Opponent,Salary\n0,Woody Marks,RB,HOU,ARI,\"$5,600\"\n",
+        encoding="utf-8",
+    )
+
+    snapshot, messages = load_ownership_csv(2025, 15, tmp_path)
+
+    assert all(m.level != "error" for m in messages)
+    assert snapshot.players[0].salary == 5600
+    assert snapshot.players[0].ownership_pct is None
+
+
 def test_malformed_row_skipped_with_warning_others_still_load(tmp_path: Path):
     write_offense_csv(
         tmp_path,

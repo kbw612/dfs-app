@@ -49,6 +49,49 @@ class Settings(BaseSettings):
     # matching name -- no code changes.
     ownership_mock_dir: Path = Path("./data/ownership_mock")
 
+    # Player Pool (backend/services/player_pool/engine.py) -- manually
+    # entered weekly scores, see repositories/player_pool/entries_repo.py
+    # for the on-disk shape.
+    player_pool_dir: Path = Path("./data/player_pool")
+
+    # New per-season NFL data layout -- data/nfl/{season}/... -- starting
+    # with the shared DK salary CSV (uploaded via POST /api/dk-salary/
+    # import-csv, see repositories/dk_salary/salary_snapshot_repo.py).
+    # Salary Blocks and Player Pool both read this; deliberately separate
+    # from ownership_snapshots_dir -- neither tab depends on the
+    # Ownership tab having loaded anything for the week (which keeps
+    # using its own file's salary for itself). Ownership and the other
+    # snapshot-backed resources still live under the flat data/ layout
+    # below for now -- they'll move under here too in a later pass.
+    nfl_data_dir: Path = Path("./data/nfl")
+
+    # Game Environment (backend/services/game_environment/scoring.py) --
+    # weekly Vegas-line data (spread, implied totals, over/under) shared
+    # across tabs, not owned by Player Pool specifically. See
+    # repositories/game_environment/game_environment_repo.py.
+    game_environment_dir: Path = Path("./data/game_environment")
+
+    # Player Attributes (backend/repositories/player_attributes/
+    # entries_repo.py) -- Volume/Talent, carried forward from the most
+    # recent earlier week same as they used to be inside Player Pool's own
+    # storage; split out into a shared resource, not owned by Player Pool
+    # specifically.
+    player_attributes_dir: Path = Path("./data/player_attributes")
+
+    # Current Week (backend/repositories/current_week/current_week_repo.py)
+    # -- the single (season, week) pointer shared by every weekly tab, set
+    # via one shared control (frontend/src/App.tsx) instead of each tab
+    # keeping its own copy.
+    current_week_dir: Path = Path("./data/current_week")
+
+    # Platform Settings (backend/repositories/platform_settings/
+    # platform_settings_repo.py) -- the single (platform, contest) pair
+    # shared by every tab that touches a platform-specific file, set via
+    # one shared control (Settings tab's top panel) instead of each tab
+    # guessing. See backend/services/platform_settings/prefix.py for how
+    # `platform` maps to the shared salary/ownership filename prefix.
+    platform_settings_dir: Path = Path("./data/platform_settings")
+
     request_timeout_seconds: int = 30
 
     # The React frontend runs as its own dev server (Vite's default port)
