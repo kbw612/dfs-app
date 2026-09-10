@@ -1,10 +1,12 @@
 """
 Persists the single platform/contest pointer (backend/schemas/
-platform_settings/platform_settings.py) -- one small JSON file, not one
-per season/week, since there's only ever one "current" value at a time
-(same shape as backend/repositories/current_week/current_week_repo.py).
+platform_settings/platform_settings.py) -- one small JSON file per season,
+not per week, since there's only ever one "current" value at a time within
+a season. Lives under the shared per-season nfl_data_dir layout (same root
+as dk_salary/player_selection/player_defaults -- see backend/config.py's
+nfl_data_dir).
 
-Shape on disk (data/platform_settings/platform_settings.json):
+Shape on disk (data/nfl/{season}/settings/platform_settings.json):
 
     {"platform": "DraftKings", "contest": "Classic Main"}
 """
@@ -19,19 +21,25 @@ from backend.schemas.platform_settings.platform_settings import PlatformSettings
 _FILENAME = "platform_settings.json"
 
 
-def _path(platform_settings_dir: Path) -> Path:
-    return platform_settings_dir / _FILENAME
+def _path(nfl_data_dir: Path, season: int) -> Path:
+    return nfl_data_dir / str(season) / "settings" / _FILENAME
 
 
-def load_platform_settings(platform_settings_dir: Path) -> PlatformSettings | None:
-    """None if nothing's ever been saved yet -- the caller decides what
-    default to hand back to a first-time caller (see the API layer)."""
-    path = _path(platform_settings_dir)
+def load_platform_settings(nfl_data_dir: Path, season: int) -> PlatformSettings | None:
+    """None if nothing's ever been saved yet for this season -- the caller
+    decides what default to hand back to a first-time caller (see the API
+    layer)."""
+    path = _path(nfl_data_dir, season)
     if not path.exists():
         return None
-    return PlatformSettings(**json.loads(path.read_text(encoding="utf-8")))
+    fields = json.loads(path.read_text(encoding="utf-8"))
+    return PlatformSettings(season=season, **fields)
 
 
-def save_platform_settings(platform_settings_dir: Path, entry: PlatformSettings) -> None:
-    platform_settings_dir.mkdir(parents=True, exist_ok=True)
-    _path(platform_settings_dir).write_text(entry.model_dump_json(indent=2), encoding="utf-8")
+def save_platform_settings(nfl_data_dir: Path, entry: PlatformSettings) -> None:
+    path = _path(nfl_data_dir, entry.season)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(entry.model_dump(exclude={"season"}), indent=2),
+        encoding="utf-8",
+    )

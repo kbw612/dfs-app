@@ -1,0 +1,313 @@
+{
+  "season": 2026,
+  "defaults": {
+    "Adonai Mitchell": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": "Boom/Bust"
+    },
+    "Bryce Young": {
+      "volume": 2.0,
+      "talent": 2.0
+    },
+    "Aaron Rodgers": {
+      "volume": 2.0,
+      "talent": 1.0
+    },
+    "Jameson Williams": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Jordan Addison": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Quentin Johnston": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Tre Tucker": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Zay Flowers": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Brian Thomas Jr.": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "James Cook III": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Keaton Mitchell": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Sean Tucker": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Chig Okonkwo": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Darren Waller": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Kyle Pitts Sr.": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Mark Andrews": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Mike Gesicki": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Oronde Gadsden II": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Alec Pierce": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Brenen Thompson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Bryce Lance": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Brian Thomas": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Calvin Ridley": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Deebo Samuel": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Demarcus Robinson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "George Pickens": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Ja'Kobi Lane": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Jalen McMillan": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Jayden Reed": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Jerry Jeudy": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Kendrick Bourne": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Mike Evans": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Rashid Shaheed": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Tyquan Thornton": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Xavier Worthy": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Colby Parkinson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Dalton Kincaid": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Elijah Arroyo": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "George Kittle": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Hunter Henry": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Isaiah Likely": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Juwan Johnson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Kyle Pitts": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Terrance Ferguson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Aaron Jones": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Alvin Kamara": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Bucky Irving": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Chase Brown": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "James Cook": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Omarion Hampton": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Quinshon Judkins": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Kyren Williams": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Rhamondre Stevenson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "RJ Harvey": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Saquon Barkley": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Travis Etienne": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "TreVeyon Henderson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Davante Adams": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Marvin Mims": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Nico Collins": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Tee Higgins": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    },
+    "Caleb Douglas": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": "Boom/Bust"
+    }
+  }
+}

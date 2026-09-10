@@ -44,7 +44,11 @@ class DkSalaryImportResult(BaseModel):
 
 @router.post("/import-csv", response_model=DkSalaryImportResult)
 async def import_dk_salary_csv_endpoint(
-    season: int, week: int, file: UploadFile = File(...), platform: str = "DraftKings"
+    season: int,
+    week: int,
+    file: UploadFile = File(...),
+    platform: str = "DraftKings",
+    contest: str = "Classic Main",
 ) -> DkSalaryImportResult:
     raw_bytes = await file.read()
     # utf-8-sig strips a leading byte-order-mark if Excel/DK's own export
@@ -53,7 +57,7 @@ async def import_dk_salary_csv_endpoint(
 
     snapshot, messages = parse_dk_salary_csv(csv_text, season, week)
     try:
-        file_path = save_salary_csv(settings.nfl_data_dir, season, week, platform, csv_text)
+        file_path = save_salary_csv(settings.nfl_data_dir, season, week, platform, contest, csv_text)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

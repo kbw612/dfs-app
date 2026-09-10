@@ -27,9 +27,11 @@ class DkSalaryFileInfo(BaseModel):
 
 
 @router.get("/file-info", response_model=DkSalaryFileInfo)
-def dk_salary_file_info_endpoint(season: int, week: int, platform: str = "DraftKings") -> DkSalaryFileInfo:
+def dk_salary_file_info_endpoint(
+    season: int, week: int, platform: str = "DraftKings", contest: str = "Classic Main"
+) -> DkSalaryFileInfo:
     try:
-        file_path = salary_csv_path(settings.nfl_data_dir, season, week, platform)
+        file_path = salary_csv_path(settings.nfl_data_dir, season, week, platform, contest)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if not file_path.exists():

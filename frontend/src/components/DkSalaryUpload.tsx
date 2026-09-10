@@ -10,10 +10,11 @@ interface DkSalaryUploadProps {
   season: number;
   week: number;
   platform: string;
+  contest: string;
   onUploaded: () => void;
 }
 
-export function DkSalaryUpload({ season, week, platform, onUploaded }: DkSalaryUploadProps) {
+export function DkSalaryUpload({ season, week, platform, contest, onUploaded }: DkSalaryUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -23,7 +24,7 @@ export function DkSalaryUpload({ season, week, platform, onUploaded }: DkSalaryU
     setUploading(true);
     setMessage(null);
     try {
-      const result = await importDkSalaryCsv(season, week, platform, file);
+      const result = await importDkSalaryCsv(season, week, platform, contest, file);
       setMessage(`Loaded ${result.player_count} players`);
       setFile(null);
       onUploaded();

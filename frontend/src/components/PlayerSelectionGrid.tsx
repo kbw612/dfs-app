@@ -14,6 +14,7 @@ interface PlayerSelectionGridProps {
   season: number;
   week: number;
   platform: string;
+  contest: string;
   // Bumped after a successful salary-file upload to force a refetch even
   // though season/week/platform didn't change -- a new file can mean a
   // different player universe entirely (see FileUploadStatus's
@@ -26,7 +27,7 @@ interface PlayerSelectionGridProps {
 // backend/api/player_selection/latest.py. Unchecking a player saves
 // immediately (no debounce -- a checkbox click is already one discrete
 // edit), same as the Platform/Contest chips above it in Settings.
-export function PlayerSelectionGrid({ season, week, platform, refreshToken }: PlayerSelectionGridProps) {
+export function PlayerSelectionGrid({ season, week, platform, contest, refreshToken }: PlayerSelectionGridProps) {
   const [position, setPosition] = useState<Position>("QB");
   const [players, setPlayers] = useState<PlayerSelectionRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,7 +38,7 @@ export function PlayerSelectionGrid({ season, week, platform, refreshToken }: Pl
     let cancelled = false;
     setLoading(true);
     setError(null);
-    fetchPlayerSelection(season, week, platform)
+    fetchPlayerSelection(season, week, platform, contest)
       .then((result) => {
         if (!cancelled) setPlayers(result.players);
       })
@@ -53,7 +54,7 @@ export function PlayerSelectionGrid({ season, week, platform, refreshToken }: Pl
     return () => {
       cancelled = true;
     };
-  }, [season, week, platform, refreshToken]);
+  }, [season, week, platform, contest, refreshToken]);
 
   async function toggleSelected(row: PlayerSelectionRow) {
     const nextSelected = !row.selected;
@@ -62,7 +63,7 @@ export function PlayerSelectionGrid({ season, week, platform, refreshToken }: Pl
     setPlayers((prev) => prev.map((p) => (p.player === row.player ? { ...p, selected: nextSelected } : p)));
     setSavingPlayers((prev) => new Set(prev).add(row.player));
     try {
-      await savePlayerSelectionEntry({ season, week, platform, player: row.player, selected: nextSelected });
+      await savePlayerSelectionEntry({ season, week, platform, contest, player: row.player, selected: nextSelected });
     } catch (err) {
       setPlayers((prev) => prev.map((p) => (p.player === row.player ? { ...p, selected: row.selected } : p)));
       setError(err instanceof Error ? err.message : "Failed to save selection");

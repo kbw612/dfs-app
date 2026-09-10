@@ -19,19 +19,27 @@ teams) -> game (optional, keep only these matchups) -> same_game_only
 decides how the *remaining* pool gets grouped into combinations (see
 compute_position_blocks()) -> salary_bucket (optional, keep only blocks
 whose total_salary falls in one of the selected percent-of-cap buckets --
-see SALARY_BUCKETS) is applied last, as a post-filter on the generated
-blocks rather than the player pool, since it doesn't reduce the
-combinatorics that MAX_BLOCKS_SAFETY_CAP guards against. `team`/`game`/
-`salary_bucket` are all repeatable query params (?team=KC&team=BUF),
-matching the frontend's multi-select chip filters elsewhere in this view.
+see SALARY_BUCKETS) -> same_team_size (optional, keep only blocks whose
+largest same-team grouping is exactly one of these sizes -- "Same team
+players" filter, see filter_blocks_by_same_team_size) are both applied
+last, as post-filters on the generated blocks rather than the player
+pool, since neither reduces the combinatorics that MAX_BLOCKS_SAFETY_CAP
+guards against. `team`/`game`/`salary_bucket`/`same_team_size` are all
+repeatable query params (?team=KC&team=BUF), matching the frontend's
+multi-select chip filters elsewhere in this view.
 
-`platform` (default "DraftKings") does double duty: it picks which
+`platform` (default "DraftKings") does triple duty: it picks which
 SALARY_CAPS entry salary_bucket's percentages resolve against (it does
 *not* change block-size rules or anything else -- see SALARY_CAPS's
-docstring for why), and it picks which platform's raw salary file gets
+docstring for why), it picks which platform's raw salary file gets
 loaded (see backend/services/platform_settings/prefix.py) -- a platform
 without an uploaded file for this (season, week) still 404s, same as
-today, just per-platform now instead of always "the" DK file.
+today, just per-platform now instead of always "the" DK file -- and it
+picks which Salary Multiplier resolves for every player's expected_fpts
+(Settings' Salary Multiplier field, or its computed default -- see
+backend/services/salary_multiplier/engine.py). Every player gets this
+attached before blocks are built, so PositionBlock.total_expected_fpts is
+just the sum of its players' values.
 
 The `games` list in the response is every distinct matchup among this
 position's players *before* the team/game filters are applied, not after
@@ -58,6 +66,7 @@ from backend.repositories.ownership.snapshot_repo import (
     load_snapshot as load_ownership_snapshot,
 )
 from backend.repositories.player_selection.player_selection_repo import load_overrides
+from backend.repositories.salary_multiplier.salary_multiplier_repo import load_multipliers
 from backend.schemas.ownership.ownership import PositionBlock
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
@@ -65,11 +74,13 @@ from backend.services.ownership.position_blocks import (
     SALARY_CAPS,
     compute_position_blocks,
     filter_blocks_by_salary_buckets,
+    filter_blocks_by_same_team_size,
     game_key,
     game_label,
     validate_block_size,
 )
 from backend.services.player_selection.engine import filter_selected_players
+from backend.services.salary_multiplier.engine import expected_fantasy_points, resolve_multiplier
 
 router = APIRouter()
 
@@ -94,7 +105,9 @@ def position_blocks_endpoint(
     team: list[str] = Query(default=[]),
     game: list[str] = Query(default=[]),
     platform: str = "DraftKings",
+    contest: str = "Classic Main",
     salary_bucket: list[str] = Query(default=[]),
+    same_team_size: list[int] = Query(default=[]),
 ) -> PositionBlocksResult:
     try:
         validate_block_size(position, block_size)
@@ -109,7 +122,7 @@ def position_blocks_endpoint(
         )
 
     try:
-        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform)
+        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if csv_text is None:
@@ -123,7 +136,10 @@ def position_blocks_endpoint(
     ownership_players = load_ownership_snapshot(ownership_snapshot_path).players if ownership_snapshot_path else None
     players = enrich_with_ownership_pct(salary_snapshot.players, ownership_players)
 
-    overrides = load_overrides(settings.nfl_data_dir, season, week, platform)
+    multiplier = resolve_multiplier(platform, load_multipliers(settings.salary_multiplier_dir).get(platform))
+    players = [p.model_copy(update={"expected_fpts": expected_fantasy_points(p.salary, multiplier)}) for p in players]
+
+    overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
     players = filter_selected_players(players, overrides)
 
     position_players = [p for p in players if p.position == position]
@@ -146,6 +162,7 @@ def position_blocks_endpoint(
     try:
         blocks = compute_position_blocks(pool, block_size, same_game_only)
         blocks = filter_blocks_by_salary_buckets(blocks, salary_bucket, cap)
+        blocks = filter_blocks_by_same_team_size(blocks, same_team_size)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

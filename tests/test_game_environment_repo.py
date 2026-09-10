@@ -2,6 +2,7 @@ from pathlib import Path
 
 from backend.repositories.game_environment.game_environment_repo import (
     load_game_environment_for_week,
+    replace_week,
     save_game_environment,
 )
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
@@ -14,7 +15,6 @@ def make_entry(**overrides) -> GameEnvironmentEntry:
         game_key="BUF-NO",
         home_team="BUF",
         away_team="NO",
-        home_spread=-3.5,
         over_under=47.5,
         home_implied_total=27.0,
         away_implied_total=20.5,
@@ -50,6 +50,48 @@ def test_save_keeps_other_games_and_weeks_separate(tmp_path: Path):
 
     week_9 = load_game_environment_for_week(tmp_path, 2025, 9)
     assert set(week_9) == {"BUF-NO", "KC-LAC"}
+
+    week_10 = load_game_environment_for_week(tmp_path, 2025, 10)
+    assert set(week_10) == {"BUF-NO"}
+
+
+def test_replace_week_sets_all_games_at_once(tmp_path: Path):
+    replace_week(
+        tmp_path,
+        2025,
+        9,
+        [
+            make_entry(game_key="BUF-NO", week=9),
+            make_entry(game_key="KC-LAC", week=9, home_team="KC", away_team="LAC"),
+        ],
+    )
+
+    loaded = load_game_environment_for_week(tmp_path, 2025, 9)
+    assert set(loaded) == {"BUF-NO", "KC-LAC"}
+
+
+def test_replace_week_drops_games_not_in_the_new_set(tmp_path: Path):
+    save_game_environment(tmp_path, make_entry(game_key="BUF-NO", week=9))
+
+    replace_week(tmp_path, 2025, 9, [make_entry(game_key="KC-LAC", week=9, home_team="KC", away_team="LAC")])
+
+    loaded = load_game_environment_for_week(tmp_path, 2025, 9)
+    assert set(loaded) == {"KC-LAC"}
+
+
+def test_replace_week_overwrites_a_previously_saved_value_for_the_same_game(tmp_path: Path):
+    save_game_environment(tmp_path, make_entry(over_under=40.0))
+
+    replace_week(tmp_path, 2025, 9, [make_entry(over_under=51.5)])
+
+    loaded = load_game_environment_for_week(tmp_path, 2025, 9)
+    assert loaded["BUF-NO"].over_under == 51.5
+
+
+def test_replace_week_does_not_touch_other_weeks(tmp_path: Path):
+    save_game_environment(tmp_path, make_entry(game_key="BUF-NO", week=10))
+
+    replace_week(tmp_path, 2025, 9, [make_entry(game_key="KC-LAC", week=9, home_team="KC", away_team="LAC")])
 
     week_10 = load_game_environment_for_week(tmp_path, 2025, 10)
     assert set(week_10) == {"BUF-NO"}

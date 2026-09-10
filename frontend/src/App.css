@@ -5,7 +5,7 @@
 }
 
 .app {
-  max-width: 900px;
+  max-width: 1024px;
   margin: 0 auto;
   padding: 24px;
 }
@@ -1088,6 +1088,24 @@ button.calendar-cell.no-data .day-number {
   font-variant-numeric: tabular-nums;
 }
 
+/* Extra 4th column for Salary Blocks' players only -- see PlayerRow's
+   hasExpectedFpts branch in playerDisplay.tsx. Every other list reusing
+   .ownership-player-row (Chalk, Game Leverage, Pivots) leaves
+   expected_fpts null, so it never gets this modifier class and keeps its
+   plain 3-column layout. Same reasoning/pattern as
+   .ownership-multi-leverage-row's own 4th column. */
+.ownership-player-row-with-fpts {
+  grid-template-columns: 200px 64px 76px 48px;
+}
+
+.ownership-player-fpts {
+  color: #666;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Flat, no box -- matches Game Pivots' expanded Chalk/Pivots lists
    (.ownership-game-detail), which flow directly on the card's own white
    background instead of sitting in a separate inset box. */
@@ -1216,7 +1234,7 @@ button.calendar-cell.no-data .day-number {
 }
 
 .block-total {
-  width: 64px;
+  min-width: 64px;
   flex: 0 0 auto;
   color: #333;
   font-weight: 600;
@@ -1225,8 +1243,32 @@ button.calendar-cell.no-data .day-number {
   font-variant-numeric: tabular-nums;
 }
 
+/* Muted/smaller than the salary figure it trails, same weight
+   relationship as .ownership-player-fpts vs .ownership-player-salary
+   below -- not bold, so it reads as supplementary info rather than
+   competing with the combined-salary number for attention. min-width
+   (not width) on .block-total above lets this grow the whole span
+   instead of overflowing past a fixed box. */
+.block-expected-fpts {
+  color: #666;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
 .block-names {
   font-size: 0.9rem;
+}
+
+/* Onslaught's own team-split label ("PIT 3 + ATL 2 bring-back") -- sits
+   between the salary and the player names, same muted/smaller treatment
+   as .block-expected-fpts so it reads as supplementary context rather
+   than competing with the combined-salary figure. Single-position blocks
+   never render this (see gameBlock in SalaryBlocksView.tsx). */
+.block-team-split {
+  color: #666;
+  font-weight: 400;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .block-arrow {
@@ -1245,6 +1287,10 @@ button.calendar-cell.no-data .day-number {
 
   .ownership-multi-leverage-row {
     grid-template-columns: 120px 56px 42px 30px;
+  }
+
+  .ownership-player-row-with-fpts {
+    grid-template-columns: 120px 56px 70px 42px;
   }
 }
 
@@ -1320,8 +1366,8 @@ button.calendar-cell.no-data .day-number {
 }
 
 .player-selection-name-col {
-  width: 150px;
-  max-width: 150px;
+  width: 160px;
+  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1411,6 +1457,40 @@ table.player-selection-grid td.player-selection-name-col {
   padding-left: 2px;
 }
 
+/* Player Default Factors grid (Settings tab): shares the Name column's
+   150px width + left-align with the Player pool grid above it via
+   .player-selection-name-col, and gets the same condensed column spacing
+   -- element-qualified selectors (0,1,2) needed to beat the shared
+   .player-pool-grid th/td padding (0,1,1) declared later in this file. */
+table.player-defaults-grid th,
+table.player-defaults-grid td {
+  padding: 6px 16px 6px 0;
+}
+
+table.player-defaults-grid th:first-child,
+table.player-defaults-grid td:first-child {
+  padding-left: 10px;
+}
+
+table.player-defaults-grid th:last-child,
+table.player-defaults-grid td:last-child {
+  padding-right: 10px;
+}
+
+/* Same "don't stretch to fill the panel" treatment as the Player pool
+   grid above it -- inline-block wrapper + width:auto on the table itself
+   (element-qualified to beat .player-pool-grid's own width:100%, same
+   0,1,0-vs-0,1,1 tie this file resolves the same way elsewhere). */
+.player-defaults-grid-wrap {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+}
+
+table.player-defaults-grid {
+  width: auto;
+}
+
 /* Fully custom checkbox -- native checkboxes render at inconsistent,
    often much larger sizes across browsers/platforms regardless of
    width/height/transform, so this draws its own small box + checkmark
@@ -1475,7 +1555,7 @@ table.player-selection-grid .player-selection-checkbox-input {
 
 .player-pool-grid th,
 .player-pool-grid td {
-  padding: 6px 8px;
+  padding: 6px 4px;
   text-align: center;
   white-space: nowrap;
   border-top: 1px solid #eee;
@@ -1502,23 +1582,302 @@ table.player-selection-grid .player-selection-checkbox-input {
   text-align: left;
 }
 
+/* .player-pool-grid td's own text-align: center (class + type = higher
+   specificity than .player-pool-grid-sticky alone) would otherwise win
+   over the left-align above and center the player name -- same fix as
+   .player-selection-name-col further up this file. */
+.player-pool-grid td.player-pool-grid-sticky {
+  text-align: left;
+}
+
+/* Total column is pinned to the right edge the same way Name is pinned
+   to the left -- otherwise a wide enough set of score columns (e.g. once
+   Game Environment's two-line header still pushes things right) scrolls
+   Total off screen with no visual cue that it still exists. */
+.player-pool-grid-sticky-right {
+  position: sticky;
+  right: 0;
+  background: white;
+  box-shadow: -1px 0 0 #eee;
+}
+
+.player-pool-grid thead th.player-pool-grid-sticky-right {
+  background: #fafafa;
+}
+
 .player-pool-grid-num {
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* .player-pool-grid td's own text-align: center (class + type = 0,1,1)
+   otherwise beats .player-pool-grid-num's plain class rule (0,1,0) above,
+   the same specificity trap .player-pool-grid td.player-pool-grid-sticky
+   was already fixed for further up this file -- without this, every
+   "numeric" cell across the app (Salary, % Drafted, Exp/Act Pts, Diff,
+   etc.) was silently staying center-aligned instead of right-aligned,
+   which is why same-precision decimals (e.g. 36.5% vs 4.1%) didn't line
+   up: centered text of different lengths never shares a column position
+   for the decimal point the way right-aligned text does. */
+.player-pool-grid td.player-pool-grid-num {
+  text-align: right;
+}
+
+/* Ownership Summary's three tables (Players/Ownership by team/Ownership
+   by game) all have very few, narrow columns (team abbreviations,
+   percentages) -- .player-pool-grid's own width:100% (element + class,
+   0,1,1) would stretch each of those into wide, gappy columns the same
+   way it used to for Player Selection/Player Default Factors before
+   those got their own width:auto override (see table.player-selection-grid
+   further up this file) -- this is the same fix, scoped to this tab's
+   tables instead. table.ownership-summary-grid (element + class, 0,1,1)
+   outranks .player-pool-grid's own plain-class rule (0,1,0), same
+   element-qualified-selector trick as table.player-selection-grid. */
+table.ownership-summary-grid {
+  width: auto;
+}
+
+/* Name column keeps a plain white background, matching every other tab's
+   Name column -- this was briefly dropped along with the old sticky-
+   positioning treatment when this tab's Name column was too wide (see
+   table.ownership-summary-grid's own width:auto fix above), but a flat
+   background alone doesn't reintroduce that width/whitespace problem, so
+   it's back on its own, applied here to every table that reuses this
+   class -- the top-level Players table as well as the nested per-game
+   detail table under "Ownership by game". */
+.ownership-summary-grid td.player-selection-name-col {
+  background: white;
+}
+
+/* Diff column color treatment -- shared by every Diff cell on this tab
+   (Players, both rollups, and the per-game detail table's own copy of
+   these columns): green for ownership that rose since the initial
+   upload, red for ownership that fell. Font-weight matches
+   .player-pool-grid-num's existing tabular-nums numeric styling rather
+   than introducing a second visual emphasis on top of it. */
+.ownership-diff-positive {
+  color: #1a7f37;
+  font-weight: 600;
+}
+
+.ownership-diff-negative {
+  color: #c0322d;
+  font-weight: 600;
+}
+
+/* Matches .player-selection-grid-wrap's own reasoning -- an inline-block
+   wrapper hugs the now-compact table's actual width instead of stretching
+   the bordered box out to the full container width and leaving a wide
+   empty gap next to a small table. */
+.ownership-summary-grid-wrap {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  margin-bottom: 4px;
+}
+
+/* .chip-filter alone has no margin of its own (same reasoning as
+   .vegas-lines-sort further down this file) -- this gives Ownership
+   Summary's Position/Sort filter rows breathing room above whichever
+   results table follows them. */
+.ownership-summary-filter {
+  margin-bottom: 16px;
+}
+
+/* Ownership Summary's three panel headers double as their own
+   expand/collapse toggle -- cursor is the only thing layered on top of
+   .player-pool-grid-header's existing flex layout, since the icon itself
+   lives inside the <h2> (see .ownership-summary-collapse-icon) rather
+   than as a second flex child pushed to the opposite edge. */
+.ownership-summary-collapsible-header {
+  cursor: pointer;
+}
+
+.ownership-summary-collapse-icon {
+  margin-left: 6px;
+  color: #666;
+  font-size: 0.8em;
+}
+
+/* Expand all/Collapse all for Ownership by game's individual rows --
+   deliberately plain action buttons (not chips, which this app uses for
+   persistent selection state) since these just set expandedGames once,
+   they aren't themselves a toggled-on/off state. */
+.ownership-summary-bulk-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ownership-summary-bulk-actions button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* Ownership by game: each row is itself a click-to-expand trigger (same
+   pattern as Salary Blocks' .block-summary), revealing every player in
+   that game underneath via a second, full-width detail row rather than a
+   separate list structure -- keeps this section a single table like
+   Ownership by team above it. */
+.ownership-summary-game-row {
+  cursor: pointer;
+}
+
+.ownership-summary-game-arrow {
+  color: #666;
+  width: 20px;
+}
+
+.ownership-summary-game-detail {
+  background: #fafafa;
+  text-align: left;
+}
+
+.header-info-wrap {
+  position: relative;
+  display: inline-block;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.header-info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid #2b6cb0;
+  border-radius: 50%;
+  background: white;
+  color: #2b6cb0;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.header-info-icon:hover,
+.header-info-icon[aria-expanded="true"] {
+  background: #2b6cb0;
+  color: white;
+}
+
+/* Game Environment column's own "refresh from Vegas Lines" action --
+   same circular-icon treatment as .header-info-icon (same size/border/
+   color) so the two read as a matched pair of header controls, just a
+   plain <button> instead of a popover trigger. Sits right before that
+   column's own .header-info-wrap (see the game_environment header cell
+   in PlayerPoolView.tsx), so this carries the same 4px margin-left
+   directly rather than needing its own wrapper span. */
+.header-refresh-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  padding: 0;
+  border: 1px solid #2b6cb0;
+  border-radius: 50%;
+  background: white;
+  color: #2b6cb0;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.header-refresh-icon:hover:not(:disabled) {
+  background: #2b6cb0;
+  color: white;
+}
+
+.header-refresh-icon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.header-info-popover {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  margin-top: 6px;
+  width: 240px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 8px 10px;
+  text-align: left;
+  white-space: normal;
+  font-weight: normal;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.header-info-popover p {
+  margin: 0 0 4px;
+}
+
+.header-info-popover p:last-child {
+  margin-bottom: 0;
+}
+
+/* The column's full name (e.g. "Game Environment" for a header shortened
+   on-grid to "Game"/"Env") -- bold, own font size a notch above the notes
+   below it, with extra bottom margin (rather than .header-info-popover
+   p's plain 4px) so it reads as a title sitting above the notes, not just
+   the first line of them. Element-qualified (.header-info-popover
+   p.header-info-popover-title, 0,2,1) to outrank .header-info-popover p's
+   own margin (0,1,1) without needing !important. */
+.header-info-popover p.header-info-popover-title {
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin: 0 0 8px;
 }
 
 .player-pool-grid-total {
   font-weight: 600;
 }
 
+/* Ownership column's projected-ownership reference figure, shown after
+   the input rather than inside it -- only rendered at all when
+   PlayerPoolPlayer.ownership_pct is non-null (see PlayerPoolView.tsx's
+   gating), so there's nothing to style/hide for the "not retrieved yet"
+   case. */
+.player-pool-ownership-pct {
+  display: inline-block;
+  margin-left: 3px;
+  font-size: 0.75rem;
+  color: #555;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .player-pool-grid input {
-  width: 56px;
+  width: 48px;
   min-height: 32px;
-  padding: 2px 4px;
+  padding: 2px 3px;
   text-align: center;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.85rem;
+}
+
+/* The "My Pool" column's checkbox lives in the same .player-pool-grid
+   table as the score number inputs above, so it needs its own reset --
+   otherwise it'd inherit the number inputs' fixed width/height/border,
+   which looks broken on a checkbox. */
+.player-pool-grid input.player-pool-my-pool-checkbox {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
 }
 
 .player-pool-row-dirty input {
@@ -1541,49 +1900,291 @@ table.player-selection-grid .player-selection-checkbox-input {
   cursor: default;
 }
 
-.player-pool-game-environment {
-  margin-bottom: 16px;
-}
-
-.player-pool-game-environment-toggle {
-  background: none;
-  border: none;
-  padding: 0;
-  color: #2b6cb0;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.player-pool-game-environment-list {
-  margin-top: 10px;
-}
-
-.player-pool-game-environment-row {
+/* Still used by VegasLinesView.tsx's own "<h2>Vegas Lines</h2> + Retrieve
+   Vegas Lines button" header row -- PlayerPoolView.tsx no longer has a
+   section of its own using this class (Game Environment's refresh moved
+   onto that column's own header icon), so space-between only ever has to
+   serve that one remaining caller now. */
+.player-pool-game-environment-header {
   display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.player-pool-game-environment-row label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: #444;
+.vegas-lines-timestamps {
+  margin-top: 4px;
+  margin-bottom: 12px;
 }
 
-.player-pool-game-environment-row input {
-  width: 72px;
+/* .chip-filter alone has no margin of its own -- other tabs' sort/filter
+   chips get their spacing from the shared .filters wrapper (App.css's
+   .filters gap), which Vegas Lines doesn't use since it has just this one
+   chip-filter rather than a whole filter bar. */
+.vegas-lines-sort {
+  margin-bottom: 16px;
+}
+
+.vegas-lines-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vegas-lines-kickoff {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.vegas-lines-matchup {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+/* Team + current implied total, colored by the same tiering rule as
+   backend/services/game_environment/scoring.py's 0/0.5/1 point bands (see
+   VegasLinesView.tsx's gameEnvironmentTier) -- green/yellow/red text on
+   the light background these list items already sit on, not a filled
+   badge, so it reads at a glance without fighting the surrounding line's
+   own bold weight. */
+.vegas-lines-tier-green {
+  color: #2f855a;
+}
+
+.vegas-lines-tier-yellow {
+  color: #a68b00;
+}
+
+.vegas-lines-tier-red {
+  color: #c53030;
+}
+
+/* Boom/Bust Players tab -- same green/gold/red palette as Vegas Lines'
+   own tiering (kept as separate classes since the two tabs tier on
+   different rules -- team implied total there, ownership% here -- even
+   though the colors happen to match). */
+.boom-bust-tier-green {
+  color: #2f855a;
+}
+
+.boom-bust-tier-yellow {
+  color: #a68b00;
+}
+
+.boom-bust-tier-red {
+  color: #c53030;
+}
+
+.boom-bust-sort {
+  margin-bottom: 12px;
+}
+
+.my-player-pool-search {
+  margin-top: 12px;
+  max-width: 420px;
+}
+
+.my-player-pool-search input[type="text"] {
+  width: 100%;
   min-height: 36px;
-  padding: 4px 8px;
+  padding: 6px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 0.9rem;
 }
 
-.player-pool-game-label {
+.my-player-pool-search-results {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.my-player-pool-search-results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border-top: 1px solid #eee;
+  font-size: 0.85rem;
+}
+
+.my-player-pool-search-results li:first-child {
+  border-top: none;
+}
+
+.vegas-lines-ou {
   font-size: 0.9rem;
+  color: #333;
+}
+
+/* Only rendered when a game's current line differs from its initial
+   scrape -- an unchanged game shows no delta line at all (see the
+   "current line + delta only" display decision). */
+.vegas-lines-delta {
+  font-size: 0.8rem;
+  color: #b7791f;
+}
+
+/* Contest Results tab -- one heading + table per top-finishing lineup,
+   stacked with breathing room between them since there can be several
+   (see ContestResultsView.tsx's `topN`). */
+.contest-results-lineup + .contest-results-lineup {
+  margin-top: 24px;
+}
+
+.contest-results-lineup h3 {
+  font-size: 0.95rem;
+  margin: 0 0 8px;
+}
+
+/* Reuses .player-pool-grid's own table styling (see that class further up
+   this file) -- this only needs its own wrap class so the totals row
+   below can be scoped without also matching Player Rankings' grid. */
+.contest-results-totals-row {
   font-weight: 600;
-  min-width: 110px;
+  border-top: 2px solid #ddd;
+}
+
+/* Both Contest Results tables (per-lineup and the results grid) have far
+   fewer columns than Player Rankings' own .player-pool-grid, so that
+   class's width: 100% stretches them out into gappy, loosely-spaced
+   columns instead of hugging their actual content width -- same fix as
+   table.ownership-summary-grid further up this file for the same reason. */
+table.contest-results-grid {
+  width: auto;
+}
+
+/* % Drafted / FPTS headers on the Contest results table (not the
+   per-lineup tables, which intentionally keep the fixed DST/FLEX/QB/RB/
+   RB/TE/WR/WR/WR slot order) -- clickable to sort, see
+   ContestResultsView.tsx's handleSort. */
+.contest-results-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.contest-results-sortable:hover {
+  background: #f0f0f0;
+}
+
+/* DK Players tab -- "Add Week N Players" / "Update Week N Points" action
+   buttons sit side by side on their own row; whichever action ran most
+   recently shows its result in one shared, full-width message row
+   underneath (see DkPlayersView.tsx -- only one of addMessage/calcResult/
+   calcError is ever populated at a time, each handler clears the other). */
+.dk-players-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.dk-players-button-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.dk-players-message-row {
+  width: 100%;
+}
+
+.dk-players-message-row > .hint {
+  margin: 0 0 2px;
+  display: block;
+}
+
+.dk-players-calc-message {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+.dk-players-calc-message p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dk-players-collapsible summary {
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.dk-players-collapsible summary::marker {
+  color: inherit;
+}
+
+.dk-players-collapsible p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+/* Settings' Weekly Stats panel -- one upload row per position (QB/RB/WR/
+   TE), a fixed-width label keeping the file inputs/buttons aligned. */
+.weekly-stats-upload-row {
+  align-items: center;
+}
+
+.weekly-stats-position-label {
+  display: inline-block;
+  width: 32px;
+  font-weight: 600;
+}
+
+.weekly-stats-file-status {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 0.85rem;
+  color: #555;
+}
+
+/* Settings' Name Aliases panel -- one row per alias, an arrow between the
+   two text inputs makes the alias->canonical direction obvious at a
+   glance. */
+.name-alias-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.name-alias-arrow {
+  color: #888;
+}
+
+.name-aliases-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Extra breathing room between % Drafted and FPTS on the Contest results
+   table -- both are otherwise tight against .player-pool-grid's shared
+   6px 4px padding, same as every other adjacent numeric column pair. */
+.player-pool-grid th.contest-results-fpts-col,
+.player-pool-grid td.contest-results-fpts-col {
+  padding-left: 20px;
+}
+
+/* Per-lineup summary bullets (LineupSummaryPanel in ContestResultsView.tsx)
+   -- smaller and more muted than the table above it, since this is
+   supplementary context rather than the primary data. */
+.contest-results-summary {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.contest-results-summary li {
+  margin-bottom: 3px;
 }

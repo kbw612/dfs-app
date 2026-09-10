@@ -49,20 +49,22 @@ class Settings(BaseSettings):
     # matching name -- no code changes.
     ownership_mock_dir: Path = Path("./data/ownership_mock")
 
-    # Player Pool (backend/services/player_pool/engine.py) -- manually
-    # entered weekly scores, see repositories/player_pool/entries_repo.py
-    # for the on-disk shape.
-    player_pool_dir: Path = Path("./data/player_pool")
-
     # New per-season NFL data layout -- data/nfl/{season}/... -- starting
     # with the shared DK salary CSV (uploaded via POST /api/dk-salary/
     # import-csv, see repositories/dk_salary/salary_snapshot_repo.py).
     # Salary Blocks and Player Pool both read this; deliberately separate
     # from ownership_snapshots_dir -- neither tab depends on the
     # Ownership tab having loaded anything for the week (which keeps
-    # using its own file's salary for itself). Ownership and the other
-    # snapshot-backed resources still live under the flat data/ layout
-    # below for now -- they'll move under here too in a later pass.
+    # using its own file's salary for itself). Also home to Player
+    # Selection's per-week override files, Player Pool's own per-week
+    # score entries (repositories/player_pool/entries_repo.py), Player
+    # Defaults' per-season data/nfl/{season}/settings/player_factors.json
+    # (see repositories/player_defaults/defaults_repo.py), and Platform
+    # Settings' per-season data/nfl/{season}/settings/platform_settings.json
+    # (see repositories/platform_settings/platform_settings_repo.py).
+    # Ownership and the other snapshot-backed resources still live under
+    # the flat data/ layout below for now -- they'll move under here too
+    # in a later pass.
     nfl_data_dir: Path = Path("./data/nfl")
 
     # Game Environment (backend/services/game_environment/scoring.py) --
@@ -71,12 +73,14 @@ class Settings(BaseSettings):
     # repositories/game_environment/game_environment_repo.py.
     game_environment_dir: Path = Path("./data/game_environment")
 
-    # Player Attributes (backend/repositories/player_attributes/
-    # entries_repo.py) -- Volume/Talent, carried forward from the most
-    # recent earlier week same as they used to be inside Player Pool's own
-    # storage; split out into a shared resource, not owned by Player Pool
-    # specifically.
-    player_attributes_dir: Path = Path("./data/player_attributes")
+    # Vegas-line source for the Vegas Lines tab's scrape button (backend/
+    # services/vegas_lines/scraper.py) -- one public page per
+    # (season, week) listing every game's implied home/away totals and
+    # over/under, e.g. https://oneweekseason.com/week/week-1-2026/. No
+    # login required for this page, unlike Ownership's basic-ownership-dk
+    # scrape on the same site (see ownership_source_username/password
+    # above) -- verified live before building the scraper.
+    oneweekseason_week_url_template: str = "https://oneweekseason.com/week/week-{week}-{season}/"
 
     # Current Week (backend/repositories/current_week/current_week_repo.py)
     # -- the single (season, week) pointer shared by every weekly tab, set
@@ -84,13 +88,26 @@ class Settings(BaseSettings):
     # keeping its own copy.
     current_week_dir: Path = Path("./data/current_week")
 
-    # Platform Settings (backend/repositories/platform_settings/
-    # platform_settings_repo.py) -- the single (platform, contest) pair
-    # shared by every tab that touches a platform-specific file, set via
-    # one shared control (Settings tab's top panel) instead of each tab
-    # guessing. See backend/services/platform_settings/prefix.py for how
-    # `platform` maps to the shared salary/ownership filename prefix.
-    platform_settings_dir: Path = Path("./data/platform_settings")
+    # Salary Multiplier (backend/repositories/salary_multiplier/
+    # salary_multiplier_repo.py) -- one saved value per platform, not
+    # scoped to season/week at all (it's a property of that platform's
+    # salary scale, e.g. DraftKings' rough $1000-per-fantasy-point curve --
+    # see backend/services/salary_multiplier/engine.py's default of 4.0).
+    # Deliberately its own top-level dir rather than living under
+    # nfl_data_dir, since nothing here is per-season.
+    salary_multiplier_dir: Path = Path("./data/salary_multiplier")
+
+    # Name Aliases (backend/repositories/name_aliases/name_aliases_repo.py)
+    # -- a small, global (not per-season/week) list of alias -> canonical
+    # player-name pairs, e.g. "James Cook III" -> "James Cook", maintained
+    # by hand in Settings. Applied wherever DK Players (backend/services/
+    # dk_players/dk_players_engine.py) matches player names across the
+    # Salary File, the weekly FantasyData stat files, and Contest
+    # Standings -- those three sources don't always spell a name the same
+    # way. Deliberately its own JSON file, same pattern as
+    # usage_bump_players_json above, rather than scoped under
+    # nfl_data_dir, since a name mismatch isn't specific to one season.
+    name_aliases_json: Path = Path("./config/name-aliases.json")
 
     request_timeout_seconds: int = 30
 

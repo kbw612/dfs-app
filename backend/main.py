@@ -27,16 +27,22 @@ scheduler yet. Cloud Scheduler + OIDC verification get added in Phase 2.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.api.contest_results import router as contest_results_router
 from backend.api.current_week import router as current_week_router
 from backend.api.depth_charts import router as depth_charts_router
+from backend.api.dk_players import router as dk_players_router
 from backend.api.dk_salary import router as dk_salary_router
 from backend.api.game_environment import router as game_environment_router
+from backend.api.my_player_pool import router as my_player_pool_router
+from backend.api.name_aliases import router as name_aliases_router
 from backend.api.ownership import router as ownership_router
 from backend.api.platform_settings import router as platform_settings_router
-from backend.api.player_attributes import router as player_attributes_router
+from backend.api.player_defaults import router as player_defaults_router
 from backend.api.player_pool import router as player_pool_router
 from backend.api.player_selection import router as player_selection_router
+from backend.api.salary_multiplier import router as salary_multiplier_router
 from backend.api.usage_bump import router as usage_bump_router
+from backend.api.vegas_lines import router as vegas_lines_router
 from backend.config import settings
 
 app = FastAPI(title="dfs-app", version="0.1.0")
@@ -55,9 +61,15 @@ app.include_router(player_pool_router, prefix="/api")
 app.include_router(game_environment_router, prefix="/api")
 app.include_router(current_week_router, prefix="/api")
 app.include_router(dk_salary_router, prefix="/api")
-app.include_router(player_attributes_router, prefix="/api")
+app.include_router(player_defaults_router, prefix="/api")
 app.include_router(platform_settings_router, prefix="/api")
 app.include_router(player_selection_router, prefix="/api")
+app.include_router(vegas_lines_router, prefix="/api")
+app.include_router(my_player_pool_router, prefix="/api")
+app.include_router(salary_multiplier_router, prefix="/api")
+app.include_router(contest_results_router, prefix="/api")
+app.include_router(dk_players_router, prefix="/api")
+app.include_router(name_aliases_router, prefix="/api")
 
 
 @app.get("/health")

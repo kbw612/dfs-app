@@ -1,0 +1,18 @@
+{
+  "Aaron Rodgers": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Joe Burrow": {
+    "game_environment": 0.5,
+    "game_matchup": 2.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  }
+}

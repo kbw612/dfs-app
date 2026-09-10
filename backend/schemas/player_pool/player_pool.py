@@ -14,23 +14,34 @@ player (see services/player_pool/engine.py's entry_total()), which is why
 e.g. a QB scored on Ownership + Volume alone still gets a sensible total
 without every position needing every field populated.
 
-PlayerPoolEntry is the persisted, per-(season, week, player) record for
-the fields Player Pool still owns directly -- Game Matchup, Ownership,
-and Salary Value are expected to be re-entered fresh most weeks since the
-underlying game/ownership context changes weekly (see
-repositories/player_pool/entries_repo.py). PlayerPoolEntry.game_environment
-is an *override* only -- leaving it unset doesn't mean "unscored", it
-means "use whatever backend/services/game_environment/scoring.py's
-formula suggests from that game's Vegas-line data" (see
-services/player_pool/engine.py and PlayerPoolPlayer.game_environment_*
-below for how the override and the suggestion combine).
+Game Environment is the one exception to the 1.0-3.0 range: it's
+constrained to 0.0-1.0 instead (0/0.5/1, matching backend/services/
+game_environment/scoring.py's rule as originally described), so it always
+carries less maximum weight in Total than the other fields -- a
+deliberate choice, not an oversight (see that module's docstring).
 
-Volume and Talent are *not* here -- see backend/schemas/player_attributes/
-player_attributes.py for those two. They're facts about the player
-themselves (carried forward from the most recent earlier week rather than
-re-entered fresh), not about Player Pool specifically, so they live in
-their own shared resource the same way GameEnvironmentEntry does (see
-below).
+PlayerPoolEntry is the persisted, per-(season, week, platform, player)
+record for every field Player Pool saves directly -- Game Matchup, Ownership, and
+Salary Value are expected to be re-entered fresh most weeks since the
+underlying game/ownership context changes weekly; Volume and Talent are
+saved the same way, one explicit value per week, no carry-forward from an
+earlier week (see repositories/player_pool/entries_repo.py).
+PlayerPoolEntry.game_environment is an *override* only -- leaving it
+unset doesn't mean "unscored", it means "use whatever
+backend/services/game_environment/scoring.py's formula suggests from that
+game's Vegas-line data" (see services/player_pool/engine.py and
+PlayerPoolPlayer.game_environment_* below for how the override and the
+suggestion combine).
+
+When a week has no explicit Volume/Talent save, Player Pool falls back to
+that player's Player Default instead of leaving the cell blank -- see
+backend/schemas/player_defaults/player_defaults.py. A Default is set once
+per player per season (Settings' Player Default Settings grid), not tied
+to a specific week; it's what "initially populates" Player Pool for a
+player before anyone has explicitly scored them that week. Setting a
+Default never touches an already-saved PlayerPoolEntry for any week --
+the two are separate resources, resolved together only at read time (see
+services/player_pool/engine.py's compute_player_pool).
 
 GameEnvironmentEntry -- the shared, per-(season, week, game) Vegas-line
 input (spread, over/under, each team's implied total) multiple tabs can
@@ -53,32 +64,53 @@ def _score_field() -> _Score:
     return Field(default=None, ge=1.0, le=3.0)
 
 
+def _game_environment_field() -> _Score:
+    """Game Environment's own 0.0-1.0 range (0/0.5/1) -- see this module's
+    docstring for why it's not on the same 1.0-3.0 scale as every other
+    score field."""
+    return Field(default=None, ge=0.0, le=1.0)
+
+
 class PlayerPoolEntry(BaseModel):
     season: int
     week: int
+    # Determines the saved file's name (see repositories/player_pool/
+    # entries_repo.py's platform_file_prefix usage) -- same reasoning as
+    # Player Selection's PlayerSelectionOverride.platform. Defaults to
+    # "DraftKings", the only platform with a real file format today.
+    platform: str = "DraftKings"
     player: str
 
     # Override only -- None means "use the Game Environment formula's
-    # suggestion," not "unscored." See this module's docstring.
-    game_environment: _Score = _score_field()
+    # suggestion," not "unscored." See this module's docstring. 0.0-1.0
+    # range, not 1.0-3.0 like the other fields below.
+    game_environment: _Score = _game_environment_field()
     game_matchup: _Score = _score_field()
     ownership: _Score = _score_field()
     # DST-only -- there's no separate "ownership"/"talent" concept for a
     # defense, just how attractively priced it is this week.
     salary_value: _Score = _score_field()
+    # None here means "no explicit save for this exact week" -- falls back
+    # to the player's Player Default, then to a neutral 2.0, purely at read
+    # time (see this module's docstring and services/player_pool/
+    # engine.py's _resolve_direct_scores). No carry-forward from an
+    # earlier week's save.
+    volume: _Score = _score_field()
+    talent: _Score = _score_field()
 
 
 class PlayerPoolPlayer(BaseModel):
     """One row in the Player Pool list -- base player info (from the
     DK/ownership snapshot) merged with this week's resolved scores (saved
     this week, carried forward for volume/talent, defaulted to a neutral
-    2.0 for game_matchup/ownership/game_environment when a new week
-    hasn't scored this player yet, or None if genuinely unscored -- see
-    compute_player_pool()) and the computed total.
+    2.0 for game_matchup/ownership -- 0.5 for game_environment, which is
+    on its own 0.0-1.0 scale -- when a new week hasn't scored this player
+    yet, or None if genuinely unscored -- see compute_player_pool()) and
+    the computed total.
 
     game_environment is the *effective* value actually counted in `total`
     (the explicit override if one's been saved, otherwise the formula's
-    suggestion -- which itself falls back to 2.0 when there's no Game
+    suggestion -- which itself falls back to 0.5 when there's no Game
     Environment data for this game yet, so this is never None).
     game_environment_override is the raw saved override only (None if
     this player hasn't been explicitly overridden this week) -- the edit
@@ -86,7 +118,7 @@ class PlayerPoolPlayer(BaseModel):
     `game_environment`, so leaving the input blank and saving doesn't
     accidentally freeze in whatever the suggestion happened to be at that
     moment. game_environment_suggested is the formula's own output (or
-    its 2.0 fallback), shown as a hint next to that input."""
+    its 0.5 fallback), shown as a hint next to that input."""
 
     player: str
     position: str
@@ -95,9 +127,24 @@ class PlayerPoolPlayer(BaseModel):
     is_home: Optional[bool] = None
     salary: int
     # Reference only -- from the Ownership tab's snapshot when it's
-    # loaded (None before ownership projections exist for the week, same
-    # as everywhere else in this app).
+    # loaded. None only means "the Ownership tab has no snapshot at all
+    # for this (season, week) yet" -- once one exists, a player who's
+    # simply absent from it is 0.0 (0% owned), not None, so the Player
+    # Rankings grid can tell "not retrieved" (show nothing) apart from
+    # "retrieved, this player just isn't projected to be owned" (show
+    # 0%). See services/player_pool/engine.py's ownership_retrieved
+    # param, set by api/player_pool/latest.py.
     ownership_pct: Optional[float] = None
+    # 1-indexed depth-chart rank (e.g. RB1, RB2) -- same cross-referenced
+    # value as OwnershipPlayer.depth_rank (see backend/services/ownership/
+    # depth_rank.py), filled in here purely so Settings' Player Default
+    # Settings grid can narrow to each position's top depth-chart slots
+    # (backend/api/player_pool/latest.py). None if there's no depth-chart
+    # snapshot yet or this name doesn't match one -- callers treat that as
+    # "rank unknown," not "buried on the depth chart." Named depth_rank
+    # (not rank) to avoid colliding with the Player Rankings tab's
+    # Total-based score, a wholly different concept.
+    depth_rank: Optional[int] = None
 
     game_environment: _Score = None
     game_environment_override: _Score = None
@@ -107,6 +154,17 @@ class PlayerPoolPlayer(BaseModel):
     volume: _Score = None
     talent: _Score = None
     salary_value: _Score = None
+
+    # Player Rankings' "Expected FPTS" column -- multiplier * salary / 1000
+    # (see backend/services/salary_multiplier/engine.py), using whichever
+    # multiplier resolved for this computation's platform (Settings'
+    # Salary Multiplier field, or its computed default). Purely
+    # informational -- unlike every field above, it's never summed into
+    # `total`, since it isn't a judgment-call score, just a salary-derived
+    # reference figure. Always a real number (there's no "no multiplier"
+    # state, see resolve_multiplier), independent of position -- DSTs get
+    # one too, unlike Game Environment/Ownership/Volume/Talent.
+    expected_fpts: float = 0.0
 
     total: float
 

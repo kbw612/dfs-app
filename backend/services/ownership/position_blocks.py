@@ -136,6 +136,36 @@ def filter_blocks_by_salary_buckets(
     return [block for block in blocks if matches(block)]
 
 
+def _max_same_team_count(block: PositionBlock) -> int:
+    """The largest number of this block's own players who share one team --
+    1 if every player is on a different team, up to the block's own size if
+    they're all on the same team. Backs the "Same team players" filter
+    below; the frontend's own UI caps the offered chip values one below
+    each position's own max block size (RB/TE top out at 2, WR at 3, not
+    their own max of 3/4) since a block where literally *every* player is
+    on the same team is vanishingly rare in practice for any position with
+    more than a couple of relevant players per team -- but this function
+    itself makes no such assumption, it just reports whatever the block's
+    own composition actually is."""
+    counts: dict[str, int] = {}
+    for p in block.players:
+        counts[p.team] = counts.get(p.team, 0) + 1
+    return max(counts.values(), default=0)
+
+
+def filter_blocks_by_same_team_size(blocks: list[PositionBlock], sizes: list[int]) -> list[PositionBlock]:
+    """Keep only blocks whose largest same-team grouping (see
+    _max_same_team_count) is exactly one of the requested sizes -- e.g.
+    sizes=[2] keeps only blocks with (at most, and at least, since this is
+    an exact match, not "N or more") two players rostered by the same
+    team. An empty `sizes` means "no filter" -- returns `blocks`
+    unchanged."""
+    if not sizes:
+        return blocks
+    size_set = set(sizes)
+    return [b for b in blocks if _max_same_team_count(b) in size_set]
+
+
 def game_key(player: OwnershipPlayer) -> frozenset[str]:
     """Canonical per-game identifier -- both teams in a matchup map to the
     same key, same convention as compute_game_leverage()'s game_key."""
@@ -160,7 +190,13 @@ def _blocks_from_pool(pool: list[OwnershipPlayer], block_size: int) -> list[Posi
     blocks: list[PositionBlock] = []
     for combo in combinations(pool, block_size):
         players = sorted(combo, key=lambda p: p.salary, reverse=True)
-        blocks.append(PositionBlock(players=players, total_salary=sum(p.salary for p in players)))
+        blocks.append(
+            PositionBlock(
+                players=players,
+                total_salary=sum(p.salary for p in players),
+                total_expected_fpts=sum(p.expected_fpts or 0.0 for p in players),
+            )
+        )
     return blocks
 
 

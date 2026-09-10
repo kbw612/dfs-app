@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchOwnershipLatest, importOwnershipCsv } from "../api";
+import { fetchOwnershipLatest } from "../api";
 import type {
   GameLeverageGroup,
   LeverageReason,
@@ -8,6 +8,7 @@ import type {
   PivotGroup,
 } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
+import { HeaderInfoPopover } from "./HeaderInfoPopover";
 import {
   formatOwnershipPct,
   formatSalary,
@@ -27,6 +28,17 @@ import {
 // the badge carries that info inline instead. Reasons themselves aren't
 // shown in a modal; clicking a row expands them in place, same
 // click-to-expand pattern as the Pivots/Game Leverage sections.
+// Salary Pivots' own formula (see backend/services/ownership/engine.py's
+// compute_pivots(), DEFAULT_SALARY_TOLERANCE=$500 / DEFAULT_OWNERSHIP_GAP=
+// 10.0) -- shown via HeaderInfoPopover next to that section's heading so
+// the definition lives right where the section is, rather than requiring
+// a trip to the backend to look it up.
+const SALARY_PIVOT_NOTES: string[] = [
+  "For every player (the \"trigger\"), finds every other player at the same position priced within $500 of them.",
+  "A same-position player counts as a pivot if it's owned at least 10 percentage points less than the trigger.",
+  "In short: a same-position, similar-salary, meaningfully-less-owned fade -- comparable price for meaningfully less ownership.",
+];
+
 function describeReason(reason: LeverageReason): string {
   const a = reason.against;
   if (reason.kind === "pivot") {
@@ -37,22 +49,19 @@ function describeReason(reason: LeverageReason): string {
   return `Game leverage vs ${a.player} ${roleLabel(a)} (${formatOwnershipPct(a.ownership_pct)} owned) — ${reason.team ?? "?"} vs ${reason.opponent ?? "?"}`;
 }
 
-// season/week come from the shared header control (see App.tsx) rather
-// than being owned here -- this tab just reacts to whatever's currently
-// selected there.
+// season/week/platform come from the shared header control / Settings
+// panel (see App.tsx), same as Ownership Summary -- platform picks which
+// uploaded Ownership file gets read (see backend/api/ownership/latest.py).
 interface OwnershipViewProps {
   season: number;
   week: number;
+  platform: string;
 }
 
-export function OwnershipView({ season, week }: OwnershipViewProps) {
+export function OwnershipView({ season, week, platform }: OwnershipViewProps) {
   const [data, setData] = useState<OwnershipLatestResult | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
-
-  const [loadLoading, setLoadLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [lastPlayerCount, setLastPlayerCount] = useState<number | null>(null);
 
   const [teamFilter, setTeamFilter] = useState<Set<string>>(new Set());
   const [positionFilter, setPositionFilter] = useState<Set<string>>(new Set());
@@ -82,49 +91,26 @@ export function OwnershipView({ season, week }: OwnershipViewProps) {
   const toggleGame = makeToggle(setExpandedGames);
   const toggleMultiLeverage = makeToggle(setExpandedMultiLeverage);
 
-  // Loads whatever's already on disk for the stored (season, week) as soon
-  // as the tab is opened -- doesn't require clicking "Load" every time,
-  // only when there's genuinely nothing there yet (404) or new data needs
-  // importing.
-  function loadLatest(s: number, w: number) {
+  // Reads whatever's currently uploaded via Settings' Ownership file --
+  // same source and same "no separate load step" behavior as Ownership
+  // Summary -- so a season/week/platform change here just refetches, the
+  // same way switching tabs would.
+  useEffect(() => {
     setFetchLoading(true);
     setFetchError(null);
-    fetchOwnershipLatest(s, w)
+    fetchOwnershipLatest(season, week, platform)
       .then((result) => setData(result))
       .catch((err) => {
         setData(null);
-        const message = err instanceof Error ? err.message : "Failed to load ownership data";
-        // The 404 detail from GET /latest ("No ownership snapshots yet for
-        // season X week Y...") isn't a real error -- it's the expected
-        // first-visit state, so it renders as a hint instead of red text.
-        setFetchError(message);
+        // The 404 detail from GET /latest ("No ownership projections file
+        // uploaded yet...") isn't a real error -- it's the expected state
+        // before anyone's used Settings' Ownership file upload yet.
+        setFetchError(err instanceof Error ? err.message : "Failed to load ownership data");
       })
       .finally(() => setFetchLoading(false));
-  }
+  }, [season, week, platform]);
 
-  useEffect(() => {
-    // season/week now come from the shared header control (see App.tsx),
-    // so a change there should refetch this tab's data the same way
-    // switching tabs would -- no more "type a new week, then click Load"
-    // two-step for viewing an already-saved week.
-    loadLatest(season, week);
-  }, [season, week]);
-
-  async function handleLoad() {
-    setLoadLoading(true);
-    setLoadError(null);
-    try {
-      const result = await importOwnershipCsv(season, week);
-      setLastPlayerCount(result.player_count);
-      loadLatest(season, week);
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : "Load failed");
-    } finally {
-      setLoadLoading(false);
-    }
-  }
-
-  const isNotFound = fetchError !== null && fetchError.includes("No ownership snapshots yet");
+  const isNotFound = fetchError !== null && fetchError.includes("No ownership projections file uploaded yet");
 
   const teamOptions = data ? [...new Set(data.players.map((p) => p.team))].sort() : [];
   const positionOptions = data ? [...new Set(data.players.map((p) => p.position))].sort() : [];
@@ -150,19 +136,11 @@ export function OwnershipView({ season, week }: OwnershipViewProps) {
 
   return (
     <>
-      <div className="ownership-load-form">
-        <button type="button" onClick={handleLoad} disabled={loadLoading}>
-          {loadLoading ? "Loading…" : "Load ownership data"}
-        </button>
-      </div>
-      {loadError && <p className="error">{loadError}</p>}
-      {!loadError && lastPlayerCount !== null && <p className="hint">Loaded {lastPlayerCount} players.</p>}
-
       {fetchLoading && <p className="hint">Loading…</p>}
 
       {!fetchLoading && fetchError && isNotFound && (
         <p className="hint">
-          No ownership data loaded yet for season {season} week {week} -- click "Load ownership data" above.
+          No ownership file uploaded yet for season {season} week {week} -- upload it in the Settings tab.
         </p>
       )}
       {!fetchLoading && fetchError && !isNotFound && <p className="error">{fetchError}</p>}
@@ -171,7 +149,7 @@ export function OwnershipView({ season, week }: OwnershipViewProps) {
         <>
           <p className="hint">
             Week {data.week}, {data.season} · {data.players.length} players · leverage point {data.leverage_point}%
-            ownership
+            ownership · last uploaded {new Date(data.uploaded_at).toLocaleString()}
           </p>
 
           <div className="filters">
@@ -314,7 +292,10 @@ export function OwnershipView({ season, week }: OwnershipViewProps) {
           </section>
 
           <section className="ownership-section">
-            <h2>Salary Pivots</h2>
+            <h2>
+              Salary Pivots
+              <HeaderInfoPopover lines={SALARY_PIVOT_NOTES} ariaLabel="Salary pivot formula" />
+            </h2>
             {filteredPivots.length === 0 ? (
               <p className="hint">No pivot groups match the current filters.</p>
             ) : (

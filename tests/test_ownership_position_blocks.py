@@ -6,6 +6,7 @@ from backend.services.ownership.position_blocks import (
     SALARY_CAPS,
     compute_position_blocks,
     filter_blocks_by_salary_buckets,
+    filter_blocks_by_same_team_size,
     game_key,
     game_label,
     salary_bucket_range,
@@ -13,7 +14,7 @@ from backend.services.ownership.position_blocks import (
 )
 
 
-def make_player(player, position, team, opponent, salary):
+def make_player(player, position, team, opponent, salary, expected_fpts=None):
     return OwnershipPlayer(
         player=player,
         position=position,
@@ -22,6 +23,7 @@ def make_player(player, position, team, opponent, salary):
         is_home=True,
         salary=salary,
         ownership_pct=10.0,
+        expected_fpts=expected_fpts,
     )
 
 
@@ -120,6 +122,27 @@ def test_compute_position_blocks_raises_past_safety_cap():
         compute_position_blocks(players, block_size=3, same_game_only=False)
 
 
+def test_compute_position_blocks_sums_expected_fpts_when_present():
+    players = [
+        make_player("A", "RB", "HOU", "ARI", 5000, expected_fpts=20.0),
+        make_player("B", "RB", "ARI", "HOU", 4000, expected_fpts=16.0),
+    ]
+    blocks = compute_position_blocks(players, block_size=2, same_game_only=False)
+    assert blocks[0].total_expected_fpts == 36.0
+
+
+def test_compute_position_blocks_expected_fpts_defaults_to_zero_when_absent():
+    # Players with no expected_fpts set (the common case for every caller
+    # except Salary Blocks' own endpoint) shouldn't blow up -- they just
+    # contribute 0.0 to the block's total.
+    players = [
+        make_player("A", "RB", "HOU", "ARI", 5000),
+        make_player("B", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks = compute_position_blocks(players, block_size=2, same_game_only=False)
+    assert blocks[0].total_expected_fpts == 0.0
+
+
 def test_salary_caps_has_draftkings_and_fanduel():
     assert SALARY_CAPS["DraftKings"] == 50000
     assert SALARY_CAPS["FanDuel"] == 60000
@@ -175,3 +198,31 @@ def test_filter_blocks_by_salary_buckets_multiple_buckets_are_unioned():
     # 21000. 11000 falls in 20_30 (not selected) and 40000 falls in 60_plus
     # (not selected), so both are excluded.
     assert [b.total_salary for b in filtered] == [5000, 21000]
+
+
+def _team_block(*teams: str) -> PositionBlock:
+    players = [make_player(f"P{i}", "RB", team, "OPP", 5000) for i, team in enumerate(teams)]
+    return PositionBlock(players=players, total_salary=sum(p.salary for p in players))
+
+
+def test_filter_blocks_by_same_team_size_no_sizes_returns_all():
+    blocks = [_team_block("KC", "BUF"), _team_block("KC", "KC")]
+    assert filter_blocks_by_same_team_size(blocks, []) == blocks
+
+
+def test_filter_blocks_by_same_team_size_all_different_teams_is_one():
+    blocks = [_team_block("KC", "BUF", "SF")]
+    assert filter_blocks_by_same_team_size(blocks, [1]) == blocks
+    assert filter_blocks_by_same_team_size(blocks, [2]) == []
+
+
+def test_filter_blocks_by_same_team_size_keeps_only_matching_group_size():
+    two_same = _team_block("KC", "KC", "BUF")
+    all_different = _team_block("KC", "BUF", "SF")
+    all_same = _team_block("KC", "KC", "KC")
+    blocks = [two_same, all_different, all_same]
+
+    assert filter_blocks_by_same_team_size(blocks, [2]) == [two_same]
+    assert filter_blocks_by_same_team_size(blocks, [1]) == [all_different]
+    assert filter_blocks_by_same_team_size(blocks, [3]) == [all_same]
+    assert filter_blocks_by_same_team_size(blocks, [1, 2]) == [two_same, all_different]

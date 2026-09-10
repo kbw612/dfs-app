@@ -19,9 +19,11 @@ router = APIRouter()
 
 
 @router.get("/file", response_class=PlainTextResponse)
-def dk_salary_file_endpoint(season: int, week: int, platform: str = "DraftKings") -> PlainTextResponse:
+def dk_salary_file_endpoint(
+    season: int, week: int, platform: str = "DraftKings", contest: str = "Classic Main"
+) -> PlainTextResponse:
     try:
-        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform)
+        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if csv_text is None:

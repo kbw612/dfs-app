@@ -10,7 +10,8 @@ backend/services/player_selection/engine.py's filter_selected_players).
 engine.py's default_selected) rather than "everyone selected" -- a player
 only needs an explicit PlayerSelectionOverride on disk once someone
 actually flips a checkbox away from that default. This is scoped to
-(season, week, platform), same as the salary file itself -- there's no
+(season, week, platform, contest), same as the salary file itself -- each
+contest's Salary File has its own player universe, and there's no
 carry-forward from an earlier week the way Volume/Talent has; each week's
 salary file gets its own fresh selection.
 """
@@ -46,5 +47,6 @@ class PlayerSelectionOverride(BaseModel):
     season: int
     week: int
     platform: str
+    contest: str
     player: str
     selected: bool

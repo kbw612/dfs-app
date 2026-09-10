@@ -1,0 +1,296 @@
+{
+  "season": 2026,
+  "week": 1,
+  "initial_scraped_at": "2026-09-06T21:50:10-04:00",
+  "current_scraped_at": "2026-09-07T21:43:27-04:00",
+  "games": [
+    {
+      "away_name": "Patriots",
+      "home_name": "Hawks",
+      "away_team": "NE",
+      "home_team": "SEA",
+      "game_key": "NE-SEA",
+      "kickoff_label": "Wednesday, Sep 9th 8:20pm Eastern",
+      "initial": {
+        "over_under": 44.5,
+        "home_implied_total": 24.0,
+        "away_implied_total": 20.5
+      },
+      "current": {
+        "over_under": 44.5,
+        "home_implied_total": 24.0,
+        "away_implied_total": 20.5
+      }
+    },
+    {
+      "away_name": "49ers",
+      "home_name": "Rams",
+      "away_team": "SF",
+      "home_team": "LAR",
+      "game_key": "LAR-SF",
+      "kickoff_label": "Thursday, Sep 10th 8:35pm Eastern",
+      "initial": {
+        "over_under": 48.0,
+        "home_implied_total": 25.75,
+        "away_implied_total": 22.25
+      },
+      "current": {
+        "over_under": 48.0,
+        "home_implied_total": 25.75,
+        "away_implied_total": 22.25
+      }
+    },
+    {
+      "away_name": "Browns",
+      "home_name": "Jaguars",
+      "away_team": "CLE",
+      "home_team": "JAX",
+      "game_key": "CLE-JAX",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 40.5,
+        "home_implied_total": 24.25,
+        "away_implied_total": 16.25
+      },
+      "current": {
+        "over_under": 40.5,
+        "home_implied_total": 24.25,
+        "away_implied_total": 16.25
+      }
+    },
+    {
+      "away_name": "Bucs",
+      "home_name": "Bengals",
+      "away_team": "TB",
+      "home_team": "CIN",
+      "game_key": "CIN-TB",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 50.5,
+        "home_implied_total": 27.25,
+        "away_implied_total": 23.25
+      },
+      "current": {
+        "over_under": 50.5,
+        "home_implied_total": 27.25,
+        "away_implied_total": 23.25
+      }
+    },
+    {
+      "away_name": "Ravens",
+      "home_name": "Colts",
+      "away_team": "BAL",
+      "home_team": "IND",
+      "game_key": "BAL-IND",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 48.0,
+        "home_implied_total": 22.25,
+        "away_implied_total": 25.75
+      },
+      "current": {
+        "over_under": 48.0,
+        "home_implied_total": 22.25,
+        "away_implied_total": 25.75
+      }
+    },
+    {
+      "away_name": "Falcons",
+      "home_name": "Steelers",
+      "away_team": "ATL",
+      "home_team": "PIT",
+      "game_key": "ATL-PIT",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 42.0,
+        "home_implied_total": 22.5,
+        "away_implied_total": 19.5
+      },
+      "current": {
+        "over_under": 41.5,
+        "home_implied_total": 22.25,
+        "away_implied_total": 19.25
+      }
+    },
+    {
+      "away_name": "Bills",
+      "home_name": "Texans",
+      "away_team": "BUF",
+      "home_team": "HOU",
+      "game_key": "BUF-HOU",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 44.5,
+        "home_implied_total": 22.25,
+        "away_implied_total": 22.25
+      },
+      "current": {
+        "over_under": 44.5,
+        "home_implied_total": 21.75,
+        "away_implied_total": 22.75
+      }
+    },
+    {
+      "away_name": "Bears",
+      "home_name": "Panthers",
+      "away_team": "CHI",
+      "home_team": "CAR",
+      "game_key": "CAR-CHI",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 47.0,
+        "home_implied_total": 22.25,
+        "away_implied_total": 24.75
+      },
+      "current": {
+        "over_under": 47.0,
+        "home_implied_total": 22.25,
+        "away_implied_total": 24.75
+      }
+    },
+    {
+      "away_name": "Jets",
+      "home_name": "Titans",
+      "away_team": "NYJ",
+      "home_team": "TEN",
+      "game_key": "NYJ-TEN",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 39.5,
+        "home_implied_total": 20.5,
+        "away_implied_total": 19.0
+      },
+      "current": {
+        "over_under": 39.5,
+        "home_implied_total": 20.5,
+        "away_implied_total": 19.0
+      }
+    },
+    {
+      "away_name": "Saints",
+      "home_name": "Lions",
+      "away_team": "NO",
+      "home_team": "DET",
+      "game_key": "DET-NO",
+      "kickoff_label": "Sunday, Sep 13th 1:00pm Eastern",
+      "initial": {
+        "over_under": 50.0,
+        "home_implied_total": 28.5,
+        "away_implied_total": 21.5
+      },
+      "current": {
+        "over_under": 50.0,
+        "home_implied_total": 28.5,
+        "away_implied_total": 21.5
+      }
+    },
+    {
+      "away_name": "Cards",
+      "home_name": "Chargers",
+      "away_team": "ARI",
+      "home_team": "LAC",
+      "game_key": "ARI-LAC",
+      "kickoff_label": "Sunday, Sep 13th 4:25pm Eastern",
+      "initial": {
+        "over_under": 47.0,
+        "home_implied_total": 28.5,
+        "away_implied_total": 18.5
+      },
+      "current": {
+        "over_under": 47.5,
+        "home_implied_total": 28.75,
+        "away_implied_total": 18.75
+      }
+    },
+    {
+      "away_name": "Dolphins",
+      "home_name": "Raiders",
+      "away_team": "MIA",
+      "home_team": "LV",
+      "game_key": "LV-MIA",
+      "kickoff_label": "Sunday, Sep 13th 4:25pm Eastern",
+      "initial": {
+        "over_under": 40.5,
+        "home_implied_total": 22.0,
+        "away_implied_total": 18.5
+      },
+      "current": {
+        "over_under": 40.5,
+        "home_implied_total": 22.0,
+        "away_implied_total": 18.5
+      }
+    },
+    {
+      "away_name": "WFT",
+      "home_name": "Eagles",
+      "away_team": "WAS",
+      "home_team": "PHI",
+      "game_key": "PHI-WAS",
+      "kickoff_label": "Sunday, Sep 13th 4:25pm Eastern",
+      "initial": {
+        "over_under": 44.5,
+        "home_implied_total": 24.75,
+        "away_implied_total": 19.75
+      },
+      "current": {
+        "over_under": 44.5,
+        "home_implied_total": 24.75,
+        "away_implied_total": 19.75
+      }
+    },
+    {
+      "away_name": "Packers",
+      "home_name": "Vikings",
+      "away_team": "GB",
+      "home_team": "MIN",
+      "game_key": "GB-MIN",
+      "kickoff_label": "Sunday, Sep 13th 4:25pm Eastern",
+      "initial": {
+        "over_under": 46.0,
+        "home_implied_total": 23.5,
+        "away_implied_total": 22.5
+      },
+      "current": {
+        "over_under": 46.0,
+        "home_implied_total": 23.5,
+        "away_implied_total": 22.5
+      }
+    },
+    {
+      "away_name": "Cowboys",
+      "home_name": "Giants",
+      "away_team": "DAL",
+      "home_team": "NYG",
+      "game_key": "DAL-NYG",
+      "kickoff_label": "Sunday, Sep 13th 8:20pm Eastern",
+      "initial": {
+        "over_under": 48.0,
+        "home_implied_total": 22.5,
+        "away_implied_total": 25.5
+      },
+      "current": {
+        "over_under": 48.0,
+        "home_implied_total": 22.5,
+        "away_implied_total": 25.5
+      }
+    },
+    {
+      "away_name": "Broncos",
+      "home_name": "Chiefs",
+      "away_team": "DEN",
+      "home_team": "KC",
+      "game_key": "DEN-KC",
+      "kickoff_label": "Monday, Sep 14th 8:15pm Eastern",
+      "initial": {
+        "over_under": 43.5,
+        "home_implied_total": 23.0,
+        "away_implied_total": 20.5
+      },
+      "current": {
+        "over_under": 43.5,
+        "home_implied_total": 23.0,
+        "away_implied_total": 20.5
+      }
+    }
+  ]
+}

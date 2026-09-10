@@ -2,11 +2,11 @@
 PUT /entry (mounted at /api/player-pool/entry -- see
 backend/api/player_pool/__init__.py). Body is a full PlayerPoolEntry --
 the edit form always sends every field currently shown (whether changed
-or not), so this is a full replace of that (season, week, player)'s saved
-scores, not a partial patch (see entries_repo.save_entry). Returns the
-saved entry back; the frontend re-fetches GET /latest afterward to pick
-up the recomputed total and any carry-forward effects on later weeks
-rather than this endpoint duplicating that merge logic.
+or not), so this is a full replace of that (season, week, platform,
+player)'s saved scores, not a partial patch (see entries_repo.save_entry).
+Returns the saved entry back; the frontend re-fetches GET /latest
+afterward to pick up the recomputed total rather than this endpoint
+duplicating that merge logic.
 """
 
 from __future__ import annotations
@@ -22,5 +22,5 @@ router = APIRouter()
 
 @router.put("/entry", response_model=PlayerPoolEntry)
 def player_pool_save_entry_endpoint(entry: PlayerPoolEntry) -> PlayerPoolEntry:
-    save_entry(settings.player_pool_dir, entry)
+    save_entry(settings.nfl_data_dir, entry)
     return entry

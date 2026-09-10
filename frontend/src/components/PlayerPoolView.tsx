@@ -1,7 +1,40 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchPlayerPool, saveGameEnvironment, savePlayerAttributeEntry, savePlayerPoolEntry } from "../api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { applyVegasLines, fetchMyPlayerPool, fetchPlayerPool, saveMyPlayerPoolEntry, savePlayerPoolEntry } from "../api";
 import type { GameEnvironmentEntry, PlayerPoolPlayer, PlayerPoolResult } from "../types";
-import { formatSalary } from "./playerDisplay";
+import { HeaderInfoPopover } from "./HeaderInfoPopover";
+import { formatOwnershipPct, formatSalary } from "./playerDisplay";
+import {
+  GAME_ENVIRONMENT_NOTES,
+  GAME_MATCHUP_NOTES,
+  OWNERSHIP_NOTES,
+  TALENT_EXPLOSIVENESS_NOTES,
+  VOLUME_OPPORTUNITIES_NOTES,
+} from "./scoringNotes";
+
+// Same "alphabetically-sorted TEAM1-TEAM2" convention as
+// backend/services/vegas_lines/scraper.py's _game_key and
+// backend/services/player_pool/engine.py's game_id -- lets a row look up
+// its own game's GameEnvironmentEntry out of PlayerPoolResult.game_environment
+// (one entry per game, not per player) without the backend needing to
+// duplicate that data onto every row.
+function gameEnvKey(team: string, opponent: string): string {
+  return [team, opponent].sort().join("-");
+}
+
+// Lines for the per-row "Vegas line" popover next to the Game Environment
+// input -- the actual numbers driving that row's suggested score, so a
+// person second-guessing the suggestion doesn't have to flip to the Vegas
+// Lines tab to see why. No entry yet (odds not applied for this game) gets
+// a single explanatory line instead of blank.
+function vegasLineNotes(entry: GameEnvironmentEntry | undefined): string[] {
+  if (!entry) {
+    return ["No Vegas Lines applied yet for this game -- see the Vegas Lines tab."];
+  }
+  const away = entry.away_implied_total === null ? "-" : entry.away_implied_total;
+  const home = entry.home_implied_total === null ? "-" : entry.home_implied_total;
+  const ou = entry.over_under === null ? "-" : entry.over_under;
+  return [`${entry.away_team} (${away}) at ${entry.home_team} (${home})`, `Over/Under ${ou}`];
+}
 
 type ScoreFieldKey = "game_environment" | "game_matchup" | "ownership" | "volume" | "talent" | "salary_value";
 
@@ -16,11 +49,11 @@ interface ScoreFieldConfig {
 // Column sets differ by position, so the grid shows exactly one
 // position's columns at a time rather than a combined "All" view.
 const OFFENSE_SCORE_FIELDS: ScoreFieldConfig[] = [
-  { key: "game_environment", label: "Game env" },
+  { key: "game_environment", label: "Game Environment" },
   { key: "game_matchup", label: "Matchup" },
   { key: "ownership", label: "Ownership" },
-  { key: "volume", label: "Volume" },
-  { key: "talent", label: "Talent" },
+  { key: "volume", label: "Volume/Opportunities" },
+  { key: "talent", label: "Talent/Explosiveness" },
 ];
 
 const DST_SCORE_FIELDS: ScoreFieldConfig[] = [
@@ -32,9 +65,12 @@ function scoreFieldsForPosition(position: string): ScoreFieldConfig[] {
   return position === "DST" ? DST_SCORE_FIELDS : OFFENSE_SCORE_FIELDS;
 }
 
-// Fields that carry forward from the most recent earlier week when left
-// blank (see entries_repo.resolve_carry_forward_value).
-const CARRY_FORWARD_FIELDS = new Set<ScoreFieldKey>(["volume", "talent"]);
+// Fields that fall back to that player's Settings Default (Player Default
+// Settings grid) when left blank for this week, rather than to a flat
+// neutral value -- see backend/schemas/player_defaults/player_defaults.py.
+// No carry-forward from an earlier week anymore -- every week is
+// independent.
+const DEFAULT_FALLBACK_FIELDS = new Set<ScoreFieldKey>(["volume", "talent"]);
 
 const POSITIONS = ["QB", "RB", "WR", "TE", "DST"] as const;
 type Position = (typeof POSITIONS)[number];
@@ -43,6 +79,26 @@ const AUTOSAVE_DEBOUNCE_MS = 800;
 
 function formatTotal(total: number): string {
   return total % 1 === 0 ? String(total) : total.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+// Same trimming as formatTotal -- expected_fpts is a plain fantasy-points
+// number, not currency, so no $ sign (per the user's own worked examples:
+// salary 5000 -> 20, salary 9000 -> 36).
+function formatExpectedFpts(value: number): string {
+  return formatTotal(value);
+}
+
+// The resolved Salary Multiplier isn't returned as its own field on
+// PlayerPoolResult -- it's baked into every row's expected_fpts already
+// (see backend/services/player_pool/engine.py). Back it out from any one
+// row with a real salary so the "Expected FPTS (Nx)" header always
+// reflects whatever multiplier is actually in effect for this platform,
+// without a second API call.
+function resolvedMultiplierLabel(players: PlayerPoolPlayer[]): string {
+  const withSalary = players.find((p) => p.salary > 0);
+  if (!withSalary) return "…";
+  const multiplier = withSalary.expected_fpts / (withSalary.salary / 1000);
+  return formatTotal(multiplier);
 }
 
 // Edit-form values are kept as strings (not numbers) so an input can sit
@@ -67,9 +123,9 @@ function playerKey(p: PlayerPoolPlayer): string {
 }
 
 // Seeded from the raw override, not the blended row.game_environment --
-// leaving the Game env cell blank and saving should mean "keep using the
-// formula's suggestion," not "freeze in whatever it happened to suggest
-// right now" (see types.ts's PlayerPoolPlayer docstring).
+// leaving the Game Environment cell blank and saving should mean "keep
+// using the formula's suggestion," not "freeze in whatever it happened
+// to suggest right now" (see types.ts's PlayerPoolPlayer docstring).
 function buildEditValues(row: PlayerPoolPlayer): EditValues {
   return {
     game_environment: scoreToInputValue(row.game_environment_override),
@@ -89,9 +145,10 @@ interface PlayerPoolViewProps {
   season: number;
   week: number;
   platform: string;
+  contest: string;
 }
 
-export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) {
+export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolViewProps) {
   const [data, setData] = useState<PlayerPoolResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,9 +157,15 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
   const [editValues, setEditValues] = useState<Record<string, EditValues>>({});
   const [dirtyKeys, setDirtyKeys] = useState<Set<string>>(new Set());
   const [savingKeys, setSavingKeys] = useState<Set<string>>(new Set());
-  const [showGameEnvironment, setShowGameEnvironment] = useState(false);
-  const [gameEnvEdits, setGameEnvEdits] = useState<Record<string, Partial<GameEnvironmentEntry>>>({});
-  const [gameEnvSaving, setGameEnvSaving] = useState<string | null>(null);
+  const [gameEnvUpdating, setGameEnvScraping] = useState(false);
+  const [gameEnvUpdateMessage, setGameEnvScrapeMessage] = useState<string | null>(null);
+
+  // Which players are currently in My Player Pool for this (season, week,
+  // platform) -- drives the checkbox column below. Loaded separately from
+  // the main player-pool fetch (its own tab, own endpoint) so a failure
+  // there doesn't block this grid from loading.
+  const [myPoolMembers, setMyPoolMembers] = useState<Set<string>>(new Set());
+  const [myPoolSavingKeys, setMyPoolSavingKeys] = useState<Set<string>>(new Set());
 
   const editValuesRef = useRef(editValues);
   useEffect(() => {
@@ -123,7 +186,7 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
     setLoading(true);
     setError(null);
 
-    fetchPlayerPool(season, week, platform)
+    fetchPlayerPool(season, week, platform, contest)
       .then((result) => {
         setData(result);
         const weekKey = `${season}-${week}`;
@@ -152,40 +215,73 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
         setError(err instanceof Error ? err.message : "Failed to load player pool");
       })
       .finally(() => setLoading(false));
-  }, [season, week, platform]);
+  }, [season, week, platform, contest]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadMyPool = useCallback(() => {
+    fetchMyPlayerPool(season, week, platform, contest)
+      .then((result) => setMyPoolMembers(new Set(result.players.map((p) => p.player))))
+      .catch(() => {
+        // Best-effort -- this grid's own load() above is what actually
+        // gates the page; a My Player Pool hiccup just means the checkbox
+        // column shows everyone as unchecked until the next successful
+        // load, not a hard error here.
+      });
+  }, [season, week, platform, contest]);
+
+  useEffect(() => {
+    loadMyPool();
+  }, [loadMyPool]);
+
+  async function toggleMyPlayerPool(player: string) {
+    const wasIn = myPoolMembers.has(player);
+    setMyPoolMembers((prev) => {
+      const next = new Set(prev);
+      if (wasIn) next.delete(player);
+      else next.add(player);
+      return next;
+    });
+    setMyPoolSavingKeys((prev) => new Set(prev).add(player));
+    try {
+      await saveMyPlayerPoolEntry({ season, week, platform, contest, player, in_pool: !wasIn });
+    } catch (err) {
+      // Revert the optimistic flip on failure.
+      setMyPoolMembers((prev) => {
+        const next = new Set(prev);
+        if (wasIn) next.add(player);
+        else next.delete(player);
+        return next;
+      });
+      setError(err instanceof Error ? err.message : "Failed to update My Player Pool");
+    } finally {
+      setMyPoolSavingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(player);
+        return next;
+      });
+    }
+  }
 
   async function saveRow(key: string) {
     const values = editValuesRef.current[key];
     if (!values) return;
     setSavingKeys((prev) => new Set(prev).add(key));
     try {
-      // Two separate resources now (see backend/schemas/player_attributes)
-      // -- Volume/Talent split out of Player Pool's own entry, so a full
-      // row save is two PUTs instead of one. Both fire regardless of
-      // which specific cell changed; simpler than tracking which resource
-      // a given field belongs to, and idempotent either way.
-      await Promise.all([
-        savePlayerPoolEntry({
-          season,
-          week,
-          player: key,
-          game_environment: inputValueToScore(values.game_environment),
-          game_matchup: inputValueToScore(values.game_matchup),
-          ownership: inputValueToScore(values.ownership),
-          salary_value: inputValueToScore(values.salary_value),
-        }),
-        savePlayerAttributeEntry({
-          season,
-          week,
-          player: key,
-          volume: inputValueToScore(values.volume),
-          talent: inputValueToScore(values.talent),
-        }),
-      ]);
+      await savePlayerPoolEntry({
+        season,
+        week,
+        platform,
+        player: key,
+        game_environment: inputValueToScore(values.game_environment),
+        game_matchup: inputValueToScore(values.game_matchup),
+        ownership: inputValueToScore(values.ownership),
+        salary_value: inputValueToScore(values.salary_value),
+        volume: inputValueToScore(values.volume),
+        talent: inputValueToScore(values.talent),
+      });
       setDirtyKeys((prev) => {
         const next = new Set(prev);
         next.delete(key);
@@ -244,40 +340,40 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
     }, 0);
   }
 
-  function updateGameEnvField(gameKey: string, field: keyof GameEnvironmentEntry, value: string) {
-    setGameEnvEdits((prev) => ({ ...prev, [gameKey]: { ...prev[gameKey], [field]: value } }));
-  }
-
-  async function saveGameEnv(gameKey: string, homeTeam: string, awayTeam: string) {
-    const edits = gameEnvEdits[gameKey] ?? {};
-    const parseOrNull = (v: unknown) => (v === undefined || v === "" ? null : Number(v));
-    setGameEnvSaving(gameKey);
+  async function handleApplyVegasLines() {
+    setGameEnvScraping(true);
+    setGameEnvScrapeMessage(null);
     try {
-      await saveGameEnvironment({
-        season,
-        week,
-        game_key: gameKey,
-        home_team: homeTeam,
-        away_team: awayTeam,
-        home_spread: parseOrNull(edits.home_spread),
-        over_under: parseOrNull(edits.over_under),
-        home_implied_total: parseOrNull(edits.home_implied_total),
-        away_implied_total: parseOrNull(edits.away_implied_total),
-      });
+      const result = await applyVegasLines(season, week);
+      setGameEnvScrapeMessage(
+        result.skipped_count > 0
+          ? `Updated ${result.applied_count} games (${result.skipped_count} skipped -- see below).`
+          : `Updated ${result.applied_count} games.`
+      );
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save game environment");
+      setGameEnvScrapeMessage(err instanceof Error ? err.message : "Failed to update from Vegas Lines");
     } finally {
-      setGameEnvSaving(null);
+      setGameEnvScraping(false);
     }
   }
 
   const isNotFound = error !== null && error.includes("No DK salary file uploaded yet");
 
+  // {game_key: GameEnvironmentEntry} for this week's Vegas Line popovers --
+  // rebuilt only when the loaded data actually changes, not on every
+  // render/keystroke.
+  const gameEnvByKey = useMemo(() => {
+    const map = new Map<string, GameEnvironmentEntry>();
+    for (const entry of data?.game_environment ?? []) {
+      map.set(entry.game_key, entry);
+    }
+    return map;
+  }, [data]);
+
   const players = data?.players ?? [];
   const visiblePlayers = players.filter((p) => p.position === position);
   const fields = scoreFieldsForPosition(position);
-  const gameEnvByKey = new Map((data?.game_environment ?? []).map((g) => [g.game_key, g]));
 
   const saveStatus = savingKeys.size > 0 ? "Saving…" : dirtyKeys.size > 0 ? "Unsaved changes" : "All changes saved";
 
@@ -312,83 +408,16 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
 
       {!loading && !error && data && (
         <>
-          <section className="ownership-section player-pool-game-environment">
-            <button
-              type="button"
-              className="player-pool-game-environment-toggle"
-              onClick={() => setShowGameEnvironment((v) => !v)}
-            >
-              Game Environment inputs (per game) {showGameEnvironment ? "▴" : "▾"}
-            </button>
-            {showGameEnvironment && (
-              <ul className="ownership-player-list pivot-card-list player-pool-game-environment-list">
-                {data.games.map((game) => {
-                  const [away, home] = game.key.split("-");
-                  const saved = gameEnvByKey.get(game.key);
-                  const edits = gameEnvEdits[game.key] ?? {};
-                  const homeSpread = edits.home_spread ?? scoreToInputValue(saved?.home_spread ?? null);
-                  const overUnder = edits.over_under ?? scoreToInputValue(saved?.over_under ?? null);
-                  const homeTotal = edits.home_implied_total ?? scoreToInputValue(saved?.home_implied_total ?? null);
-                  const awayTotal = edits.away_implied_total ?? scoreToInputValue(saved?.away_implied_total ?? null);
-                  return (
-                    <li key={game.key} className="ownership-pivot-group player-pool-game-environment-row">
-                      <span className="player-pool-game-label">{game.label}</span>
-                      <label>
-                        {home} spread
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={homeSpread}
-                          onChange={(e) => updateGameEnvField(game.key, "home_spread", e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        O/U
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={overUnder}
-                          onChange={(e) => updateGameEnvField(game.key, "over_under", e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        {home} total
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={homeTotal}
-                          onChange={(e) => updateGameEnvField(game.key, "home_implied_total", e.target.value)}
-                        />
-                      </label>
-                      <label>
-                        {away} total
-                        <input
-                          type="number"
-                          step="0.5"
-                          value={awayTotal}
-                          onChange={(e) => updateGameEnvField(game.key, "away_implied_total", e.target.value)}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="player-pool-save-button"
-                        disabled={gameEnvSaving === game.key}
-                        onClick={() => saveGameEnv(game.key, home, away)}
-                      >
-                        {gameEnvSaving === game.key ? "Saving…" : "Save"}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-
           <section className="ownership-section">
             <div className="player-pool-grid-header">
-              <h2>Player Pool</h2>
+              <h2>Player Rankings</h2>
               <span className="player-pool-save-status">{saveStatus}</span>
             </div>
+            {/* Game Environment's own refresh now lives on that column's
+                header (the ↻ icon next to its info icon below) rather than
+                a standalone button/section -- this is just where its
+                result message surfaces now that section is gone. */}
+            {gameEnvUpdateMessage && <p className="hint">{gameEnvUpdateMessage}</p>}
             {visiblePlayers.length === 0 ? (
               <p className="hint">No {position} players loaded.</p>
             ) : (
@@ -398,12 +427,67 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
                     <tr>
                       <th className="player-pool-grid-sticky">Name</th>
                       <th>Salary</th>
+                      <th>
+                        Expected
+                        <br />
+                        FPTS ({resolvedMultiplierLabel(players)}x)
+                      </th>
                       <th>Team</th>
                       <th>Opp</th>
+                      <th>
+                        My
+                        <br />
+                        Pool
+                      </th>
                       {fields.map((f) => (
-                        <th key={f.key}>{f.label}</th>
+                        <th key={f.key}>
+                          {f.key === "volume" ? (
+                            <>
+                              Vol/
+                              <br />
+                              Opp
+                            </>
+                          ) : f.key === "talent" ? (
+                            <>
+                              Talent/
+                              <br />
+                              Exp
+                            </>
+                          ) : f.key === "game_environment" ? (
+                            <>
+                              Game
+                              <br />
+                              Env
+                            </>
+                          ) : (
+                            f.label
+                          )}
+                          {f.key === "game_environment" && (
+                            <button
+                              type="button"
+                              className="header-refresh-icon"
+                              disabled={gameEnvUpdating}
+                              onClick={handleApplyVegasLines}
+                              aria-label={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
+                              title={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
+                            >
+                              ↻
+                            </button>
+                          )}
+                          {f.key === "game_environment" && (
+                            <HeaderInfoPopover title={f.label} lines={GAME_ENVIRONMENT_NOTES} />
+                          )}
+                          {f.key === "game_matchup" && <HeaderInfoPopover title={f.label} lines={GAME_MATCHUP_NOTES} />}
+                          {f.key === "ownership" && <HeaderInfoPopover title={f.label} lines={OWNERSHIP_NOTES} />}
+                          {f.key === "volume" && <HeaderInfoPopover title={f.label} lines={VOLUME_OPPORTUNITIES_NOTES} />}
+                          {f.key === "talent" && <HeaderInfoPopover title={f.label} lines={TALENT_EXPLOSIVENESS_NOTES} />}
+                        </th>
                       ))}
-                      <th>Total</th>
+                      <th className="player-pool-grid-sticky-right">
+                        Rank
+                        <br />
+                        Total
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -414,16 +498,31 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
                         <tr key={key} className={dirtyKeys.has(key) ? "player-pool-row-dirty" : undefined}>
                           <td className="player-pool-grid-sticky">{row.player}</td>
                           <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
+                          <td className="player-pool-grid-num">{formatExpectedFpts(row.expected_fpts)}</td>
                           <td>{row.team}</td>
                           <td>{row.is_home === null ? row.opponent : row.is_home ? `vs ${row.opponent}` : `@${row.opponent}`}</td>
+                          <td>
+                            <input
+                              type="checkbox"
+                              className="player-pool-my-pool-checkbox"
+                              checked={myPoolMembers.has(row.player)}
+                              disabled={myPoolSavingKeys.has(row.player)}
+                              onChange={() => toggleMyPlayerPool(row.player)}
+                              aria-label={`Add ${row.player} to My Player Pool`}
+                            />
+                          </td>
                           {fields.map((f) => (
                             <td key={f.key}>
                               <input
                                 type="number"
-                                min={1}
-                                max={3}
-                                step="0.25"
-                                title={CARRY_FORWARD_FIELDS.has(f.key) ? "Carries forward until changed" : undefined}
+                                min={f.key === "game_environment" ? 0 : 1}
+                                max={f.key === "game_environment" ? 1 : 3}
+                                step={f.key === "game_environment" ? "0.5" : "0.25"}
+                                title={
+                                  DEFAULT_FALLBACK_FIELDS.has(f.key)
+                                    ? "Falls back to the Settings Default until changed this week"
+                                    : undefined
+                                }
                                 placeholder={
                                   f.key === "game_environment" && row.game_environment_suggested !== null
                                     ? String(row.game_environment_suggested)
@@ -433,9 +532,20 @@ export function PlayerPoolView({ season, week, platform }: PlayerPoolViewProps) 
                                 onChange={(e) => updateCell(key, f.key, e.target.value)}
                                 onBlur={() => handleCellBlur(key)}
                               />
+                              {f.key === "game_environment" && (
+                                <HeaderInfoPopover
+                                  ariaLabel="Vegas line for this game"
+                                  lines={vegasLineNotes(gameEnvByKey.get(gameEnvKey(row.team, row.opponent)))}
+                                />
+                              )}
+                              {f.key === "ownership" && row.ownership_pct !== null && (
+                                <span className="player-pool-ownership-pct">
+                                  {formatOwnershipPct(row.ownership_pct)}
+                                </span>
+                              )}
                             </td>
                           ))}
-                          <td className="player-pool-grid-num player-pool-grid-total">
+                          <td className="player-pool-grid-num player-pool-grid-total player-pool-grid-sticky-right">
                             {formatTotal(liveTotal(key, row, fields))}
                           </td>
                         </tr>

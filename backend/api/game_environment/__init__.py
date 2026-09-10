@@ -2,7 +2,9 @@
 Combines every Game Environment endpoint (latest.py, entry.py) into one
 router under the "/game-environment" prefix. main.py mounts this under
 "/api", giving GET /api/game-environment/latest and PUT
-/api/game-environment/entry.
+/api/game-environment/entry. The action that fills these values in from
+Vegas Lines lives at POST /api/vegas-lines/apply instead -- see
+backend/api/vegas_lines/__init__.py.
 """
 
 from fastapi import APIRouter

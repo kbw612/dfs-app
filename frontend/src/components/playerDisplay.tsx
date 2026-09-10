@@ -11,6 +11,15 @@ export function formatSalary(salary: number): string {
   return `$${salary.toLocaleString()}`;
 }
 
+// Same trimming convention as Player Rankings/My Player Pool/Boom-Bust's
+// own Expected FPTS formatting -- a plain fantasy-points number, not
+// currency. Only Salary Blocks currently populates
+// OwnershipPlayer.expected_fpts, so this only ever renders there (see
+// PlayerRow below).
+export function formatExpectedFpts(value: number): string {
+  return value % 1 === 0 ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
 // "-" when ownership isn't known yet (projections lag DK salaries by a
 // few days -- see OwnershipPlayer.ownership_pct in types.ts) rather than
 // crashing on null.toFixed() or silently showing "0.0%", which would read
@@ -33,7 +42,7 @@ export function opponentLabel(p: { opponent: string; is_home: boolean | null }):
 // ownership/depth_rank.py). Falls back to just the position when there's
 // no depth-chart snapshot yet or this name didn't match one.
 export function roleLabel(p: OwnershipPlayer): string {
-  return p.rank !== null ? `${p.position}${p.rank}` : p.position;
+  return p.depth_rank !== null ? `${p.position}${p.depth_rank}` : p.position;
 }
 
 export function playerMatchesFilters(
@@ -110,10 +119,19 @@ export function PlayerNameCell({
 // overflow, so salary/ownership% always start at the exact same
 // x-position no matter what's in the name column.
 export function PlayerRow({ p }: { p: OwnershipPlayer }) {
+  // Expected FPTS is only ever set on Salary Blocks' players (see
+  // OwnershipPlayer.expected_fpts) -- every other caller of this shared
+  // row (Chalk, Game Leverage, Pivots) leaves it null, so the extra
+  // column simply doesn't render for them, no separate row variant
+  // needed there.
+  const hasExpectedFpts = p.expected_fpts !== null;
   return (
-    <li className="ownership-player-row">
+    <li className={`ownership-player-row${hasExpectedFpts ? " ownership-player-row-with-fpts" : ""}`}>
       <PlayerNameCell player={p.player} role={roleLabel(p)} />
       <span className="ownership-player-salary">{formatSalary(p.salary)}</span>
+      {hasExpectedFpts && (
+        <span className="ownership-player-fpts">{formatExpectedFpts(p.expected_fpts as number)} FPTS</span>
+      )}
       <span className="ownership-player-pct">{formatOwnershipPct(p.ownership_pct)}</span>
     </li>
   );

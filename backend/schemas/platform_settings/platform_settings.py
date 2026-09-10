@@ -3,9 +3,11 @@ Platform Settings: the single (platform, contest) pair shared across every
 tab that deals with a specific DFS site's export -- picked once in the
 Settings tab's top panel (see frontend/src/components/SettingsView.tsx)
 rather than each tab guessing which platform's file it should be looking
-for. There is exactly one of these at a time, same "single current value,
-not a history" shape as Current Week (backend/schemas/current_week/
-current_week.py).
+for. There is exactly one of these at a time *per season* -- same "single
+current value, not a history" shape as Current Week (backend/schemas/
+current_week/current_week.py), just scoped by season now that it lives
+under the shared data/nfl/{season}/settings/ layout (see
+backend/repositories/platform_settings/platform_settings_repo.py).
 
 `platform` also determines the filename prefix used for this week's
 shared salary/ownership files -- see
@@ -23,5 +25,6 @@ from pydantic import BaseModel
 
 
 class PlatformSettings(BaseModel):
+    season: int
     platform: str
     contest: str

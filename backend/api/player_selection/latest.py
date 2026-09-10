@@ -24,9 +24,11 @@ router = APIRouter()
 
 
 @router.get("/latest", response_model=PlayerSelectionResult)
-def player_selection_latest_endpoint(season: int, week: int, platform: str = "DraftKings") -> PlayerSelectionResult:
+def player_selection_latest_endpoint(
+    season: int, week: int, platform: str = "DraftKings", contest: str = "Classic Main"
+) -> PlayerSelectionResult:
     try:
-        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform)
+        csv_text = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     if csv_text is None:
@@ -35,7 +37,7 @@ def player_selection_latest_endpoint(season: int, week: int, platform: str = "Dr
             detail=f"No DK salary file uploaded yet for season {season} week {week} -- upload this week's DK salary export first.",
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
-    overrides = load_overrides(settings.nfl_data_dir, season, week, platform)
+    overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
 
     rows = [
         PlayerSelectionRow(
