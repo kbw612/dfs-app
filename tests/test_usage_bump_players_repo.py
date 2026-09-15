@@ -8,7 +8,7 @@ def test_missing_file_returns_empty_dict(tmp_path):
 
 
 def test_loads_teams_and_players(tmp_path):
-    path = tmp_path / "usage-bump-players.json"
+    path = tmp_path / "usage_bump_players.json"
     path.write_text(
         json.dumps(
             {
@@ -34,7 +34,7 @@ def test_loads_teams_and_players(tmp_path):
 
 
 def test_skips_entries_missing_team_abbrev_or_name(tmp_path):
-    path = tmp_path / "usage-bump-players.json"
+    path = tmp_path / "usage_bump_players.json"
     path.write_text(
         json.dumps(
             {
@@ -51,7 +51,7 @@ def test_skips_entries_missing_team_abbrev_or_name(tmp_path):
 
 
 def test_missing_more_usage_players_defaults_to_empty_list(tmp_path):
-    path = tmp_path / "usage-bump-players.json"
+    path = tmp_path / "usage_bump_players.json"
     path.write_text(
         json.dumps({"teams": [{"teamAbbrev": "MIA", "players": [{"name": "Someone"}]}]}),
         encoding="utf-8",

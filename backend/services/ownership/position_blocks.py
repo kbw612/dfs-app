@@ -48,6 +48,8 @@ from itertools import combinations
 from math import comb
 
 from backend.schemas.ownership.ownership import OwnershipPlayer, PositionBlock
+from backend.services.shared.game_matchup import game_label as _format_game_label
+from backend.services.shared.game_matchup import resolve_away_home
 
 MAX_BLOCKS_SAFETY_CAP = 2000
 
@@ -172,11 +174,23 @@ def game_key(player: OwnershipPlayer) -> frozenset[str]:
     return frozenset({player.team, player.opponent})
 
 
-def game_label(key: frozenset[str]) -> str:
-    """'ARI vs LAR' -- alphabetically sorted so it's stable regardless of
-    which side of the matchup you start from."""
-    teams = sorted(key)
-    return " vs ".join(teams) if len(teams) == 2 else next(iter(teams), "")
+def game_label(player: OwnershipPlayer) -> str:
+    """'NO @ DET' -- away team first, using `player`'s own is_home (see
+    backend/services/shared/game_matchup.py's resolve_away_home/game_label,
+    the shared "AWAY @ HOME" formatting every Game filter uses). Any one of
+    the two teams' players works here -- their own is_home always agrees
+    with the other side's, since both are parsed from the same DK salary
+    row's "AWAY@HOME" Game Info (see dk_salary_parsing.py's
+    parse_game_info). Falls back to an alphabetically-sorted "ARI vs LAR"
+    when is_home isn't known at all (a defensive case -- the CSV loader
+    always sets it, but a live scrape hitting an unexpected page shape
+    could leave it null)."""
+    resolved = resolve_away_home(player.team, player.opponent, player.is_home)
+    if resolved is None:
+        teams = sorted((player.team, player.opponent))
+        return " vs ".join(teams) if len(teams) == 2 else next(iter(teams), "")
+    away, home = resolved
+    return _format_game_label(away, home)
 
 
 def _blocks_from_pool(pool: list[OwnershipPlayer], block_size: int) -> list[PositionBlock]:

@@ -11,7 +11,7 @@ from backend.services.dk_players.dk_players_engine import (
     suggest_stat_file_match,
     week_status,
 )
-from backend.services.dk_players.weekly_stats_loader import merge_td_points, parse_weekly_stats_csv
+from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lines, merge_td_points, parse_weekly_stats_csv
 
 
 def make_salary_player(player, position, salary, team="TM"):
@@ -132,6 +132,22 @@ def test_parse_dk_players_csv_empty_string_returns_empty_list():
     assert parse_dk_players_csv("   ") == []
 
 
+def test_parse_dk_players_csv_accepts_percent_suffixed_pct_drafted():
+    # A legacy/hand-copied DK-Players.csv (e.g. a prior season's export)
+    # commonly writes %Drafted as "24.21%" rather than this app's own
+    # bare-number storage format -- see _parse_pct_drafted's own
+    # docstring. This used to raise ValueError and surface as an
+    # unhandled 500 on every endpoint reading the tracker.
+    csv_text = (
+        "Name,Position,Roster Position,TeamAbbrev,Week,Salary,%Drafted,FPTS,Non_TD_FPTS,TD_FPTS\n"
+        "Josh Allen,QB,QB,BUF,1,7200,24.21%,30.5,18.5,12.0\n"
+        "Bijan Robinson,RB,RB/FLEX,ATL,1,8000,0%,0.0,0.0,0.0\n"
+    )
+    rows = parse_dk_players_csv(csv_text)
+    assert rows[0].pct_drafted == 24.21
+    assert rows[1].pct_drafted == 0.0
+
+
 # -- week_status -------------------------------------------------------------
 
 
@@ -219,6 +235,40 @@ def test_merge_td_points_combines_all_position_files():
     rb_csv = f"{RB_HEADER}\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4\n"
     merged = merge_td_points({"QB": qb_csv, "RB": rb_csv}, week=1)
     assert merged == {"Lamar Jackson": 14.0, "Bijan Robinson": 6.0}
+
+
+def test_load_weekly_stat_lines_reads_every_week_at_once():
+    csv_text = (
+        f"{RB_HEADER}\n"
+        "1,Tony Pollard,TEN,RB,13,CLE,12,60,5.0,0,2,1,3,0,0,0,6.3\n"
+        "1,Tony Pollard,TEN,RB,14,SF,18,101,5.6,1,2,2,15,0,0,0,21.6\n"
+    )
+    lines = load_weekly_stat_lines(csv_text)
+    assert lines[("Tony Pollard", 13)] == {
+        "rush_att": 12,
+        "rush_yards": 60,
+        "targets": 2,
+        "receptions": 1,
+        "receiving_yards": 3,
+    }
+    assert lines[("Tony Pollard", 14)]["rush_att"] == 18
+
+
+def test_load_weekly_stat_lines_qb_file_has_no_receiving_keys():
+    csv_text = f"{QB_HEADER}\n1,Lamar Jackson,BAL,QB,1,BUF,14,19,73.7,209,11.0,2,0,39,2,144.4,6,70,11.7,1,29.4\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Lamar Jackson", 1)]
+    assert stat_line["rush_att"] == 6
+    assert stat_line["rush_yards"] == 70
+    assert "targets" not in stat_line
+    assert "receptions" not in stat_line
+    assert "receiving_yards" not in stat_line
+
+
+def test_load_weekly_stat_lines_blank_cells_parse_as_zero():
+    csv_text = f"{RB_HEADER}\n1,Someone,ATL,RB,1,TB,0,0,,0,5,4,40,0,0,0,8.0\n"
+    lines = load_weekly_stat_lines(csv_text)
+    assert lines[("Someone", 1)]["rush_att"] == 0
 
 
 # -- calculate_week_points ----------------------------------------------------

@@ -15,28 +15,28 @@
       "talent": 1.0
     },
     "Jameson Williams": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Jordan Addison": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Quentin Johnston": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Tre Tucker": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Zay Flowers": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Brian Thomas Jr.": {
@@ -50,8 +50,8 @@
       "dfs_type": "Boom/Bust"
     },
     "Keaton Mitchell": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Sean Tucker": {
@@ -60,13 +60,13 @@
       "dfs_type": "Boom/Bust"
     },
     "Chig Okonkwo": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Darren Waller": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Kyle Pitts Sr.": {
@@ -75,13 +75,13 @@
       "dfs_type": "Boom/Bust"
     },
     "Mark Andrews": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Mike Gesicki": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Oronde Gadsden II": {
@@ -90,8 +90,8 @@
       "dfs_type": "Boom/Bust"
     },
     "Alec Pierce": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Brenen Thompson": {
@@ -105,8 +105,8 @@
       "dfs_type": "Boom/Bust"
     },
     "Brian Thomas": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Calvin Ridley": {
@@ -115,8 +115,8 @@
       "dfs_type": "Boom/Bust"
     },
     "Deebo Samuel": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Demarcus Robinson": {
@@ -125,8 +125,8 @@
       "dfs_type": "Boom/Bust"
     },
     "George Pickens": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Ja'Kobi Lane": {
@@ -135,13 +135,13 @@
       "dfs_type": "Boom/Bust"
     },
     "Jalen McMillan": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Jayden Reed": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Jerry Jeudy": {
@@ -155,159 +155,904 @@
       "dfs_type": "Boom/Bust"
     },
     "Mike Evans": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Rashid Shaheed": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Tyquan Thornton": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Xavier Worthy": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Colby Parkinson": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Dalton Kincaid": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Elijah Arroyo": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "George Kittle": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Hunter Henry": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Isaiah Likely": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Juwan Johnson": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Kyle Pitts": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Terrance Ferguson": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Aaron Jones": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Alvin Kamara": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 1.0,
       "dfs_type": "Boom/Bust"
     },
     "Bucky Irving": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Chase Brown": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "James Cook": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Omarion Hampton": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Quinshon Judkins": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Kyren Williams": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Rhamondre Stevenson": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "RJ Harvey": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Saquon Barkley": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Travis Etienne": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "TreVeyon Henderson": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Davante Adams": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Marvin Mims": {
-      "volume": null,
-      "talent": null,
+      "volume": 1.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Nico Collins": {
-      "volume": null,
-      "talent": null,
+      "volume": 3.0,
+      "talent": 3.0,
       "dfs_type": "Boom/Bust"
     },
     "Tee Higgins": {
-      "volume": null,
-      "talent": null,
+      "volume": 2.0,
+      "talent": 2.0,
       "dfs_type": "Boom/Bust"
     },
     "Caleb Douglas": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": "Boom/Bust"
+    },
+    "Brock Purdy": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Bo Nix": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Baker Mayfield": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "C.J. Stroud": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Caleb Williams": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Cam Ward": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Dak Prescott": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Daniel Jones": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Deshaun Watson": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Drake Maye": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Drew Lock": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Fernando Mendoza": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Geno Smith": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Jacoby Brissett": {
+      "volume": 2.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Jalen Hurts": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jalon Daniels": {
       "volume": null,
       "talent": null,
-      "dfs_type": "Boom/Bust"
+      "dfs_type": null
+    },
+    "Jared Goff": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jaxson Dart": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jayden Daniels": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Joe Burrow": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jordan Love": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Josh Allen": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Justin Herbert": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Kirk Cousins": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Kyler Murray": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Lamar Jackson": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Malik Willis": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Matthew Stafford": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Michael Penix": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Patrick Mahomes": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Sam Darnold": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Shedeur Sanders": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Trevor Lawrence": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Tua Tagovailoa": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Tyler Shough": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Ashton Jeanty": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Bhayshul Tuten": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Bijan Robinson": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Blake Corum": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Breece Hall": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Cam Skattebo": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Chris Brooks": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Chris Rodriguez": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Christian McCaffrey": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Chuba Hubbard": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "D'Andre Swift": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "David Montgomery": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "De'Von Achane": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Derrick Henry": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Dylan Sampson": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Jacory Croskey-Merritt": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jadarian Price": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jahmyr Gibbs": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Javonte Williams": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jaylen Warren": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jeremiyah Love": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Jonah Coleman": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jonathan Taylor": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Jonathon Brooks": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Jordan Mason": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Kenneth Walker": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Kenny Gainwell": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Kimani Vidal": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Kyle Monangai": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "MarShawn Lloyd": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Mike Washington": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Najee Harris": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Rachaad White": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Rico Dowdle": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Tony Pollard": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Tyjae Spears": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Tyler Allgeier": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Tyrone Tracy": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Woody Marks": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Ty Johnson": {
+      "volume": null,
+      "talent": null,
+      "dfs_type": null
+    },
+    "A.J. Brown": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Amon-Ra St. Brown": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Carnell Tate": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "CeeDee Lamb": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Chris Godwin": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Chris Olave": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Christian Watson": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Courtland Sutton": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "De'Zhaun Stribling": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "DeMario Douglas": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Devaughn Vele": {
+      "volume": 2.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "DeVonta Smith": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "DJ Moore": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Dontayvion Wicks": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Drake London": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Emeka Egbuka": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Garrett Wilson": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Ja'Marr Chase": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Jakobi Meyers": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jalen Coker": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jalen Nailor": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Jaxon Smith-Njigba": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Jaylen Waddle": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jaylin Noel": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Josh Downs": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Justin Jefferson": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "KC Concepcion": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Keenan Allen": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Khalil Shakir": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Ladd McConkey": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Luther Burden": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Malik Nabers": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Malik Washington": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Marvin Harrison": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Matthew Golden": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Michael Pittman": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Michael Wilson": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Parker Washington": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Pat Bryant": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Puka Nacua": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Rashee Rice": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Rashod Bateman": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Rome Odunze": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Romeo Doubs": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Ryan Flournoy": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Stefon Diggs": {
+      "volume": 2.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Tetairoa McMillan": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Wan'Dale Robinson": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "AJ Barner": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Brenton Strange": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Brock Bowers": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Cade Otton": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Charlie Kolar": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Colston Loveland": {
+      "volume": 2.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Dallas Goedert": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Dalton Schultz": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "David Njoku": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Eli Raridon": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Elijah Higgins": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Erick All": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Greg Dulcich": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Gunnar Helm": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Harold Fannin": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Jake Ferguson": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Kenyon Sadiq": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Michael Mayer": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Oronde Gadsden": {
+      "volume": 1.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Pat Freiermuth": {
+      "volume": 2.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Sam LaPorta": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "T.J. Hockenson": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Theo Johnson": {
+      "volume": 1.0,
+      "talent": 1.0,
+      "dfs_type": null
+    },
+    "Travis Kelce": {
+      "volume": 2.0,
+      "talent": 2.0,
+      "dfs_type": null
+    },
+    "Trey McBride": {
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_type": null
+    },
+    "Tucker Kraft": {
+      "volume": 3.0,
+      "talent": 2.0,
+      "dfs_type": null
     }
   }
 }

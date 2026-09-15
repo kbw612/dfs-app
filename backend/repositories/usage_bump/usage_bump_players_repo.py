@@ -1,5 +1,6 @@
 """
-Loads config/usage-bump-players.json -- a hand-curated file of explicit
+Loads data/nfl/2026/usage_bump_players.json (see backend/config.py's
+usage_bump_players_json) -- a hand-curated file of explicit
 "if this player is out, these named players get bumped usage" lists, in
 priority order. Real-world usage doesn't always follow depth-chart array
 order (committee backfields, route-tree overlap, etc.), so this lets

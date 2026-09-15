@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { applyVegasLines, fetchMyPlayerPool, fetchPlayerPool, saveMyPlayerPoolEntry, savePlayerPoolEntry } from "../api";
+import {
+  applyVegasLines,
+  calculateOwnershipScores,
+  fetchMyPlayerPool,
+  fetchPlayerPool,
+  saveMyPlayerPoolEntry,
+  savePlayerPoolEntry,
+} from "../api";
 import type { GameEnvironmentEntry, PlayerPoolPlayer, PlayerPoolResult } from "../types";
 import { HeaderInfoPopover } from "./HeaderInfoPopover";
 import { formatOwnershipPct, formatSalary } from "./playerDisplay";
@@ -75,10 +82,27 @@ const DEFAULT_FALLBACK_FIELDS = new Set<ScoreFieldKey>(["volume", "talent"]);
 const POSITIONS = ["QB", "RB", "WR", "TE", "DST"] as const;
 type Position = (typeof POSITIONS)[number];
 
+// Player Rankings' own column sort -- Salary and Total only (everything
+// else stays in whatever order the backend/position filter produced).
+// null means "no explicit sort yet," which keeps the backend's own
+// default order (total descending overall, see compute_player_pool's
+// docstring) rather than forcing a resort on first render.
+type SortField = "salary" | "total";
+type SortDirection = "asc" | "desc";
+
 const AUTOSAVE_DEBOUNCE_MS = 800;
 
 function formatTotal(total: number): string {
   return total % 1 === 0 ? String(total) : total.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+// Same source of truth as the Opp column's own "vs X" (home) / "@X"
+// (away) prefix just to its left -- is_home true reads as the "vs"
+// case, false as the "@" case, null (no schedule data yet) as blank
+// rather than guessing.
+function homeAwayLabel(isHome: boolean | null): string {
+  if (isHome === null) return "-";
+  return isHome ? "Home" : "Away";
 }
 
 // Same trimming as formatTotal -- expected_fpts is a plain fantasy-points
@@ -152,6 +176,11 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
   const [data, setData] = useState<PlayerPoolResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Separate from `error` above on purpose -- `error` gates whether the
+  // whole grid renders at all (a load failure), while a single row's
+  // save failing is a much smaller, recoverable thing that shouldn't
+  // blank out every other player's data just because one save hiccuped.
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [position, setPosition] = useState<Position>("QB");
   const [editValues, setEditValues] = useState<Record<string, EditValues>>({});
@@ -159,6 +188,11 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
   const [savingKeys, setSavingKeys] = useState<Set<string>>(new Set());
   const [gameEnvUpdating, setGameEnvScraping] = useState(false);
   const [gameEnvUpdateMessage, setGameEnvScrapeMessage] = useState<string | null>(null);
+  const [ownershipUpdating, setOwnershipUpdating] = useState(false);
+  const [ownershipUpdateMessage, setOwnershipUpdateMessage] = useState<string | null>(null);
+
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   // Which players are currently in My Player Pool for this (season, week,
   // platform) -- drives the checkbox column below. Loaded separately from
@@ -247,6 +281,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
     setMyPoolSavingKeys((prev) => new Set(prev).add(player));
     try {
       await saveMyPlayerPoolEntry({ season, week, platform, contest, player, in_pool: !wasIn });
+      setSaveError(null);
     } catch (err) {
       // Revert the optimistic flip on failure.
       setMyPoolMembers((prev) => {
@@ -255,7 +290,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
         else next.delete(player);
         return next;
       });
-      setError(err instanceof Error ? err.message : "Failed to update My Player Pool");
+      setSaveError(err instanceof Error ? err.message : "Failed to update My Player Pool");
     } finally {
       setMyPoolSavingKeys((prev) => {
         const next = new Set(prev);
@@ -287,8 +322,9 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
         next.delete(key);
         return next;
       });
+      setSaveError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save score");
+      setSaveError(err instanceof Error ? err.message : "Failed to save score");
     } finally {
       setSavingKeys((prev) => {
         const next = new Set(prev);
@@ -296,6 +332,20 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
         return next;
       });
     }
+  }
+
+  // Every save goes through this queue so saveRow calls always run one at
+  // a time rather than in parallel -- Game Matchup's propagation (see
+  // teammateKeysSharingMatchup) can trigger a save for every teammate on
+  // a team at once (a full WR corps, say), and firing that many PUT
+  // requests simultaneously was hitting the browser's per-host connection
+  // limit and surfacing as a hard "Failed to fetch" network error instead
+  // of a normal save. saveRow never throws (it catches its own errors
+  // internally), so chaining onto this queue can't get stuck on a
+  // rejected promise.
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  function enqueueSave(key: string) {
+    saveQueueRef.current = saveQueueRef.current.then(() => saveRow(key));
   }
 
   function scheduleAutosave(key: string) {
@@ -307,14 +357,44 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
     // without this a change could sit unsaved indefinitely.
     debounceTimers.current[key] = setTimeout(() => {
       delete debounceTimers.current[key];
-      saveRow(key);
+      enqueueSave(key);
     }, AUTOSAVE_DEBOUNCE_MS);
   }
 
+  // Game Matchup is a team+position-level judgment call (how a team's WR
+  // corps as a whole lines up against the opposing defense), not a
+  // genuinely per-player one -- editing any one player's Matchup value
+  // should apply to every teammate at that same position too (e.g. every
+  // Bengals WR shares one Matchup score), same rule for QB/RB/WR/TE
+  // alike. DST is unaffected in practice (there's only ever one DST per
+  // team), and every other field stays purely per-player.
+  function teammateKeysSharingMatchup(key: string): string[] {
+    const row = players.find((p) => playerKey(p) === key);
+    if (!row) return [];
+    return players
+      .filter((p) => p.team === row.team && p.position === row.position && playerKey(p) !== key)
+      .map(playerKey);
+  }
+
   function updateCell(key: string, field: ScoreFieldKey, value: string) {
-    setEditValues((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
-    setDirtyKeys((prev) => new Set(prev).add(key));
+    const teammateKeys = field === "game_matchup" ? teammateKeysSharingMatchup(key) : [];
+
+    setEditValues((prev) => {
+      const next = { ...prev, [key]: { ...prev[key], [field]: value } };
+      for (const mateKey of teammateKeys) {
+        next[mateKey] = { ...next[mateKey], [field]: value };
+      }
+      return next;
+    });
+    setDirtyKeys((prev) => {
+      const next = new Set(prev).add(key);
+      for (const mateKey of teammateKeys) next.add(mateKey);
+      return next;
+    });
     scheduleAutosave(key);
+    for (const mateKey of teammateKeys) {
+      scheduleAutosave(mateKey);
+    }
   }
 
   function handleCellBlur(key: string) {
@@ -322,7 +402,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
       clearTimeout(debounceTimers.current[key]);
       delete debounceTimers.current[key];
     }
-    saveRow(key);
+    enqueueSave(key);
   }
 
   function effectiveValue(key: string, field: ScoreFieldKey, row: PlayerPoolPlayer): number | null {
@@ -338,6 +418,31 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
       const v = effectiveValue(key, f.key, row);
       return v !== null ? sum + v : sum;
     }, 0);
+  }
+
+  // Clicking an already-active sort column flips direction; clicking a
+  // different one starts fresh at descending (highest salary/total on
+  // top, matching how a DFS ranking is normally read).
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortField(field);
+      setSortDirection("desc");
+    }
+  }
+
+  // "⇅" (neutral) for a column that isn't the active sort, "▲"/"▼" for
+  // the active one's current direction -- shown on every sortable header
+  // regardless of state so it's discoverable before the first click.
+  function sortIcon(field: SortField): string {
+    if (sortField !== field) return "⇅";
+    return sortDirection === "asc" ? "▲" : "▼";
+  }
+
+  function sortAriaLabel(field: SortField, label: string): string {
+    if (sortField !== field) return `Sort by ${label}`;
+    return sortDirection === "asc" ? `Sort by ${label} descending` : `Sort by ${label} ascending`;
   }
 
   async function handleApplyVegasLines() {
@@ -358,6 +463,28 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
     }
   }
 
+  // Same shape as handleApplyVegasLines -- bulk-computes and saves every
+  // player's Ownership score from their current ownership_pct (see
+  // backend/api/player_pool/calculate_ownership_scores.py), then reloads
+  // so the grid picks up the freshly-saved values.
+  async function handleCalculateOwnershipScores() {
+    setOwnershipUpdating(true);
+    setOwnershipUpdateMessage(null);
+    try {
+      const result = await calculateOwnershipScores(season, week, platform, contest);
+      setOwnershipUpdateMessage(
+        result.skipped_count > 0
+          ? `Updated ${result.applied_count} players (${result.skipped_count} skipped -- no ownership data or n/a for DST).`
+          : `Updated ${result.applied_count} players.`
+      );
+      load();
+    } catch (err) {
+      setOwnershipUpdateMessage(err instanceof Error ? err.message : "Failed to calculate Ownership scores");
+    } finally {
+      setOwnershipUpdating(false);
+    }
+  }
+
   const isNotFound = error !== null && error.includes("No DK salary file uploaded yet");
 
   // {game_key: GameEnvironmentEntry} for this week's Vegas Line popovers --
@@ -372,8 +499,19 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
   }, [data]);
 
   const players = data?.players ?? [];
-  const visiblePlayers = players.filter((p) => p.position === position);
   const fields = scoreFieldsForPosition(position);
+  const filteredPlayers = players.filter((p) => p.position === position);
+  // Sorts by the *live* total (unsaved edits included), same number the
+  // Total column itself displays -- sorting against the last-saved
+  // row.total would visibly disagree with the column while someone's
+  // mid-edit.
+  const visiblePlayers = sortField
+    ? [...filteredPlayers].sort((a, b) => {
+        const aValue = sortField === "salary" ? a.salary : liveTotal(playerKey(a), a, fields);
+        const bValue = sortField === "salary" ? b.salary : liveTotal(playerKey(b), b, fields);
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      })
+    : filteredPlayers;
 
   const saveStatus = savingKeys.size > 0 ? "Saving…" : dirtyKeys.size > 0 ? "Unsaved changes" : "All changes saved";
 
@@ -413,11 +551,20 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
               <h2>Player Rankings</h2>
               <span className="player-pool-save-status">{saveStatus}</span>
             </div>
+            {/* A save failure (e.g. a network hiccup) shouldn't take the
+                whole grid down with it -- only a load failure does that
+                (see the `error`-gated block below). This is dismissible
+                by simply saving again; it just reflects the most recent
+                save attempt. */}
+            {saveError && <p className="error">{saveError}</p>}
             {/* Game Environment's own refresh now lives on that column's
                 header (the ↻ icon next to its info icon below) rather than
                 a standalone button/section -- this is just where its
-                result message surfaces now that section is gone. */}
+                result message surfaces now that section is gone. Ownership's
+                refresh icon (Ownership column header) follows the same
+                pattern. */}
             {gameEnvUpdateMessage && <p className="hint">{gameEnvUpdateMessage}</p>}
+            {ownershipUpdateMessage && <p className="hint">{ownershipUpdateMessage}</p>}
             {visiblePlayers.length === 0 ? (
               <p className="hint">No {position} players loaded.</p>
             ) : (
@@ -426,7 +573,19 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                   <thead>
                     <tr>
                       <th className="player-pool-grid-sticky">Name</th>
-                      <th>Salary</th>
+                      <th aria-sort={sortField === "salary" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
+                        <button
+                          type="button"
+                          className="player-pool-sort-header"
+                          onClick={() => toggleSort("salary")}
+                          aria-label={sortAriaLabel("salary", "Salary")}
+                        >
+                          Salary
+                          <span className="player-pool-sort-icon" aria-hidden="true">
+                            {sortIcon("salary")}
+                          </span>
+                        </button>
+                      </th>
                       <th>
                         Expected
                         <br />
@@ -434,6 +593,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                       </th>
                       <th>Team</th>
                       <th>Opp</th>
+                      <th>Home/Away</th>
                       <th>
                         My
                         <br />
@@ -459,6 +619,11 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                               <br />
                               Env
                             </>
+                          ) : f.key === "ownership" ? (
+                            <>
+                              Ownership
+                              <br />
+                            </>
                           ) : (
                             f.label
                           )}
@@ -478,15 +643,41 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                             <HeaderInfoPopover title={f.label} lines={GAME_ENVIRONMENT_NOTES} />
                           )}
                           {f.key === "game_matchup" && <HeaderInfoPopover title={f.label} lines={GAME_MATCHUP_NOTES} />}
+                          {f.key === "ownership" && (
+                            <button
+                              type="button"
+                              className="header-refresh-icon"
+                              disabled={ownershipUpdating}
+                              onClick={handleCalculateOwnershipScores}
+                              aria-label={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
+                              title={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
+                            >
+                              ↻
+                            </button>
+                          )}
                           {f.key === "ownership" && <HeaderInfoPopover title={f.label} lines={OWNERSHIP_NOTES} />}
                           {f.key === "volume" && <HeaderInfoPopover title={f.label} lines={VOLUME_OPPORTUNITIES_NOTES} />}
                           {f.key === "talent" && <HeaderInfoPopover title={f.label} lines={TALENT_EXPLOSIVENESS_NOTES} />}
                         </th>
                       ))}
-                      <th className="player-pool-grid-sticky-right">
-                        Rank
-                        <br />
-                        Total
+                      <th
+                        className="player-pool-grid-sticky-right"
+                        aria-sort={sortField === "total" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
+                      >
+                        <button
+                          type="button"
+                          className="player-pool-sort-header player-pool-sort-header-stacked"
+                          onClick={() => toggleSort("total")}
+                          aria-label={sortAriaLabel("total", "Total")}
+                        >
+                          <span>Rank</span>
+                          <span className="player-pool-sort-header-row">
+                            Total
+                            <span className="player-pool-sort-icon" aria-hidden="true">
+                              {sortIcon("total")}
+                            </span>
+                          </span>
+                        </button>
                       </th>
                     </tr>
                   </thead>
@@ -501,6 +692,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                           <td className="player-pool-grid-num">{formatExpectedFpts(row.expected_fpts)}</td>
                           <td>{row.team}</td>
                           <td>{row.is_home === null ? row.opponent : row.is_home ? `vs ${row.opponent}` : `@${row.opponent}`}</td>
+                          <td>{homeAwayLabel(row.is_home)}</td>
                           <td>
                             <input
                               type="checkbox"
@@ -515,9 +707,9 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                             <td key={f.key}>
                               <input
                                 type="number"
-                                min={f.key === "game_environment" ? 0 : 1}
-                                max={f.key === "game_environment" ? 1 : 3}
-                                step={f.key === "game_environment" ? "0.5" : "0.25"}
+                                min={1}
+                                max={3}
+                                step="0.25"
                                 title={
                                   DEFAULT_FALLBACK_FIELDS.has(f.key)
                                     ? "Falls back to the Settings Default until changed this week"

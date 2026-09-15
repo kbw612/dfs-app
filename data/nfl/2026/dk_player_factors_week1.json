@@ -2,17 +2,786 @@
   "Aaron Rodgers": {
     "game_environment": null,
     "game_matchup": 2.0,
-    "ownership": 2.0,
+    "ownership": 3.0,
     "salary_value": null,
     "volume": 2.0,
     "talent": 3.0
   },
   "Joe Burrow": {
-    "game_environment": 0.5,
+    "game_environment": 2.0,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Lamar Jackson": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "Trevor Lawrence": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 2.0
+  },
+  "Jalen Hurts": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Jayden Daniels": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Daniel Jones": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Jordan Love": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Tyler Shough": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Kyler Murray": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Jacoby Brissett": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 1.0
+  },
+  "Jahmyr Gibbs": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 1.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "Jonathan Taylor": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "Saquon Barkley": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "Jonathon Brooks": {
+    "game_environment": null,
     "game_matchup": 2.0,
     "ownership": 2.0,
     "salary_value": null,
     "volume": 2.0,
+    "talent": 3.0
+  },
+  "Bijan Robinson": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "Omarion Hampton": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
     "talent": 2.0
+  },
+  "D'Andre Swift": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Bhayshul Tuten": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Chris Rodriguez Jr.": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "James Cook III": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": null,
+    "talent": null
+  },
+  "Jeremiyah Love": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Jaylen Warren": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Rico Dowdle": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Jacory Croskey-Merritt": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Chris Brooks": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 1.0
+  },
+  "Amon-Ra St. Brown": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 1.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 3.0
+  },
+  "DeVonta Smith": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 2.0
+  },
+  "Jameson Williams": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Ladd McConkey": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Chris Olave": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 1.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 2.0
+  },
+  "Christian Watson": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 3.0
+  },
+  "Parker Washington": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Brian Thomas Jr.": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": null,
+    "talent": null
+  },
+  "Jakobi Meyers": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Quentin Johnston": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Terry McLaurin": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "DJ Moore": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Antonio Williams": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Marvin Harrison Jr.": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Michael Wilson": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Stefon Diggs": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 1.0
+  },
+  "Matthew Golden": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Dontayvion Wicks": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Zay Flowers": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 2.0
+  },
+  "Devaughn Vele": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 1.0
+  },
+  "Kyle Pitts Sr.": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": null,
+    "talent": null
+  },
+  "Dalton Kincaid": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Sam LaPorta": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Dallas Goedert": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 2.0,
+    "talent": 2.0
+  },
+  "Chig Okonkwo": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Cade Otton": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 1.0
+  },
+  "Juwan Johnson": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": 2.0,
+    "salary_value": null,
+    "volume": 3.0,
+    "talent": 2.0
+  },
+  "Brenton Strange": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": 3.0,
+    "salary_value": null,
+    "volume": 1.0,
+    "talent": 2.0
+  },
+  "Chargers": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Jaguars": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Steelers": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Lions": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Eagles": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Titans": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Texans": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Raiders": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Bears": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Bengals": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Buccaneers": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Dolphins": {
+    "game_environment": null,
+    "game_matchup": 3.0,
+    "ownership": null,
+    "salary_value": 2.0,
+    "volume": null,
+    "talent": null
+  },
+  "Colts": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Commanders": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Saints": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Browns": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Cardinals": {
+    "game_environment": null,
+    "game_matchup": 1.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Panthers": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Jets": {
+    "game_environment": null,
+    "game_matchup": 2.0,
+    "ownership": null,
+    "salary_value": 3.0,
+    "volume": null,
+    "talent": null
+  },
+  "Ja'Marr Chase": {
+    "ownership": 1.0
+  },
+  "Justin Jefferson": {
+    "ownership": 2.0
+  },
+  "Chase Brown": {
+    "ownership": 3.0
+  },
+  "Josh Allen": {
+    "ownership": 3.0
+  },
+  "De'Von Achane": {
+    "ownership": 2.0
+  },
+  "Nico Collins": {
+    "ownership": 3.0
+  },
+  "Trey McBride": {
+    "ownership": 3.0
+  },
+  "Derrick Henry": {
+    "ownership": 2.0
+  },
+  "Ashton Jeanty": {
+    "ownership": 2.0
+  },
+  "Drake London": {
+    "ownership": 3.0
+  },
+  "Caleb Williams": {
+    "ownership": 3.0
+  },
+  "Tee Higgins": {
+    "ownership": 2.0
+  },
+  "Breece Hall": {
+    "ownership": 2.0
+  },
+  "Emeka Egbuka": {
+    "ownership": 3.0
+  },
+  "Justin Herbert": {
+    "ownership": 2.0
+  },
+  "Tetairoa McMillan": {
+    "ownership": 3.0
+  },
+  "Jared Goff": {
+    "ownership": 2.0
+  },
+  "David Montgomery": {
+    "ownership": 3.0
+  },
+  "Baker Mayfield": {
+    "ownership": 3.0
+  },
+  "Travis Etienne Jr.": {
+    "ownership": 3.0
+  },
+  "Jordan Addison": {
+    "ownership": 3.0
+  },
+  "Garrett Wilson": {
+    "ownership": 2.0
+  },
+  "Bucky Irving": {
+    "ownership": 2.0
+  },
+  "Alec Pierce": {
+    "ownership": 3.0
+  },
+  "Tony Pollard": {
+    "ownership": 3.0
+  },
+  "Quinshon Judkins": {
+    "ownership": 3.0
+  },
+  "Chuba Hubbard": {
+    "ownership": 3.0
+  },
+  "Luther Burden III": {
+    "ownership": 2.0
+  },
+  "DK Metcalf": {
+    "ownership": 3.0
+  },
+  "Rome Odunze": {
+    "ownership": 3.0
+  },
+  "Malik Willis": {
+    "ownership": 3.0
+  },
+  "Carnell Tate": {
+    "ownership": 3.0
+  },
+  "Colston Loveland": {
+    "ownership": 3.0
+  },
+  "C.J. Stroud": {
+    "ownership": 3.0
+  },
+  "Bryce Young": {
+    "ownership": 3.0
+  },
+  "Kenny Gainwell": {
+    "ownership": 3.0
+  },
+  "Chris Godwin Jr.": {
+    "ownership": 3.0
+  },
+  "Josh Downs": {
+    "ownership": 3.0
+  },
+  "Cam Ward": {
+    "ownership": 3.0
+  },
+  "Kirk Cousins": {
+    "ownership": 3.0
+  },
+  "Jayden Reed": {
+    "ownership": 3.0
+  },
+  "Michael Pittman Jr.": {
+    "ownership": 3.0
+  },
+  "Tyler Warren": {
+    "ownership": 3.0
+  },
+  "MarShawn Lloyd": {
+    "ownership": 3.0
+  },
+  "Wan'Dale Robinson": {
+    "ownership": 3.0
+  },
+  "Khalil Shakir": {
+    "ownership": 3.0
+  },
+  "Deshaun Watson": {
+    "ownership": 3.0
+  },
+  "Geno Smith": {
+    "ownership": 3.0
+  },
+  "Jalen Coker": {
+    "ownership": 3.0
+  },
+  "KC Concepcion": {
+    "ownership": 3.0
+  },
+  "Tucker Kraft": {
+    "ownership": 3.0
+  },
+  "Jalen Nailor": {
+    "ownership": 3.0
+  },
+  "Harold Fannin Jr.": {
+    "ownership": 3.0
+  },
+  "Cooper Rush": {
+    "ownership": 3.0
+  },
+  "Tre Tucker": {
+    "ownership": 2.0
+  },
+  "Adonai Mitchell": {
+    "ownership": 3.0
+  },
+  "Rashod Bateman": {
+    "ownership": 3.0
+  },
+  "Mark Andrews": {
+    "ownership": 3.0
+  },
+  "Tre' Harris": {
+    "ownership": 3.0
+  },
+  "Dalton Schultz": {
+    "ownership": 3.0
+  },
+  "Pat Freiermuth": {
+    "ownership": 3.0
+  },
+  "Ted Hurst III": {
+    "ownership": 3.0
+  },
+  "T.J. Hockenson": {
+    "ownership": 3.0
+  },
+  "Mike Gesicki": {
+    "ownership": 3.0
+  },
+  "Caleb Douglas": {
+    "ownership": 3.0
+  },
+  "Michael Mayer": {
+    "ownership": 1.0
+  },
+  "Charlie Kolar": {
+    "ownership": 3.0
   }
 }

@@ -18,11 +18,21 @@ CSV a contest's own "Export to CSV" button produces) into two things:
    and salary cap usage. See _build_lineup_summary in
    contest_results_engine.py for how each of those is derived.
 
-2. ContestResultRow -- the export's own player-reference table
-   (Player/Roster Position/%Drafted/FPTS, one row per distinct
-   player+roster-slot combination that appeared anywhere in the
-   contest), reformatted with Salary joined in from the DK salary file
-   and this week's number attached -- matches the person's own
+2. ContestResultRow -- the export's own player-reference table, collapsed
+   to one row per PLAYER (not per player+roster-slot combination the raw
+   export itself uses) -- see contest_results_engine.py's
+   build_contest_result_rows for why: DK's own export tracks %Drafted
+   separately per roster slot (e.g. a flex-eligible RB shows up as two
+   separate reference rows, one for RB and one for FLEX, each with its
+   own smaller %Drafted), which reads as confusing/wrong when shown
+   as-is -- a person looking at "Jahmyr Gibbs -- 3.88%" has no way to
+   know that's only his FLEX-slot usage, not his real total. Every
+   matching row's %Drafted is summed into one true per-player ownership
+   figure instead. `position` is the player's own true position from the
+   DK salary file (QB/RB/WR/TE/DST), not a roster slot -- FLEX never
+   appears here since it was never a real position to begin with, just a
+   slot label. Reformatted with Salary also joined in from the DK salary
+   file and this week's number attached -- matches the person's own
    dk_{contest}_contest_results_week{week}.csv naming, though `contest`
    itself is a frontend-only label (see backend/api/contest_results/
    player_results.py's docstring) never sent to or stored by this API.
@@ -30,6 +40,14 @@ CSV a contest's own "Export to CSV" button produces) into two things:
 `players` in TopLineup is in the export's own fixed slot order (DST,
 FLEX, QB, RB, RB, TE, WR, WR, WR) -- see
 contest_standings_parser.parse_lineup_text.
+
+3. OptimalLineup -- not a real contest entry at all, but the single
+   highest-actual-FPTS DK Classic lineup (1 QB, 2 RB, 3 WR, 1 TE, 1 FLEX,
+   1 DST) that COULD have been built under a given salary cap, built from
+   this week's own ContestResultRow list -- "if you'd known the real
+   scores in advance, what's the best possible lineup." See
+   backend/services/contest_results/optimal_lineup.py's own docstring for
+   how it's solved and its player-pool coverage caveat.
 """
 
 from __future__ import annotations
@@ -49,6 +67,12 @@ class LineupPlayer(BaseModel):
     # incomplete; the lineup's own totals below only sum what's real.
     salary: int | None
     position: str | None
+    # Summed across every roster slot this player was used in anywhere in
+    # the contest (via _total_pct_drafted_by_player), not just the one
+    # slot THIS lineup happened to draft them at -- same number
+    # ContestResultRow.pct_drafted shows for this player in the Contest
+    # Results tab, so the two views never disagree. None only if this
+    # player has no reference-table row at all.
     pct_drafted: float | None
     exp_pts: float | None
     act_pts: float | None
@@ -144,10 +168,47 @@ class TopLineup(BaseModel):
     summary: LineupSummary
 
 
+class OptimalLineupPlayer(BaseModel):
+    """One slot in an OptimalLineup -- unlike LineupPlayer above, every
+    field here is a plain non-optional value, since a player only gets
+    into an OptimalLineup in the first place if they had a real salary
+    and true position to build the roster with (see
+    optimal_lineup.py's own docstring)."""
+
+    roster_position: str
+    player: str
+    position: str
+    salary: int
+    fpts: float
+
+
+class OptimalLineup(BaseModel):
+    """The single highest actual-FPTS lineup buildable under a salary cap
+    from one week's ContestResultRow list -- see backend/services/
+    contest_results/optimal_lineup.py's build_optimal_lineup for exactly
+    how this is solved (an exact search, not a heuristic) and its own
+    important coverage caveat (only players someone actually rostered in
+    the contest are eligible, since that's the only pool with a real
+    actual-FPTS number to optimize against)."""
+
+    players: list[OptimalLineupPlayer]
+    total_salary: int
+    total_fpts: float
+    # salary_cap minus total_salary -- always >= 0, since a lineup that
+    # couldn't fit under the cap is never returned in the first place.
+    salary_leftover: int
+
+
 class ContestResultRow(BaseModel):
     week: int
     player: str
     salary: int | None
-    roster_position: str
+    # This player's own true position (QB/RB/WR/TE/DST) from the DK salary
+    # file -- None if their name didn't match anything there. Never "FLEX"
+    # -- see this module's own docstring for why a roster slot isn't what
+    # this field means anymore.
+    position: str | None
+    # Summed across every roster slot this player was used in anywhere in
+    # the contest -- see build_contest_result_rows.
     pct_drafted: float
     fpts: float

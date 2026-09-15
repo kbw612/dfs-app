@@ -1,6 +1,7 @@
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.services.contest_results.contest_results_engine import build_contest_result_rows, build_top_lineups
 from backend.services.contest_results.contest_standings_parser import (
+    ContestEntry,
     ContestReferenceRow,
     ContestStandings,
     parse_contest_standings_csv,
@@ -63,6 +64,22 @@ def test_parse_contest_standings_csv_parses_entries_and_reference_rows():
     assert standings.reference_rows == [
         ContestReferenceRow(player="Bijan Robinson", roster_position="FLEX", pct_drafted=49.69, fpts=7.30),
         ContestReferenceRow(player="Puka Nacua", roster_position="WR", pct_drafted=36.46, fpts=30.90),
+    ]
+
+
+def test_parse_contest_standings_csv_strips_trailing_space_from_dst_reference_rows():
+    # DK's own export pads every DST row's Player cell with a trailing
+    # space (confirmed against a real export -- "Raiders ", "Packers ",
+    # etc., unlike individual player names) -- an unstripped name here
+    # breaks every downstream exact-match lookup (salary file, tracker)
+    # for every DST, not just one team.
+    csv_text = (
+        f"{HEADER}\n"
+        "1,111,alice,0,50.0,DST Raiders FLEX Bijan Robinson,,Raiders ,DST,4.39%,0\n"
+    )
+    standings = parse_contest_standings_csv(csv_text)
+    assert standings.reference_rows == [
+        ContestReferenceRow(player="Raiders", roster_position="DST", pct_drafted=4.39, fpts=0.0),
     ]
 
 
@@ -165,11 +182,14 @@ def test_build_top_lineups_unmatched_player_gets_none_fields_without_crashing():
     assert lu.total_act_pts == 15.2
 
 
-def test_build_top_lineups_prefers_exact_slot_match_over_player_only_fallback():
-    # Two reference rows for the same player at different slots (a real
-    # scenario -- some entrants drafted them at RB, others as FLEX) --
-    # the lineup used FLEX, so it should pick FLEX's own %Drafted, not
-    # whichever row happens to come first.
+def test_build_top_lineups_sums_pct_drafted_across_roster_slots():
+    # Real DK export behavior: a flex-eligible player gets two separate
+    # reference rows, one per slot he was drafted into across the whole
+    # contest. This lineup happened to use him at FLEX, but the displayed
+    # pct_drafted should be his TOTAL ownership (matching Contest Results'
+    # own number for the same player -- see
+    # test_build_contest_result_rows_sums_pct_drafted_across_roster_slots),
+    # not just the FLEX row's own smaller share.
     standings = _standings_for_one_lineup(
         "FLEX Bijan Robinson",
         points=7.30,
@@ -181,7 +201,30 @@ def test_build_top_lineups_prefers_exact_slot_match_over_player_only_fallback():
     salary_players = [make_player("Bijan Robinson", "RB", 7700)]
 
     lineups = build_top_lineups(standings, salary_players, top_n=10)
-    assert lineups[0].players[0].pct_drafted == 49.69
+    assert lineups[0].players[0].pct_drafted == 5.0 + 49.69
+    # Act Pts is unaffected -- still the exact-slot match (same real value
+    # either way, since a player's actual score doesn't depend on slot).
+    assert lineups[0].players[0].act_pts == 7.30
+
+
+def test_build_top_lineups_pct_drafted_matches_contest_result_rows_for_same_player():
+    # The exact Gibbs scenario that motivated this fix: Top Lineups and
+    # Contest Results must never disagree on the same player's ownership.
+    standings = ContestStandings(
+        entries=[
+            ContestEntry(rank=1, entry_id="1", entry_name="alice", points=37.6, lineup_text="RB Jahmyr Gibbs")
+        ],
+        reference_rows=[
+            ContestReferenceRow(player="Jahmyr Gibbs", roster_position="RB", pct_drafted=40.83, fpts=37.6),
+            ContestReferenceRow(player="Jahmyr Gibbs", roster_position="FLEX", pct_drafted=3.88, fpts=37.6),
+        ],
+    )
+    salary_players = [make_player("Jahmyr Gibbs", "RB", 8000)]
+
+    lineup_pct = build_top_lineups(standings, salary_players, top_n=1)[0].players[0].pct_drafted
+    result_row_pct = build_contest_result_rows(standings, salary_players, week=1)[0].pct_drafted
+    assert round(lineup_pct, 2) == 44.71
+    assert lineup_pct == result_row_pct
 
 
 def test_build_top_lineups_respects_top_n():
@@ -212,12 +255,48 @@ def test_build_contest_result_rows_joins_salary_and_attaches_week():
     assert rows[0].week == 15
     assert rows[0].player == "Bijan Robinson"
     assert rows[0].salary == 7700
-    assert rows[0].roster_position == "FLEX"
+    assert rows[0].position == "RB"
     assert rows[0].pct_drafted == 49.69
     assert rows[0].fpts == 7.30
 
     assert rows[1].player == "Unmatched Guy"
     assert rows[1].salary is None
+    assert rows[1].position is None
+
+
+def test_build_contest_result_rows_sums_pct_drafted_across_roster_slots():
+    # Real DK export behavior: a flex-eligible player gets two separate
+    # reference rows, one per slot he was drafted into -- his true
+    # ownership is the sum, not either row's own smaller number (this is
+    # the exact "Gibbs shows 3.88% here but 40% there" confusion this
+    # collapse fixes).
+    standings = ContestStandings(
+        entries=[],
+        reference_rows=[
+            ContestReferenceRow(player="Jahmyr Gibbs", roster_position="RB", pct_drafted=40.83, fpts=37.6),
+            ContestReferenceRow(player="Jahmyr Gibbs", roster_position="FLEX", pct_drafted=3.88, fpts=37.6),
+        ],
+    )
+    salary_players = [make_player("Jahmyr Gibbs", "RB", 8500)]
+
+    rows = build_contest_result_rows(standings, salary_players, week=1)
+    assert len(rows) == 1
+    assert rows[0].player == "Jahmyr Gibbs"
+    assert rows[0].position == "RB"
+    assert round(rows[0].pct_drafted, 2) == 44.71
+    assert rows[0].fpts == 37.6
+
+
+def test_build_contest_result_rows_sorted_by_pct_drafted_descending():
+    standings = ContestStandings(
+        entries=[],
+        reference_rows=[
+            ContestReferenceRow(player="Low Owned", roster_position="WR", pct_drafted=1.0, fpts=5.0),
+            ContestReferenceRow(player="High Owned", roster_position="RB", pct_drafted=50.0, fpts=10.0),
+        ],
+    )
+    rows = build_contest_result_rows(standings, [], week=1)
+    assert [r.player for r in rows] == ["High Owned", "Low Owned"]
 
 
 # -- LineupSummary --------------------------------------------------------

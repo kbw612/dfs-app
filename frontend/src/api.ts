@@ -13,13 +13,18 @@ import type {
   FileInfo,
   GameBlocksResult,
   GameEnvironmentEntry,
+  GameLogsAgainstResult,
+  GameLogsResult,
   MyPlayerPoolEntryInput,
   NameAlias,
   NameAliasesResult,
+  OptimalLineupsResult,
   OwnershipLatestResult,
   OwnershipProjectionsFileInfo,
+  OwnershipMainSlateScrapeResult,
   OwnershipProjectionsImportResult,
   OwnershipProjectionsResult,
+  OwnershipScoresApplyResult,
   PlatformSettings,
   PlayerDefaultEntryInput,
   PlayerPoolEntryInput,
@@ -29,6 +34,7 @@ import type {
   PositionBlocksResult,
   SalaryMultiplierEntryInput,
   SalaryMultiplierResult,
+  ScheduleImportResult,
   ScrapeResult,
   SnapshotSummary,
   UsageBumpsResult,
@@ -38,9 +44,10 @@ import type {
   WeeklyStatsFileInfoResult,
   WeeklyStatsImportResult,
   WeeklyStatsPosition,
+  WeeklyStatsScrapeResult,
 } from "./types";
 
-// Falls back to the backend's default local port -- see .env.example if
+// Falls back to the backend's default local port -- see .env if
 // you're running the API somewhere else.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -184,6 +191,13 @@ export interface PositionBlocksParams {
   // same-team grouping is exactly one of these sizes (see backend/
   // services/ownership/position_blocks.py's filter_blocks_by_same_team_size).
   sameTeamSizes: number[];
+  // Independent, both-optional pool filters -- Settings' Player Selection
+  // (defaults true, matching this endpoint's behavior before either became
+  // optional) and My Player Pool's own saved shortlist (defaults false,
+  // since it's the newer/narrower of the two). See backend/api/ownership/
+  // position_blocks.py's docstring for why these aren't mutually exclusive.
+  useSettingsPool?: boolean;
+  useMyPlayerPool?: boolean;
 }
 
 export function fetchPositionBlocks(params: PositionBlocksParams): Promise<PositionBlocksResult> {
@@ -195,6 +209,8 @@ export function fetchPositionBlocks(params: PositionBlocksParams): Promise<Posit
     same_game_only: String(params.sameGameOnly),
     platform: params.platform,
     contest: params.contest,
+    apply_selection_filter: String(params.useSettingsPool ?? true),
+    apply_my_player_pool_filter: String(params.useMyPlayerPool ?? false),
   });
   for (const team of params.teams) query.append("team", team);
   for (const game of params.games) query.append("game", game);
@@ -227,6 +243,10 @@ export interface GameBlocksParams {
   // own "Filter by game" chips populate from this, before the person has
   // picked a game to actually retrieve blocks for. Defaults to false.
   gamesOnly?: boolean;
+  // Same two independent, both-optional pool filters as
+  // PositionBlocksParams above -- see that interface's own comment.
+  useSettingsPool?: boolean;
+  useMyPlayerPool?: boolean;
 }
 
 export function fetchGameBlocks(params: GameBlocksParams): Promise<GameBlocksResult> {
@@ -235,6 +255,8 @@ export function fetchGameBlocks(params: GameBlocksParams): Promise<GameBlocksRes
     week: String(params.week),
     platform: params.platform,
     contest: params.contest,
+    apply_selection_filter: String(params.useSettingsPool ?? true),
+    apply_my_player_pool_filter: String(params.useMyPlayerPool ?? false),
   });
   if (params.gamesOnly) query.set("games_only", "true");
   if (params.maxSize !== undefined) query.set("max_size", String(params.maxSize));
@@ -294,6 +316,29 @@ export function fetchContestResultRows(
 ): Promise<ContestResultRowsResult> {
   const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
   return apiGet<ContestResultRowsResult>(`/api/contest-results/player-results?${params.toString()}`);
+}
+
+// The 10 exact-highest-scoring distinct lineups under `salaryCap` --
+// cached server-side to a JSON file after the first generation for a
+// given week; pass regenerate=true to force a fresh generation. See
+// backend/api/contest_results/optimal_lineup_pools.py.
+export function fetchOptimalLineupsTop10(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  salaryCap: number,
+  regenerate = false
+): Promise<OptimalLineupsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    contest,
+    salary_cap: String(salaryCap),
+    regenerate: String(regenerate),
+  });
+  return apiGet<OptimalLineupsResult>(`/api/contest-results/optimal-lineups-top10?${params.toString()}`);
 }
 
 // {filename, uploaded_at} for whatever contest standings file is
@@ -383,6 +428,16 @@ export function fetchWeeklyStatsFileInfo(season: number, week: number): Promise<
   return apiGet<WeeklyStatsFileInfoResult>(`/api/dk-players/weekly-stats/file-info?${params.toString()}`);
 }
 
+// Scrapes all 4 positions from FantasyData in one call and saves whichever
+// ones succeed -- see backend/api/dk_players/weekly_stats.py. Callers
+// should check fetchWeeklyStatsFileInfo first and confirm with the user
+// before calling this if any position already has saved data for the
+// target week, since this always overwrites.
+export function scrapeWeeklyStats(season: number, week: number): Promise<WeeklyStatsScrapeResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiPost<WeeklyStatsScrapeResult>(`/api/dk-players/weekly-stats/scrape?${params.toString()}`);
+}
+
 // Name Aliases -- global list (not season/week/platform-scoped), see
 // backend/api/name_aliases/__init__.py. saveNameAliases always replaces
 // the whole list.
@@ -392,6 +447,61 @@ export function fetchNameAliases(): Promise<NameAliasesResult> {
 
 export function saveNameAliases(aliases: NameAlias[]): Promise<NameAliasesResult> {
   return apiPut<NameAliasesResult>("/api/name-aliases", { aliases });
+}
+
+// Schedule -- one full-season Team/Week/Opponent/GameLocation file per
+// season (see backend/api/schedule/__init__.py), not week/platform/
+// contest-scoped like most uploads here. Feeds the Game Logs tab's
+// Opponent/GameLoc columns and Game filter.
+export function importScheduleCsv(season: number, file: File): Promise<ScheduleImportResult> {
+  const params = new URLSearchParams({ season: String(season) });
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiPostForm<ScheduleImportResult>(`/api/schedule/import-csv?${params.toString()}`, formData);
+}
+
+export function fetchScheduleFileInfo(season: number): Promise<FileInfo> {
+  const params = new URLSearchParams({ season: String(season) });
+  return apiGet<FileInfo>(`/api/schedule/file-info?${params.toString()}`);
+}
+
+// Game Logs -- see backend/api/game_logs/game_logs.py. Returns every
+// currently-rostered QB/RB/WR/TE league-wide with their own recent-weeks
+// history; the Game Logs tab's Team/Game chip filters narrow this
+// client-side, same convention as every other tab's Position filter.
+export function fetchGameLogs(
+  season: number,
+  week: number,
+  platform: string,
+  lookbackWeeks: number
+): Promise<GameLogsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    lookback_weeks: String(lookbackWeeks),
+  });
+  return apiGet<GameLogsResult>(`/api/game-logs?${params.toString()}`);
+}
+
+// Game Logs Against -- see backend/api/game_logs_against/game_logs_against.py.
+// Unlike fetchGameLogs, this is already scoped to this week's slate
+// (one "Against {team}" panel per team appearing in `games`) -- the Game
+// filter narrows to one game's two panels client-side, same shared-Game-
+// filter shape as Game Logs itself.
+export function fetchGameLogsAgainst(
+  season: number,
+  week: number,
+  platform: string,
+  lookbackWeeks: number
+): Promise<GameLogsAgainstResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    lookback_weeks: String(lookbackWeeks),
+  });
+  return apiGet<GameLogsAgainstResult>(`/api/game-logs-against?${params.toString()}`);
 }
 
 // applySelectionFilter defaults true (the Player Rankings tab's normal
@@ -418,6 +528,22 @@ export function fetchPlayerPool(
 
 export function savePlayerPoolEntry(entry: PlayerPoolEntryInput): Promise<PlayerPoolEntryInput> {
   return apiPut<PlayerPoolEntryInput>("/api/player-pool/entry", entry);
+}
+
+// Bulk-computes and saves each player's Ownership score from their
+// current ownership_pct -- see backend/api/player_pool/
+// calculate_ownership_scores.py. Mirrors applyVegasLines' role for Game
+// Environment; 404s if no Ownership projections have been uploaded yet
+// for this (season, week, platform), same as fetchPlayerPool's own "no DK
+// salary uploaded yet" case for the salary file.
+export function calculateOwnershipScores(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+): Promise<OwnershipScoresApplyResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiPost<OwnershipScoresApplyResult>(`/api/player-pool/calculate-ownership-scores?${params.toString()}`);
 }
 
 // My Player Pool tab -- see backend/api/my_player_pool/latest.py. Returns
@@ -574,4 +700,18 @@ export function importOwnershipProjectionsCsv(
     `/api/ownership/upload-projections-csv?${params.toString()}`,
     formData
   );
+}
+
+// Scrapes OneWeekSeason's public DraftKings Main Slate page and saves the
+// result through the same file the manual upload above writes to -- see
+// backend/api/ownership/scrape_main_slate.py. No file to attach; this is a
+// second way to produce that same CSV, offered as an alternative to the
+// upload, not a replacement for it.
+export function scrapeMainSlateOwnership(
+  season: number,
+  week: number,
+  platform: string
+): Promise<OwnershipMainSlateScrapeResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform });
+  return apiPost<OwnershipMainSlateScrapeResult>(`/api/ownership/scrape-main-slate?${params.toString()}`);
 }

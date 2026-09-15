@@ -6,7 +6,7 @@
 export type GameEnvironmentTier = "green" | "yellow" | "red";
 
 // Same thresholds as backend/services/game_environment/scoring.py's
-// score_game_environment (0/0.5/1 point bands), reimplemented here purely
+// score_game_environment (1/2/3 point bands), reimplemented here purely
 // for coloring a team's *current* implied total -- these tabs are raw
 // browse views of the Vegas Lines scrape, not tied to whether Game
 // Environment has actually been applied yet for this game. null (no

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { addDkPlayersWeek, calculateDkPlayersWeekPoints, fetchDkPlayers, fetchDkPlayersWeekStatus } from "../api";
 import type { CalculateWeekPointsResult, DkPlayerRow } from "../types";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { formatOwnershipPct, formatSalary } from "./playerDisplay";
 
 interface DkPlayersViewProps {
@@ -40,6 +41,9 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
   // it (missing stat files, possible name mismatches).
   const [calcResult, setCalcResult] = useState<CalculateWeekPointsResult | null>(null);
   const [calcError, setCalcError] = useState<string | null>(null);
+  // Pending confirm-popover, if any -- replaces window.confirm (a blocking
+  // browser dialog, not part of the app's own UI) with an in-page modal.
+  const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
   const reload = useCallback(() => {
     setLoading(true);
@@ -93,12 +97,22 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
         const warning = status.has_calculated_points
           ? `Week ${week} already has ${status.player_count} players WITH calculated points -- replacing will lose them. Replace with the current Salary File?`
           : `Week ${week} already has ${status.player_count} players -- replace with the current Salary File?`;
-        if (!window.confirm(warning)) {
-          setAddBusy(false);
-          return;
-        }
+        setAddBusy(false);
+        setConfirm({ message: warning, onConfirm: () => performAddWeek(true) });
+        return;
       }
-      const result = await addDkPlayersWeek(season, week, platform, status.exists);
+      await performAddWeek(false);
+    } catch (err) {
+      setAddMessage(err instanceof Error ? err.message : "Failed to add this week's players");
+      setAddBusy(false);
+    }
+  }
+
+  async function performAddWeek(replace: boolean) {
+    setConfirm(null);
+    setAddBusy(true);
+    try {
+      const result = await addDkPlayersWeek(season, week, platform, replace);
       setAddMessage(
         `Added ${result.added_count} players for week ${result.week}${result.replaced ? " (replaced existing rows)" : ""}`
       );
@@ -278,6 +292,15 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
             </div>
           )}
         </section>
+      )}
+
+      {confirm && (
+        <ConfirmDialog
+          message={confirm.message}
+          confirmLabel="Replace"
+          onConfirm={confirm.onConfirm}
+          onCancel={() => setConfirm(null)}
+        />
       )}
     </>
   );

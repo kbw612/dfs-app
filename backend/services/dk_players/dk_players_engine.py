@@ -21,6 +21,12 @@ from backend.schemas.dk_players.dk_players import (
 )
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.services.contest_results.contest_standings_parser import ContestReferenceRow
+# Re-exported for backward compatibility -- apply_name_alias/
+# name_lookup_candidates used to be defined here, now live in
+# backend/services/shared/name_match.py (alongside normalize_player_name,
+# the same "cross-source name matching" family of helper) since Player
+# Pool's Player Defaults resolution needs them too, not just DK Players.
+from backend.services.shared.name_match import apply_name_alias, name_lookup_candidates  # noqa: F401
 
 # Name suffixes stripped before comparing "last names" in
 # suggest_stat_file_match -- e.g. "James Cook III" and "James Cook" should
@@ -50,37 +56,6 @@ _FLEX_ELIGIBLE_POSITIONS = {"RB", "WR", "TE"}
 
 def derive_roster_position(position: str) -> str:
     return f"{position}/FLEX" if position in _FLEX_ELIGIBLE_POSITIONS else position
-
-
-def apply_name_alias(name: str, name_aliases: dict[str, str]) -> str:
-    """`name_aliases` is {alias: canonical} -- returns the canonical name
-    if `name` has one, otherwise `name` unchanged."""
-    return name_aliases.get(name, name)
-
-
-def name_lookup_candidates(name: str, name_aliases: dict[str, str]) -> list[str]:
-    """Every spelling worth trying for `name` when matching against an
-    external source (a stat file or Contest Standings), in the order to
-    try them: `name` itself first, since real DraftKings exports commonly
-    agree with each other and need no translation at all -- only a genuine
-    mismatch needs an alias. Then the forward alias->canonical mapping (if
-    `name` IS a known alias), for the source that needs the "other"
-    spelling. Then the *reverse* mapping (if `name` IS a known canonical,
-    whichever alias maps to it), since which direction an alias needs to
-    be applied can differ per source -- the Salary File/tracker might
-    already agree with Contest Standings' spelling (no translation needed
-    there) while only the stat file needs the canonical spelling, or vice
-    versa, and there's no way to know which up front. calculate_week_points
-    tries these in order and stops at the first source match, so a name
-    that matches natively never gets needlessly translated."""
-    candidates = [name]
-    canonical = name_aliases.get(name)
-    if canonical is not None and canonical not in candidates:
-        candidates.append(canonical)
-    for alias, canon in name_aliases.items():
-        if canon == name and alias not in candidates:
-            candidates.append(alias)
-    return candidates
 
 
 def _core_last_name(name: str) -> str:

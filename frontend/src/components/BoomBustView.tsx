@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { fetchPlayerDefaults, fetchPlayerPool } from "../api";
+import { fetchNameAliases, fetchPlayerDefaults, fetchPlayerPool } from "../api";
 import { BOOM_BUST_DFS_TYPE } from "../dfsTypes";
+import { nameLookupCandidates } from "../nameAliasMatching";
 import type { PlayerPoolPlayer } from "../types";
 import { formatOwnershipPct, formatSalary } from "./playerDisplay";
 
@@ -26,6 +27,16 @@ function boomBustTier(ownershipPct: number | null): Tier | null {
 }
 
 type SortMode = "tier_green_first" | "tier_yellow_first" | "tier_red_first" | "ownership_asc" | "ownership_desc";
+
+// "all" -- every Boom/Bust-tagged player in this (season, week, platform,
+// contest)'s salary file, regardless of Settings' Player Selection grid
+// (fetchPlayerPool's applySelectionFilter=false) -- the original,
+// independent-of-Selection behavior. "selected" additionally requires the
+// player be checked in Player Selection (applySelectionFilter=true), for
+// narrowing Boom/Bust down to "players I'm actually considering" once
+// Selection itself has trimmed the pool -- see PlayerPoolViewProps'
+// contest-scoped fetch and this tab's own docstring.
+type PoolFilter = "all" | "selected";
 
 const CANONICAL_TIER_ORDER: Tier[] = ["green", "yellow", "red"];
 
@@ -100,22 +111,44 @@ function resolvedMultiplierLabel(players: PlayerPoolPlayer[]): string {
 // for a DFS Type tag (same scope as Volume/Talent Defaults), so it's
 // filtered out here too even though fetchPlayerPool would otherwise
 // include it.
+//
+// The "Player pool" filter (see PoolFilter) controls whether a tagged
+// player who's been unchecked in Settings' Player Selection grid still
+// shows up here -- "All in salary file" (the original behavior) shows
+// them regardless, "Selected in Settings" hides them, for narrowing this
+// tab down to "players I'm actually still considering" once Selection
+// itself has trimmed the pool.
 export function BoomBustView({ season, week, platform, contest }: BoomBustViewProps) {
   const [players, setPlayers] = useState<PlayerPoolPlayer[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("ownership_asc");
+  const [poolFilter, setPoolFilter] = useState<PoolFilter>("all");
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
-    // apply_selection_filter=false -- a player's DFS Type tag applies
-    // regardless of whether Settings' Player Selection grid has them
-    // checked, same independence Player Default Factors itself relies on.
-    Promise.all([fetchPlayerPool(season, week, platform, contest, false), fetchPlayerDefaults(season)])
-      .then(([poolResult, defaultsResult]) => {
+    // A player's DFS Type tag itself always applies regardless of
+    // Selection (same independence Player Default Factors relies on) --
+    // poolFilter controls whether the *salary pool this tag is checked
+    // against* is further narrowed to just what's checked in Settings'
+    // Player Selection grid ("selected") or left as every salary-file
+    // player ("all"), via fetchPlayerPool's own applySelectionFilter.
+    Promise.all([
+      fetchPlayerPool(season, week, platform, contest, poolFilter === "selected"),
+      fetchPlayerDefaults(season),
+      fetchNameAliases(),
+    ])
+      .then(([poolResult, defaultsResult, aliasesResult]) => {
+        // Expand each tagged Default name through Name Aliases so a
+        // suffix mismatch between Settings' Player Default Factors grid
+        // and this week's DK salary export (e.g. "Brian Thomas" tagged in
+        // Settings, "Brian Thomas Jr." in the pool) still matches -- see
+        // nameAliasMatching.ts.
         const boomBustNames = new Set(
-          defaultsResult.defaults.filter((d) => d.dfs_type === BOOM_BUST_DFS_TYPE).map((d) => d.player)
+          defaultsResult.defaults
+            .filter((d) => d.dfs_type === BOOM_BUST_DFS_TYPE)
+            .flatMap((d) => nameLookupCandidates(d.player, aliasesResult.aliases))
         );
         setPlayers(poolResult.players.filter((p) => p.position !== "DST" && boomBustNames.has(p.player)));
       })
@@ -124,7 +157,7 @@ export function BoomBustView({ season, week, platform, contest }: BoomBustViewPr
         setError(err instanceof Error ? err.message : "Failed to load Boom/Bust players");
       })
       .finally(() => setLoading(false));
-  }, [season, week, platform, contest]);
+  }, [season, week, platform, contest, poolFilter]);
 
   useEffect(() => {
     load();
@@ -141,8 +174,31 @@ export function BoomBustView({ season, week, platform, contest }: BoomBustViewPr
       </div>
       <p className="hint">
         Everyone tagged DFS Type "Boom/Bust" in Settings' Player Default Factors grid, colored by this week's
-        projected ownership.
+        projected ownership. Use "Player pool" below to also require they're checked in Settings' Player Selection
+        grid.
       </p>
+
+      <div className="chip-filter boom-bust-sort">
+        <span className="filter-label">Player pool</span>
+        <div className="chip-row">
+          <button
+            type="button"
+            className={`chip${poolFilter === "all" ? " selected" : ""}`}
+            aria-pressed={poolFilter === "all"}
+            onClick={() => setPoolFilter("all")}
+          >
+            All in salary file
+          </button>
+          <button
+            type="button"
+            className={`chip${poolFilter === "selected" ? " selected" : ""}`}
+            aria-pressed={poolFilter === "selected"}
+            onClick={() => setPoolFilter("selected")}
+          >
+            Selected in Settings
+          </button>
+        </div>
+      </div>
 
       {players !== null && players.length > 0 && (
         <>

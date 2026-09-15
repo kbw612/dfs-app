@@ -23,6 +23,17 @@ fully replaces whatever was there before for that (week, player) -- the
 caller (the API layer) always sends the complete current set of fields
 from the edit form, not a partial patch, so there's no merge logic needed
 here.
+
+save_entry does its read-modify-write through
+backend/repositories/atomic_json.py's locked_read_modify_write rather than
+a plain read + path.write_text -- this file is now written to several
+times in quick succession whenever Game Matchup's team+position
+propagation fires (see PlayerPoolView.tsx's teammateKeysSharingMatchup),
+and a naive concurrent read-modify-write on the same file can both lose
+one of the updates and, worse, corrupt the file outright if two writes
+interleave at the OS level. See atomic_json.py's own docstring for the
+exact failure this is guarding against -- it happened for real to
+data/nfl/2026/dk_player_factors_week1.json before this fix.
 """
 
 from __future__ import annotations
@@ -30,6 +41,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from backend.repositories.atomic_json import locked_read_modify_write
 from backend.schemas.player_pool.player_pool import PlayerPoolEntry
 from backend.services.platform_settings.prefix import platform_file_prefix
 
@@ -47,11 +59,36 @@ def _load_raw(nfl_data_dir: Path, season: int, week: int, platform: str) -> dict
 
 
 def save_entry(nfl_data_dir: Path, entry: PlayerPoolEntry) -> None:
-    data = _load_raw(nfl_data_dir, entry.season, entry.week, entry.platform)
-    data[entry.player] = entry.model_dump(exclude={"season", "week", "platform", "player"})
     path = _path(nfl_data_dir, entry.season, entry.week, entry.platform)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    def modify(data: dict) -> None:
+        data[entry.player] = entry.model_dump(exclude={"season", "week", "platform", "player"})
+
+    locked_read_modify_write(
+        path, lambda: _load_raw(nfl_data_dir, entry.season, entry.week, entry.platform), modify
+    )
+
+
+def save_ownership_scores(nfl_data_dir: Path, season: int, week: int, platform: str, scores: dict[str, float]) -> None:
+    """Bulk-applies fresh Ownership scores (see backend/services/
+    ownership/scoring.py's score_ownership_pct, used by the Player
+    Rankings refresh icon -- backend/api/player_pool/
+    calculate_ownership_scores.py) to potentially many players in a
+    single locked read-modify-write, rather than one save_entry() call
+    per player -- both for efficiency and because save_entry's full-entry
+    replace would otherwise require re-reading and re-sending every
+    player's other already-saved fields just to touch this one. Unlike
+    save_entry, this only ever touches the `ownership` key -- every other
+    already-saved field for a player is left exactly as it was (or unset,
+    for a player with no entry yet at all)."""
+    path = _path(nfl_data_dir, season, week, platform)
+
+    def modify(data: dict) -> None:
+        for player, score in scores.items():
+            existing = data.get(player, {})
+            data[player] = {**existing, "ownership": score}
+
+    locked_read_modify_write(path, lambda: _load_raw(nfl_data_dir, season, week, platform), modify)
 
 
 def load_entry(nfl_data_dir: Path, season: int, week: int, platform: str, player: str) -> PlayerPoolEntry | None:

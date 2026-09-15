@@ -47,11 +47,23 @@ position's players *before* the team/game filters are applied, not after
 shrink as soon as you've already filtered down to one game. Players
 narrowed out by Settings' Player Selection grid (see
 backend/services/player_selection/engine.py's filter_selected_players)
-are dropped before any of this -- they never appear in a block, and never
-populate the game-filter chips either. RB/WR/TE are the only positions
-this endpoint deals with, so the "DST is never filtered" carve-out in
+are dropped before any of this *whenever* `apply_selection_filter` is true
+(the default, matching this endpoint's behavior before that became
+optional) -- they never appear in a block, and never populate the
+game-filter chips either. RB/WR/TE are the only positions this endpoint
+deals with, so the "DST is never filtered" carve-out in
 filter_selected_players never actually comes up here, but the same shared
 filter is used for consistency with Player Pool.
+
+`apply_my_player_pool_filter` (default false) is the same idea for My
+Player Pool's own saved shortlist (backend/repositories/my_player_pool/
+my_player_pool_repo.py) -- when true, only players explicitly added there
+survive, dropped at the same point as the Settings filter above. The two
+are independent and both optional -- either, both, or neither can be
+active at once, unlike Boom/Bust's mutually-exclusive all-vs-selected
+toggle (see BoomBustView.tsx's own PoolFilter), since "only players I've
+shortlisted AND that are still checked in Settings" is a meaningful
+combination here, not just a choice between two views of the same list.
 """
 
 from __future__ import annotations
@@ -65,11 +77,13 @@ from backend.repositories.ownership.snapshot_repo import (
     find_latest_snapshot as find_latest_ownership_snapshot,
     load_snapshot as load_ownership_snapshot,
 )
+from backend.repositories.my_player_pool.my_player_pool_repo import load_membership
 from backend.repositories.player_selection.player_selection_repo import load_overrides
 from backend.repositories.salary_multiplier.salary_multiplier_repo import load_multipliers
 from backend.schemas.ownership.ownership import PositionBlock
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
+from backend.services.my_player_pool.engine import in_my_player_pool
 from backend.services.ownership.position_blocks import (
     SALARY_CAPS,
     compute_position_blocks,
@@ -108,6 +122,8 @@ def position_blocks_endpoint(
     contest: str = "Classic Main",
     salary_bucket: list[str] = Query(default=[]),
     same_team_size: list[int] = Query(default=[]),
+    apply_selection_filter: bool = True,
+    apply_my_player_pool_filter: bool = False,
 ) -> PositionBlocksResult:
     try:
         validate_block_size(position, block_size)
@@ -139,8 +155,13 @@ def position_blocks_endpoint(
     multiplier = resolve_multiplier(platform, load_multipliers(settings.salary_multiplier_dir).get(platform))
     players = [p.model_copy(update={"expected_fpts": expected_fantasy_points(p.salary, multiplier)}) for p in players]
 
-    overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
-    players = filter_selected_players(players, overrides)
+    if apply_selection_filter:
+        overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
+        players = filter_selected_players(players, overrides)
+
+    if apply_my_player_pool_filter:
+        membership = load_membership(settings.nfl_data_dir, season, week, platform, contest)
+        players = [p for p in players if in_my_player_pool(p.player, membership)]
 
     position_players = [p for p in players if p.position == position]
 
@@ -148,7 +169,7 @@ def position_blocks_endpoint(
     for player in position_players:
         key = game_key(player)
         if key not in game_options_by_key:
-            game_options_by_key[key] = GameOption(key="-".join(sorted(key)), label=game_label(key))
+            game_options_by_key[key] = GameOption(key="-".join(sorted(key)), label=game_label(player))
     games = sorted(game_options_by_key.values(), key=lambda g: g.label)
 
     pool = position_players

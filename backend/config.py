@@ -25,8 +25,17 @@ class Settings(BaseSettings):
 
     # Usage-bump engine (backend/services/usage_bump/engine.py) -- see
     # that module's docstring for how these three files fit together.
-    usage_bump_players_json: Path = Path("./config/usage-bump-players.json")
-    usage_bump_position_settings_json: Path = Path("./config/usage-bump-position-settings.json")
+    # usage_bump_players_json and usage_bump_position_settings_json live
+    # under data/nfl/2026 now (moved out of config/, same per-season data
+    # directory as everything else in nfl_data_dir below) -- not yet
+    # dynamically scoped per-season the way player_factors.json/
+    # platform_settings.json are (the usage-bump feature has no season
+    # param anywhere in its own endpoint/frontend today), so this is a
+    # literal hardcoded 2026 path for now, not a template. player_out_settings_json
+    # (the scoring matrix) stays under config/ -- it's not team/player data,
+    # just a fixed scoring table, unrelated to any one season.
+    usage_bump_players_json: Path = Path("./data/nfl/2026/usage_bump_players.json")
+    usage_bump_position_settings_json: Path = Path("./data/nfl/2026/settings/usage_bump_position_settings.json")
     player_out_settings_json: Path = Path("./config/player-out-settings.json")
 
     # Ownership/leverage engine (backend/services/ownership/engine.py).
@@ -81,6 +90,13 @@ class Settings(BaseSettings):
     # scrape on the same site (see ownership_source_username/password
     # above) -- verified live before building the scraper.
     oneweekseason_week_url_template: str = "https://oneweekseason.com/week/week-{week}-{season}/"
+
+    # DraftKings Main Slate ownership/salary/projections page -- backs the
+    # Settings tab's "Scrape from OneWeekSeason" ownership control (backend/
+    # services/ownership/main_slate_scraper.py). Also no login required,
+    # confirmed live before building that scraper -- distinct from Ownership's
+    # older, login-gated scrape of /basic-ownership-dk (scraper.py above).
+    oneweekseason_main_slate_url: str = "https://oneweekseason.com/draftkings-main-slate/"
 
     # Current Week (backend/repositories/current_week/current_week_repo.py)
     # -- the single (season, week) pointer shared by every weekly tab, set

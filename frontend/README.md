@@ -9,7 +9,7 @@ origin (`http://localhost:5173` by default) to call the API directly.
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local   # defaults are fine if the backend runs on :8000
+cp .env .env.local   # defaults are fine if the backend runs on :8000
 ```
 
 ## Run

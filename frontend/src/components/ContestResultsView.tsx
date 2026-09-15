@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchContestResultRows, fetchContestTopLineups } from "../api";
-import type { ContestResultRow, ContestTopLineup } from "../types";
+import { fetchContestResultRows, fetchContestTopLineups, fetchOptimalLineupsTop10 } from "../api";
+import type { ContestResultRow, ContestTopLineup, OptimalLineup } from "../types";
 import { formatExpectedFpts, formatOwnershipPct, formatSalary } from "./playerDisplay";
+
+// DK Classic's own salary cap -- fixed for the cached "Optimal Lineups"
+// pool below, since the cache filename itself isn't cap-scoped -- see
+// backend/repositories/contest_results/optimal_lineups_cache_repo.py.
+const OPTIMAL_LINEUPS_POOL_SALARY_CAP = 50000;
 
 interface ContestResultsViewProps {
   season: number;
@@ -23,11 +28,13 @@ interface ContestResultsViewProps {
 type ResultSortKey = "pct_drafted" | "fpts";
 type SortDir = "asc" | "desc";
 
-// Position filter chips for the Contest results table -- these are the
-// roster-slot tokens the contest export's own Lineup field can produce
-// (see _SLOT_TOKEN_RE in contest_standings_parser.py), which is also
-// exactly what ContestResultRow.roster_position holds, FLEX included.
-const POSITION_FILTER_OPTIONS = ["All", "QB", "RB", "WR", "TE", "FLEX", "DST"] as const;
+// Position filter chips for the Contest results table -- a player's own
+// true position from the DK salary file (ContestResultRow.position), not
+// a roster slot -- FLEX isn't a real position, so it's not a chip here
+// (a flex-eligible player's own true position, e.g. RB or WR, is what
+// their now-summed row uses instead -- see ContestResultRow's own
+// docstring in types.ts).
+const POSITION_FILTER_OPTIONS = ["All", "QB", "RB", "WR", "TE", "DST"] as const;
 type PositionFilter = (typeof POSITION_FILTER_OPTIONS)[number];
 
 // Diff = Act Pts - Exp Pts -- green when the player beat their fixed 4x-
@@ -208,13 +215,129 @@ function LineupTable({ lineup }: { lineup: ContestTopLineup }) {
   );
 }
 
+// The best lineup that could have been built under a salary cap -- not a
+// real contest entry, so this table only shows what the optimizer itself
+// used to pick it (Salary, Act Pts) rather than every TopLineup column
+// (no % Drafted/Exp Pts/Diff -- see OptimalLineup's own docstring in
+// types.ts for why this is a different, simpler shape).
+function OptimalLineupTable({ lineup }: { lineup: OptimalLineup }) {
+  return (
+    <div className="player-pool-grid-wrap contest-results-lineup-wrap">
+      <table className="player-pool-grid contest-results-grid">
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th className="player-pool-grid-sticky">Name</th>
+            <th>Salary</th>
+            <th>Act Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {lineup.players.map((p, i) => (
+            <tr key={i}>
+              <td>{p.roster_position}</td>
+              <td className="player-pool-grid-sticky">{p.player}</td>
+              <td className="player-pool-grid-num">{formatSalary(p.salary)}</td>
+              <td className="player-pool-grid-num">{formatPts(p.fpts)}</td>
+            </tr>
+          ))}
+          <tr className="contest-results-totals-row">
+            <td colSpan={2}>Total</td>
+            <td className="player-pool-grid-num">{formatSalary(lineup.total_salary)}</td>
+            <td className="player-pool-grid-num">{formatPts(lineup.total_fpts)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Same expand/collapse header pattern as OwnershipSummaryView.tsx's own
+// CollapsibleHeader -- the whole header (not just an icon) is the click
+// target, and reuses that view's own .ownership-summary-collapsible-
+// header/.ownership-summary-collapse-icon CSS rather than inventing a
+// second, visually-identical style just because this is a different tab.
+function CollapsibleHeader({ title, expanded, onToggle }: { title: string; expanded: boolean; onToggle: () => void }) {
+  return (
+    <div
+      className="player-pool-grid-header ownership-summary-collapsible-header"
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      onClick={onToggle}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+    >
+      <h2>
+        {title}
+        <span className="ownership-summary-collapse-icon">{expanded ? "▴" : "▾"}</span>
+      </h2>
+    </div>
+  );
+}
+
+// A pool of 10 generated lineups -- just N repeats of OptimalLineupTable
+// above, one per lineup, each with its own rank/points/salary heading.
+function OptimalLineupsPoolTable({ lineups }: { lineups: OptimalLineup[] }) {
+  return (
+    <>
+      {lineups.map((lineup, i) => (
+        <div key={i} className="contest-results-lineup">
+          <h3>
+            #{i + 1} · {formatPts(lineup.total_fpts)} pts · {formatSalary(lineup.total_salary)} salary ·{" "}
+            {formatSalary(lineup.salary_leftover)} left over
+          </h3>
+          <OptimalLineupTable lineup={lineup} />
+        </div>
+      ))}
+    </>
+  );
+}
+
 export function ContestResultsView({ season, week, platform, contest }: ContestResultsViewProps) {
   const [topN, setTopN] = useState(10);
+  // Starts expanded -- unlike the newer Optimal Lineups panel, this
+  // section (real contest entries) has always been shown by default.
+  const [topLineupsExpanded, setTopLineupsExpanded] = useState(true);
 
   const [lineups, setLineups] = useState<ContestTopLineup[] | null>(null);
   const [resultRows, setResultRows] = useState<ContestResultRow[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Optimal Lineups panel -- fetched automatically as soon as the tab
+  // loads (not on demand), since the backend itself handles the
+  // "generate once, cache to a JSON file, read the cache on every later
+  // visit" behavior (see backend/api/contest_results/
+  // optimal_lineup_pools.py) -- a page visit here is cheap after the
+  // first one for a given week. The panel itself starts collapsed;
+  // expanding it doesn't trigger the fetch, since the fetch already ran
+  // regardless (so expanding feels instant once data's back).
+  const [lineupsPoolExpanded, setLineupsPoolExpanded] = useState(false);
+  const [top10Lineups, setTop10Lineups] = useState<OptimalLineup[] | null>(null);
+  const [top10Loading, setTop10Loading] = useState(false);
+  const [top10Error, setTop10Error] = useState<string | null>(null);
+
+  function loadTop10Lineups(regenerate: boolean) {
+    setTop10Loading(true);
+    setTop10Error(null);
+    fetchOptimalLineupsTop10(season, week, platform, contest, OPTIMAL_LINEUPS_POOL_SALARY_CAP, regenerate)
+      .then((result) => setTop10Lineups(result.lineups))
+      .catch((err) => {
+        setTop10Lineups(null);
+        setTop10Error(err instanceof Error ? err.message : "Failed to load top 10 lineups");
+      })
+      .finally(() => setTop10Loading(false));
+  }
+
+  useEffect(() => {
+    loadTop10Lineups(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [season, week, platform, contest]);
 
   // Contest results table sorting -- defaults to % Drafted descending
   // (most-owned players first) rather than backend/upload order.
@@ -239,7 +362,7 @@ export function ContestResultsView({ season, week, platform, contest }: ContestR
   const sortedResultRows = useMemo(() => {
     if (!resultRows) return resultRows;
     const filtered =
-      positionFilter === "All" ? resultRows : resultRows.filter((row) => row.roster_position === positionFilter);
+      positionFilter === "All" ? resultRows : resultRows.filter((row) => row.position === positionFilter);
     if (!sortKey) return filtered;
     const sorted = [...filtered];
     sorted.sort((a, b) => (a[sortKey] - b[sortKey]) * (sortDir === "asc" ? 1 : -1));
@@ -284,26 +407,58 @@ export function ContestResultsView({ season, week, platform, contest }: ContestR
         </div>
       </section>
 
+      <section className="ownership-section">
+        <CollapsibleHeader
+          title="Optimal Lineups"
+          expanded={lineupsPoolExpanded}
+          onToggle={() => setLineupsPoolExpanded((e) => !e)}
+        />
+        {lineupsPoolExpanded && (
+          <div className="contest-results-lineup">
+            <div className="player-pool-grid-header">
+              <h3>Top 10 by Points</h3>
+              <button type="button" onClick={() => loadTop10Lineups(true)} disabled={top10Loading}>
+                {top10Loading ? "Generating…" : "Regenerate"}
+              </button>
+            </div>
+            <p className="hint">
+              The 10 highest-scoring DISTINCT lineups possible under a {formatSalary(OPTIMAL_LINEUPS_POOL_SALARY_CAP)}{" "}
+              cap using this week's actual results -- only players rostered by at least one contest entry are
+              eligible (see Contest results below), so this isn't a true whole-slate optimum, but is very close for a
+              large-field contest. Cached after the first generation for this week.
+            </p>
+            {top10Loading && !top10Lineups && <p className="hint">Generating…</p>}
+            {top10Error && <p className="error">{top10Error}</p>}
+            {top10Lineups && <OptimalLineupsPoolTable lineups={top10Lineups} />}
+          </div>
+        )}
+      </section>
+
       {loading && <p className="hint">Loading…</p>}
       {!loading && error && isNotFound && <p className="hint">{error}</p>}
       {!loading && error && !isNotFound && <p className="error">{error}</p>}
 
       {!loading && !error && lineups && (
         <section className="ownership-section">
-          <h2>Top {lineups.length} lineups</h2>
-          {lineups.length === 0 ? (
-            <p className="hint">No entries found in the uploaded contest standings.</p>
-          ) : (
-            lineups.map((lineup) => (
-              <div key={lineup.rank} className="contest-results-lineup">
-                <h3>
-                  #{lineup.rank} · {lineup.entry_name} · {formatExpectedFpts(lineup.points)} pts
-                </h3>
-                <LineupTable lineup={lineup} />
-                <LineupSummaryPanel lineup={lineup} />
-              </div>
-            ))
-          )}
+          <CollapsibleHeader
+            title="Contest Top 10 Lineups"
+            expanded={topLineupsExpanded}
+            onToggle={() => setTopLineupsExpanded((e) => !e)}
+          />
+          {topLineupsExpanded &&
+            (lineups.length === 0 ? (
+              <p className="hint">No entries found in the uploaded contest standings.</p>
+            ) : (
+              lineups.map((lineup) => (
+                <div key={lineup.rank} className="contest-results-lineup">
+                  <h3>
+                    #{lineup.rank} · {lineup.entry_name} · {formatExpectedFpts(lineup.points)} pts
+                  </h3>
+                  <LineupTable lineup={lineup} />
+                  <LineupSummaryPanel lineup={lineup} />
+                </div>
+              ))
+            ))}
         </section>
       )}
 
@@ -337,7 +492,7 @@ export function ContestResultsView({ season, week, platform, contest }: ContestR
                   <th>Week</th>
                   <th className="player-pool-grid-sticky">Player</th>
                   <th>Salary</th>
-                  <th>Roster Position</th>
+                  <th>Position</th>
                   <th className="contest-results-sortable" onClick={() => handleSort("pct_drafted")}>
                     % Drafted{sortIndicator("pct_drafted")}
                   </th>
@@ -352,7 +507,7 @@ export function ContestResultsView({ season, week, platform, contest }: ContestR
                     <td>{row.week}</td>
                     <td className="player-pool-grid-sticky">{row.player}</td>
                     <td className="player-pool-grid-num">{row.salary !== null ? formatSalary(row.salary) : "-"}</td>
-                    <td>{row.roster_position}</td>
+                    <td>{row.position ?? "-"}</td>
                     <td className="player-pool-grid-num">{formatOwnershipPct(row.pct_drafted)}</td>
                     <td className="player-pool-grid-num contest-results-fpts-col">{formatPts(row.fpts)}</td>
                   </tr>

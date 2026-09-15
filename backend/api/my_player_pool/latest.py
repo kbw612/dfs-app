@@ -55,7 +55,9 @@ def my_player_pool_latest_endpoint(
             detail=f"No DK salary file uploaded yet for season {season} week {week} -- upload this week's DK salary export first.",
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
-    players, ownership_retrieved = enrich_players_for_week(salary_snapshot.players, season, week)
+    players, ownership_retrieved = enrich_players_for_week(
+        salary_snapshot.players, season, week, platform, settings.nfl_data_dir
+    )
 
     membership = load_membership(settings.nfl_data_dir, season, week, platform, contest)
     players = [p for p in players if in_my_player_pool(p.player, membership)]
@@ -71,4 +73,5 @@ def my_player_pool_latest_endpoint(
         settings.nfl_data_dir,
         ownership_retrieved=ownership_retrieved,
         multiplier=resolve_multiplier(platform, saved_multiplier),
+        name_aliases_json=settings.name_aliases_json,
     )

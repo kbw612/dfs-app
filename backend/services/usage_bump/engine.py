@@ -8,10 +8,10 @@ same team.
 Each trigger's usage-bump list -- who benefits from *their* injury -- is
 resolved one of two ways, in priority order:
 
-1. Curated (config/usage-bump-players.json, usage_bump_players_repo.py):
+1. Curated (data/nfl/2026/usage_bump_players.json, usage_bump_players_repo.py):
    if the trigger has an explicit named-beneficiary list for their team,
    that list is used, in order.
-2. Default position-based (config/usage-bump-position-settings.json,
+2. Default position-based (data/nfl/2026/settings/usage_bump_position_settings.json,
    position_settings_repo.py): otherwise, the trigger's role label (their
    position + real depth-chart rank, e.g. "RB1") is looked up in a
    universal (not per-team) table of role -> beneficiary-role lists (e.g.

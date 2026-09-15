@@ -8,17 +8,20 @@ Opportunities, Talent/Explosiveness -- Game Matchup and Salary Value for
 DSTs) to decide who's actually worth rostering that week.
 
 Every score field is optional and, when set, constrained to 1.0-3.0 with
-decimals allowed (e.g. 1.5, 2.25) -- not tied to a fixed 0/.5/1 scale.
+decimals allowed (e.g. 1.5, 2.25) -- not tied to a fixed 1/2/3 scale.
 Total is just the sum of whichever fields are filled in for a given
 player (see services/player_pool/engine.py's entry_total()), which is why
 e.g. a QB scored on Ownership + Volume alone still gets a sensible total
 without every position needing every field populated.
 
-Game Environment is the one exception to the 1.0-3.0 range: it's
-constrained to 0.0-1.0 instead (0/0.5/1, matching backend/services/
-game_environment/scoring.py's rule as originally described), so it always
-carries less maximum weight in Total than the other fields -- a
-deliberate choice, not an oversight (see that module's docstring).
+Game Environment shares this same 1.0-3.0 range -- it used to be
+constrained to its own 0.0-1.0 scale (0/0.5/1, matching backend/services/
+game_environment/scoring.py's rule as originally described), which gave
+it half the maximum weight of the other fields in Total. That asymmetry
+was intentional at the time but was later reversed so every field weighs
+the same (see that module's docstring and engine.py's
+_DEFAULT_GAME_ENVIRONMENT); a previously-saved override on the old scale
+needs remapping (old * 2 + 1) rather than being read as-is.
 
 PlayerPoolEntry is the persisted, per-(season, week, platform, player)
 record for every field Player Pool saves directly -- Game Matchup, Ownership, and
@@ -64,13 +67,6 @@ def _score_field() -> _Score:
     return Field(default=None, ge=1.0, le=3.0)
 
 
-def _game_environment_field() -> _Score:
-    """Game Environment's own 0.0-1.0 range (0/0.5/1) -- see this module's
-    docstring for why it's not on the same 1.0-3.0 scale as every other
-    score field."""
-    return Field(default=None, ge=0.0, le=1.0)
-
-
 class PlayerPoolEntry(BaseModel):
     season: int
     week: int
@@ -82,9 +78,9 @@ class PlayerPoolEntry(BaseModel):
     player: str
 
     # Override only -- None means "use the Game Environment formula's
-    # suggestion," not "unscored." See this module's docstring. 0.0-1.0
-    # range, not 1.0-3.0 like the other fields below.
-    game_environment: _Score = _game_environment_field()
+    # suggestion," not "unscored." See this module's docstring. Same
+    # 1.0-3.0 range as every other field below.
+    game_environment: _Score = _score_field()
     game_matchup: _Score = _score_field()
     ownership: _Score = _score_field()
     # DST-only -- there's no separate "ownership"/"talent" concept for a
@@ -103,22 +99,21 @@ class PlayerPoolPlayer(BaseModel):
     """One row in the Player Pool list -- base player info (from the
     DK/ownership snapshot) merged with this week's resolved scores (saved
     this week, carried forward for volume/talent, defaulted to a neutral
-    2.0 for game_matchup/ownership -- 0.5 for game_environment, which is
-    on its own 0.0-1.0 scale -- when a new week hasn't scored this player
-    yet, or None if genuinely unscored -- see compute_player_pool()) and
-    the computed total.
+    2.0 for game_matchup/ownership/game_environment when a new week hasn't
+    scored this player yet, or None if genuinely unscored -- see
+    compute_player_pool()) and the computed total.
 
     game_environment is the *effective* value actually counted in `total`
     (the explicit override if one's been saved, otherwise the formula's
-    suggestion -- which itself falls back to 0.5 when there's no Game
-    Environment data for this game yet, so this is never None).
+    suggestion -- which itself falls back to a neutral 2.0 when there's no
+    Game Environment data for this game yet, so this is never None).
     game_environment_override is the raw saved override only (None if
     this player hasn't been explicitly overridden this week) -- the edit
     form seeds its input from this, not from the blended
     `game_environment`, so leaving the input blank and saving doesn't
     accidentally freeze in whatever the suggestion happened to be at that
     moment. game_environment_suggested is the formula's own output (or
-    its 0.5 fallback), shown as a hint next to that input."""
+    its 2.0 fallback), shown as a hint next to that input."""
 
     player: str
     position: str

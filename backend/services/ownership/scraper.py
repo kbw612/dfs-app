@@ -10,12 +10,11 @@ instead of a literal email/password in source, and DST kept in the same
 flat player list instead of being split into a second file (it's still
 just a `position` value like any other).
 
-Login flow: GET the login page, harvest every existing form field
-(WordPress logins often carry a nonce or similar the site expects back
-unchanged), override just the username/password fields, then POST to
-whatever the form's own `action` resolves to -- this replicates what
-mechanize's select_form()+submit() did without hardcoding assumptions
-about which hidden fields exist today.
+login() itself now lives in site_login.py, shared with
+main_slate_scraper.py (the DraftKings Main Slate page, which didn't used
+to need login but the site switches on later in the week) -- re-exported
+here so nothing importing `backend.services.ownership.scraper.login`
+breaks.
 """
 
 from __future__ import annotations
@@ -30,42 +29,10 @@ from backend.config import settings
 from backend.schemas.depth_charts.snapshot import Message
 from backend.schemas.ownership.ownership import OwnershipPlayer, OwnershipSnapshot
 from backend.services.ownership.parsing import normalize_team_abbrev, parse_opponent, parse_ownership_pct, parse_salary
+from backend.services.ownership.site_login import login  # noqa: F401
 
-_LOGIN_PATH = "/login/"
 _OWNERSHIP_PATH = "/basic-ownership-dk"
 _OWNERSHIP_TABLE_ID = "table_1"
-
-
-def login(session: requests.Session, base_url: str, username: str, password: str) -> None:
-    """Authenticates `session` in place against oneweekseason.com's login
-    form. Raises requests.HTTPError on a network-level failure; does NOT
-    itself verify the login succeeded -- bad credentials just leave the
-    session unauthenticated, which parse_players() surfaces as a Message
-    once the expected table isn't found."""
-    login_url = urljoin(base_url, _LOGIN_PATH)
-    response = session.get(login_url, timeout=settings.request_timeout_seconds)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.text, "html.parser")
-    form = soup.find("form")
-    if form is None:
-        raise RuntimeError(f"No <form> found on login page: {login_url}")
-
-    form_data: dict[str, str] = {}
-    for field in form.find_all(["input", "textarea"]):
-        name = field.get("name")
-        if name:
-            form_data[name] = field.get("value", "")
-
-    form_data["rcp_user_login"] = username
-    form_data["rcp_user_pass"] = password
-
-    submit_url = urljoin(login_url, form.get("action") or login_url)
-    method = (form.get("method") or "post").strip().lower()
-    submit = session.post if method == "post" else session.get
-
-    response = submit(submit_url, data=form_data, timeout=settings.request_timeout_seconds)
-    response.raise_for_status()
 
 
 def fetch_ownership_html(session: requests.Session, base_url: str) -> str:

@@ -24,7 +24,7 @@ from fastapi import APIRouter, HTTPException
 from backend.config import settings
 from backend.repositories.contest_results.contest_standings_repo import load_contest_standings_csv
 from backend.repositories.dk_players.dk_players_repo import load_dk_players_csv, save_dk_players_csv
-from backend.repositories.dk_players.weekly_stats_repo import load_weekly_stats_csv
+from backend.repositories.dk_players.weekly_stats_repo import load_weekly_stats_csv, week_has_data
 from backend.repositories.name_aliases.name_aliases_repo import load_name_aliases
 from backend.schemas.dk_players.dk_players import CalculateWeekPointsResult
 from backend.services.contest_results.contest_standings_parser import parse_contest_standings_csv
@@ -63,10 +63,15 @@ def calculate_week_points_endpoint(
             detail=f"Week {week} has no players in the tracker yet -- run \"Add Week {week} Players\" first.",
         )
 
+    # A position's season file can already exist from an earlier week even
+    # though *this* week's rows were never saved to it -- so "missing" has
+    # to be judged by week_has_data(), not by whether load_weekly_stats_csv
+    # returns something at all (see weekly_stats_repo.py's docstring).
     stats_csvs = {
         position: csv_text
         for position in _POSITIONS
-        if (csv_text := load_weekly_stats_csv(settings.nfl_data_dir, season, week, position)) is not None
+        if week_has_data(settings.nfl_data_dir, season, position, week)
+        and (csv_text := load_weekly_stats_csv(settings.nfl_data_dir, season, position)) is not None
     }
     missing_stat_positions = [position for position in _POSITIONS if position not in stats_csvs]
     td_points_by_player = merge_td_points(stats_csvs, week)

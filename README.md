@@ -21,7 +21,7 @@ built yet.
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # defaults are fine as-is
+cp .env .env   # defaults are fine as-is
 ```
 
 ## Run
@@ -83,10 +83,10 @@ ones) is a "trigger." Each trigger's usage-bump list -- who could benefit
 from *their* absence -- comes from one of two config files, checked in
 priority order:
 
-1. `config/usage-bump-players.json` -- a curated, per-team, named-player
+1. `data/nfl/2026/usage_bump_players.json` -- a curated, per-team, named-player
    list (e.g. if Jalen Coker is out, credit these specific WRs, in this
    order).
-2. `config/usage-bump-position-settings.json` -- a universal (not
+2. `data/nfl/2026/settings/usage_bump_position_settings.json` -- a universal (not
    per-team) fallback keyed by role label (position + real depth-chart
    rank, e.g. `"RB1"`), mapping to a list of *other* role labels that
    benefit -- which can span positions (RB1 going down can bump WRs and a
@@ -187,9 +187,9 @@ backend/
       snapshot_repo.py           save/load/list/find_by_id snapshot (local disk for now)
     usage_bump/
       usage_bump_players_repo.py    load_usage_bump_players() -- parses
-                                     config/usage-bump-players.json
+                                     data/nfl/2026/usage_bump_players.json
       position_settings_repo.py     load_usage_bump_position_settings() -- parses
-                                     config/usage-bump-position-settings.json
+                                     data/nfl/2026/settings/usage_bump_position_settings.json
       scoring_matrix_repo.py        load_bump_matrix() -- parses
                                      config/player-out-settings.json
   api/
@@ -208,21 +208,23 @@ config/
   team-info.csv                      Full Name -> abbreviation lookup (real content,
                                       pulled from your kbw612/Fantasy GitHub repo at
                                       scaffold time)
-  usage-bump-players.json            Curated per-team, named-player usage-bump lists
+  player-out-settings.json           The scoring matrix shared by the two usage-bump
+                                      files below -- given which list positions are
+                                      also out, what bump each remaining healthy
+                                      position gets. `player_out_depths: [0]` is the
+                                      sentinel for "just the trigger is out, nothing
+                                      else in its list is"
+data/nfl/2026/
+  usage_bump_players.json            Curated per-team, named-player usage-bump lists
                                       ({"name": "Jalen Coker", "moreUsagePlayers": [...]})
                                       -- highest priority, sparse by design
-  usage-bump-position-settings.json  Universal (not per-team) role-label fallback
-                                      ({"settings": [{"outPosition": "RB1",
-                                      "usageBumpPositions": ["RB2", "WR1", ...]}]}) --
-                                      used when a player has no curated entry; also
-                                      sparse, only QB1/RB1/RB2/WR1/WR2/WR3/TE1 defined
-                                      so far
-  player-out-settings.json           The scoring matrix shared by both files above --
-                                      given which list positions are also out, what
-                                      bump each remaining healthy position gets.
-                                      `player_out_depths: [0]` is the sentinel for
-                                      "just the trigger is out, nothing else in its
-                                      list is"
+  settings/
+    usage_bump_position_settings.json  Universal (not per-team) role-label fallback
+                                        ({"settings": [{"outPosition": "RB1",
+                                        "usageBumpPositions": ["RB2", "WR1", ...]}]}) --
+                                        used when a player has no curated entry; also
+                                        sparse, only QB1/RB1/RB2/WR1/WR2/WR3/TE1 defined
+                                        so far
 frontend/                      React + TypeScript app (own dev server, Vite)
                                 -- see frontend/README.md
 tests/

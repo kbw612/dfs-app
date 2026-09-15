@@ -1,11 +1,13 @@
 """
 GET /player-results?season=&week=&platform=&contest= (mounted at
 /api/contest-results/player-results). This week's uploaded contest
-standings' own player-reference table (every distinct player+roster-slot
-combination that appeared anywhere in the contest), reformatted with
-Salary joined in from the week's DK salary file -- see
-backend/services/contest_results/contest_results_engine.py's
-build_contest_result_rows.
+standings' own player-reference table, collapsed to one row per player
+(their %Drafted summed across every roster slot they were used in, rather
+than the raw export's own separate row per player+roster-slot combination
+-- see backend/schemas/contest_results/contest_results.py's own
+ContestResultRow docstring for why), reformatted with Salary joined in
+from the week's DK salary file -- see backend/services/contest_results/
+contest_results_engine.py's build_contest_result_rows.
 
 `contest` (default "Classic Main", the same Settings chip value used
 everywhere else -- see SettingsView.tsx) picks which contest's Contest

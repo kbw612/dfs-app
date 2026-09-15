@@ -66,7 +66,7 @@ class UsageBumpCause(BaseModel):
     source: Literal["curated", "position-settings"]
     # Only set when source == "position-settings": the role label that was
     # looked up (e.g. "WR2") and its configured usageBumpPositions list,
-    # verbatim from config/usage-bump-position-settings.json -- role
+    # verbatim from data/nfl/2026/settings/usage_bump_position_settings.json -- role
     # labels, not resolved player names (that's usage_bump_list).
     source_role_label: Optional[str] = None
     source_role_positions: Optional[list[str]] = None

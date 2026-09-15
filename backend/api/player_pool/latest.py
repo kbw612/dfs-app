@@ -75,7 +75,9 @@ def player_pool_latest_endpoint(
             detail=f"No DK salary file uploaded yet for season {season} week {week} -- upload this week's DK salary export first.",
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
-    players, ownership_retrieved = enrich_players_for_week(salary_snapshot.players, season, week)
+    players, ownership_retrieved = enrich_players_for_week(
+        salary_snapshot.players, season, week, platform, settings.nfl_data_dir
+    )
 
     if apply_selection_filter:
         overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
@@ -97,4 +99,5 @@ def player_pool_latest_endpoint(
         # just isn't projected to be owned" (ownership_pct becomes 0.0).
         ownership_retrieved=ownership_retrieved,
         multiplier=resolve_multiplier(platform, saved_multiplier),
+        name_aliases_json=settings.name_aliases_json,
     )

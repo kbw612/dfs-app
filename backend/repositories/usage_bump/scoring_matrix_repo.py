@@ -1,6 +1,6 @@
 """
 Loads config/player-out-settings.json -- the scoring matrix shared by both
-usage-bump-players.json and usage-bump-position-settings.json usage-bump
+usage_bump_players.json and usage_bump_position_settings.json usage-bump
 lists (see engine.py for how the two come together). Each entry says: given
 that these particular positions *within a usage-bump list* are also out
 (on top of the list's own trigger player, who's always out by definition),

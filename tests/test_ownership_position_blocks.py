@@ -14,13 +14,13 @@ from backend.services.ownership.position_blocks import (
 )
 
 
-def make_player(player, position, team, opponent, salary, expected_fpts=None):
+def make_player(player, position, team, opponent, salary, expected_fpts=None, is_home=True):
     return OwnershipPlayer(
         player=player,
         position=position,
         team=team,
         opponent=opponent,
-        is_home=True,
+        is_home=is_home,
         salary=salary,
         ownership_pct=10.0,
         expected_fpts=expected_fpts,
@@ -49,9 +49,22 @@ def test_game_key_is_order_independent():
     assert game_key(a) == game_key(b)
 
 
-def test_game_label_sorts_alphabetically():
-    key = game_key(make_player("A", "RB", "LAR", "ARI", 5000))
-    assert game_label(key) == "ARI vs LAR"
+def test_game_label_puts_away_team_first():
+    # team="LAR" is_home=True -> LAR is the home team, ARI is away.
+    player = make_player("A", "RB", "LAR", "ARI", 5000, is_home=True)
+    assert game_label(player) == "ARI @ LAR"
+
+
+def test_game_label_reflects_away_team_perspective_too():
+    # Same real matchup, but from the away team's own player row --
+    # team="ARI" is_home=False -> still "ARI @ LAR".
+    player = make_player("B", "RB", "ARI", "LAR", 5000, is_home=False)
+    assert game_label(player) == "ARI @ LAR"
+
+
+def test_game_label_falls_back_to_alphabetical_vs_when_is_home_unknown():
+    player = make_player("A", "RB", "LAR", "ARI", 5000, is_home=None)
+    assert game_label(player) == "ARI vs LAR"
 
 
 def test_compute_position_blocks_generates_every_combination_with_total_salary():

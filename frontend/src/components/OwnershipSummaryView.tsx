@@ -1,18 +1,21 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { fetchOwnershipProjections, fetchVegasLines } from "../api";
-import type { OwnershipProjectionsPlayer, VegasLinesSnapshot } from "../types";
+import { fetchContestResultRows, fetchOwnershipProjections, fetchPlayerPool, fetchVegasLines } from "../api";
+import type { OwnershipProjectionsPlayer, PlayerPoolPlayer, VegasLinesSnapshot } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { formatOwnershipPct, formatSalary, opponentLabel } from "./playerDisplay";
 import { gameEnvironmentTier, tierClassName } from "./vegasLinesTiers";
 
-// season/week/platform come from the shared header control / Settings
-// panel (see App.tsx), same as every other weekly tab -- platform picks
-// which uploaded Ownership file gets read (see
-// backend/api/ownership/projections.py).
+// season/week/platform/contest come from the shared header control /
+// Settings panel (see App.tsx), same as every other weekly tab --
+// platform picks which uploaded Ownership file gets read (see
+// backend/api/ownership/projections.py); contest picks which uploaded DK
+// salary file backs this tab's own home/away lookup (see buildHomeByTeam
+// below) -- the ownership file itself has no contest of its own.
 interface OwnershipSummaryViewProps {
   season: number;
   week: number;
   platform: string;
+  contest: string;
 }
 
 // Same position set as every other tab's chips -- DST included here since
@@ -25,9 +28,13 @@ type SortDirection = "desc" | "asc";
 
 // Which ownership figure a table is currently sorted by -- every sortable
 // list on this tab (Players, Ownership by team, Ownership by game) offers
-// the same three, since they all now carry the same Initial/Current/Diff
-// triplet.
-type SortField = "initial" | "current" | "diff";
+// the same five, since they all now carry the same Proj/Initial,
+// Proj/Latest, Proj/Diff, Actual, Actual/Diff set. "actual" comes from the
+// week's Contest Standings (see actualOwnershipByPlayer below), not the
+// ownership projections file -- it's null/0 wherever no contest data
+// exists yet, same graceful-degradation convention as this tab's other
+// side-channel data (Vegas Lines, the salary file).
+type SortField = "initial" | "current" | "actual" | "diff" | "actualDiff";
 
 // Same alphabetically-sorted "TEAM1-TEAM2"/"TEAM1 vs TEAM2" convention as
 // backend/services/ownership/position_blocks.py's game_key/game_label and
@@ -45,6 +52,7 @@ interface TeamOwnership {
   team: string;
   initialTotalOwnership: number;
   totalOwnership: number;
+  actualTotalOwnership: number;
 }
 
 interface GameOwnership {
@@ -54,6 +62,7 @@ interface GameOwnership {
   homeTeam: string | null;
   initialTotalOwnership: number;
   totalOwnership: number;
+  actualTotalOwnership: number;
   // Every player in the game (any position, including DST) sorted by
   // ownership% descending -- shown when the row is expanded. Distinct
   // from totalOwnership, which excludes DST (see this function's own
@@ -71,24 +80,61 @@ interface GameOwnership {
 // data still shows *some* total instead of silently vanishing from the
 // list. initialTotalOwnership sums initial_ownership_pct the same way --
 // a player added since the initial upload contributes 0 to it, same
-// convention.
-function computeTeamOwnership(players: OwnershipProjectionsPlayer[]): TeamOwnership[] {
-  const totals = new Map<string, { initial: number; current: number }>();
+// convention. actualTotalOwnership sums actualByPlayer (the week's Contest
+// Standings %Drafted, see actualOwnershipByPlayer below) the same way too
+// -- 0 for a player with no contest data yet, not skipped.
+function computeTeamOwnership(
+  players: OwnershipProjectionsPlayer[],
+  actualByPlayer: Map<string, number>
+): TeamOwnership[] {
+  const totals = new Map<string, { initial: number; current: number; actual: number }>();
   for (const p of players) {
     if (p.position === "DST") continue;
-    if (!totals.has(p.team)) totals.set(p.team, { initial: 0, current: 0 });
+    if (!totals.has(p.team)) totals.set(p.team, { initial: 0, current: 0, actual: 0 });
     const entry = totals.get(p.team)!;
     entry.initial += p.initial_ownership_pct ?? 0;
     entry.current += p.ownership_pct ?? 0;
+    entry.actual += actualByPlayer.get(p.player) ?? 0;
   }
-  return [...totals.entries()].map(([team, { initial, current }]) => ({
+  return [...totals.entries()].map(([team, { initial, current, actual }]) => ({
     team,
     initialTotalOwnership: initial,
     totalOwnership: current,
+    actualTotalOwnership: actual,
   }));
 }
 
-function computeGameOwnership(players: OwnershipProjectionsPlayer[]): GameOwnership[] {
+// The ownership projections file itself never carries a "vs"/"@" signal
+// (its Opponent column is a bare team abbreviation, on purpose -- see
+// backend/services/ownership/csv_loader.py's parsing), so parse_opponent()
+// resolves every row's is_home to true server-side. That's fine for the
+// file itself, but wrong to display -- so this view never trusts
+// OwnershipProjectionsPlayer.is_home for anything shown on screen, and
+// instead cross-references the week's own DK salary file (fetched via
+// fetchPlayerPool, same as Boom/Bust and My Player Pool -- its Game Info
+// column is unambiguous "AWAY@HOME", see backend/services/dk_salary/
+// dk_salary_parsing.py) to resolve each team's real home/away once and
+// look it up by team abbreviation here. A team missing from that file
+// (nothing uploaded yet for this contest) simply renders with no vs/@
+// prefix at all -- see resolvedIsHome and playerDisplay.tsx's
+// opponentLabel's own null case -- rather than guessing.
+function buildHomeByTeam(players: PlayerPoolPlayer[]): Map<string, boolean> {
+  const homeByTeam = new Map<string, boolean>();
+  for (const p of players) {
+    if (p.is_home !== null) homeByTeam.set(p.team, p.is_home);
+  }
+  return homeByTeam;
+}
+
+function resolvedIsHome(team: string, homeByTeam: Map<string, boolean>): boolean | null {
+  return homeByTeam.get(team) ?? null;
+}
+
+function computeGameOwnership(
+  players: OwnershipProjectionsPlayer[],
+  homeByTeam: Map<string, boolean>,
+  actualByPlayer: Map<string, number>
+): GameOwnership[] {
   const byKey = new Map<string, GameOwnership>();
   for (const p of players) {
     const key = gameKey(p.team, p.opponent);
@@ -101,6 +147,7 @@ function computeGameOwnership(players: OwnershipProjectionsPlayer[]): GameOwners
         homeTeam: null,
         initialTotalOwnership: 0,
         totalOwnership: 0,
+        actualTotalOwnership: 0,
         players: [],
       };
       byKey.set(key, entry);
@@ -109,9 +156,11 @@ function computeGameOwnership(players: OwnershipProjectionsPlayer[]): GameOwners
     if (p.position !== "DST") {
       entry.initialTotalOwnership += p.initial_ownership_pct ?? 0;
       entry.totalOwnership += p.ownership_pct ?? 0;
+      entry.actualTotalOwnership += actualByPlayer.get(p.player) ?? 0;
     }
-    if (p.is_home === true) entry.homeTeam = p.team;
-    if (p.is_home === false) entry.awayTeam = p.team;
+    const isHome = resolvedIsHome(p.team, homeByTeam);
+    if (isHome === true) entry.homeTeam = p.team;
+    if (isHome === false) entry.awayTeam = p.team;
   }
   for (const entry of byKey.values()) {
     entry.players.sort((a, b) => (b.ownership_pct ?? -1) - (a.ownership_pct ?? -1));
@@ -120,7 +169,7 @@ function computeGameOwnership(players: OwnershipProjectionsPlayer[]): GameOwners
 }
 
 function formatTotalOwnership(value: number): string {
-  return `${value.toFixed(1)}%`;
+  return `${value.toFixed(2)}%`;
 }
 
 // "+3.2" / "-1.5" / "0.0" -- "-" when either side is missing (a player
@@ -149,25 +198,43 @@ function diffClassName(initial: number | null, current: number | null): string |
 }
 
 // A player row's value for whichever column it's currently sorted by.
-// Diff comes back null (rather than 0) when either side is missing --
-// same "can't be computed" case formatOwnershipDelta renders as "-" --
-// so compareNullable below can push those rows to the bottom instead of
-// treating an unknown diff as a real 0.0.
-function playerSortValue(p: OwnershipProjectionsPlayer, field: SortField): number | null {
+// Diff/actualDiff come back null (rather than 0) when either side is
+// missing -- same "can't be computed" case formatOwnershipDelta renders
+// as "-" -- so compareNullable below can push those rows to the bottom
+// instead of treating an unknown diff as a real 0.0. `actual` itself is
+// null whenever this player has no row at all in the week's Contest
+// Standings (never rostered, or nothing uploaded yet) -- see
+// actualOwnershipByPlayer's own docstring below for why that's
+// indistinguishable from "really was 0% owned" and why that's fine here.
+function playerSortValue(p: OwnershipProjectionsPlayer, field: SortField, actualByPlayer: Map<string, number>): number | null {
   if (field === "initial") return p.initial_ownership_pct;
   if (field === "current") return p.ownership_pct;
-  if (p.initial_ownership_pct === null || p.ownership_pct === null) return null;
-  return p.ownership_pct - p.initial_ownership_pct;
+  if (field === "actual") return actualByPlayer.get(p.player) ?? null;
+  if (field === "diff") {
+    if (p.initial_ownership_pct === null || p.ownership_pct === null) return null;
+    return p.ownership_pct - p.initial_ownership_pct;
+  }
+  // actualDiff -- how far the actual contest ownership landed from the
+  // latest projection (not the initial one -- the latest is the more
+  // meaningful "did the projection call it" baseline).
+  const actual = actualByPlayer.get(p.player) ?? null;
+  if (actual === null || p.ownership_pct === null) return null;
+  return actual - p.ownership_pct;
 }
 
-// Same idea for the Team/Game rollups -- their Initial/Current totals are
-// always real numbers (they start at 0 and only ever add to it, see
-// computeTeamOwnership/computeGameOwnership above), so Diff never needs
-// the null case playerSortValue has to handle.
-function rollupSortValue(row: { initialTotalOwnership: number; totalOwnership: number }, field: SortField): number {
+// Same idea for the Team/Game rollups -- their Initial/Current/Actual
+// totals are always real numbers (they start at 0 and only ever add to
+// it, see computeTeamOwnership/computeGameOwnership above), so neither
+// Diff needs the null case playerSortValue has to handle.
+function rollupSortValue(
+  row: { initialTotalOwnership: number; totalOwnership: number; actualTotalOwnership: number },
+  field: SortField
+): number {
   if (field === "initial") return row.initialTotalOwnership;
   if (field === "current") return row.totalOwnership;
-  return row.totalOwnership - row.initialTotalOwnership;
+  if (field === "actual") return row.actualTotalOwnership;
+  if (field === "diff") return row.totalOwnership - row.initialTotalOwnership;
+  return row.actualTotalOwnership - row.totalOwnership; // actualDiff
 }
 
 // Shared comparator for every sortable list on this tab. A null (a
@@ -239,71 +306,70 @@ function CollapsibleHeader({ title, expanded, onToggle }: { title: string; expan
   );
 }
 
-// Shared by all three panels below -- lets each one be sorted by
-// whichever of the three ownership columns (Initial/Current/Diff) matters
-// right now, independent of direction (see the plain high/low chip row
-// next to it). A separate control from CollapsibleHeader's expand/collapse
-// since sort field and sort direction are independent axes.
-function SortFieldControls({ field, onChange }: { field: SortField; onChange: (field: SortField) => void }) {
-  return (
-    <div className="chip-filter ownership-summary-filter">
-      <span className="filter-label">Sort by</span>
-      <div className="chip-row">
-        <button
-          type="button"
-          className={`chip${field === "initial" ? " selected" : ""}`}
-          aria-pressed={field === "initial"}
-          onClick={() => onChange("initial")}
-        >
-          Initial
-        </button>
-        <button
-          type="button"
-          className={`chip${field === "current" ? " selected" : ""}`}
-          aria-pressed={field === "current"}
-          onClick={() => onChange("current")}
-        >
-          Current
-        </button>
-        <button
-          type="button"
-          className={`chip${field === "diff" ? " selected" : ""}`}
-          aria-pressed={field === "diff"}
-          onClick={() => onChange("diff")}
-        >
-          Diff
-        </button>
-      </div>
-    </div>
-  );
+// Click-a-column-header sorting for the five ownership columns (Proj/
+// Initial, Proj/Latest, Proj/Diff, Actual, Actual/Diff), same pattern as
+// My Player Pool's own SortableTh (see MyPlayerPoolView.tsx) -- replaces
+// this tab's earlier separate "Sort by"/"Direction" chip rows, which did
+// the same job with an extra click and without the header itself showing
+// which column is active. Each of the four tables below (Players, team
+// rollup, game rollup, per-game detail) keeps its own independent field/
+// direction state, same as before.
+const SORT_FIELD_LABELS: Record<SortField, string> = {
+  initial: "Proj/Initial",
+  current: "Proj/Latest",
+  diff: "Proj/Diff",
+  actual: "Actual",
+  actualDiff: "Actual/Diff",
+};
+
+function sortIcon(field: SortField, currentField: SortField, direction: SortDirection): string {
+  if (currentField !== field) return "⇅";
+  return direction === "asc" ? "▲" : "▼";
 }
 
-// Plain high/low direction chip row -- same shape SortFieldControls has,
-// pulled out once here since Team/Game already had this control and
-// Players is gaining it in this change too, all three now identical.
-function SortDirectionControls({ direction, onChange }: { direction: SortDirection; onChange: (direction: SortDirection) => void }) {
+function sortAriaLabel(field: SortField, currentField: SortField, direction: SortDirection): string {
+  const label = SORT_FIELD_LABELS[field];
+  if (currentField !== field) return `Sort by ${label}`;
+  return direction === "asc" ? `Sort by ${label} descending` : `Sort by ${label} ascending`;
+}
+
+// One sortable <th> -- clicking it toggles direction if it's already the
+// active column, or switches to it (starting descending, matching every
+// other sortable column in this app) otherwise. The label's own "/" is
+// where the two-line header breaks, matching this tab's existing plain
+// <th>Proj<br />Initial</th> markup exactly.
+function SortableTh({
+  field,
+  currentField,
+  direction,
+  onToggle,
+}: {
+  field: SortField;
+  currentField: SortField;
+  direction: SortDirection;
+  onToggle: (field: SortField) => void;
+}) {
+  const [line1, line2] = SORT_FIELD_LABELS[field].split("/");
   return (
-    <div className="chip-filter ownership-summary-filter">
-      <span className="filter-label">Direction</span>
-      <div className="chip-row">
-        <button
-          type="button"
-          className={`chip${direction === "desc" ? " selected" : ""}`}
-          aria-pressed={direction === "desc"}
-          onClick={() => onChange("desc")}
-        >
-          High to low
-        </button>
-        <button
-          type="button"
-          className={`chip${direction === "asc" ? " selected" : ""}`}
-          aria-pressed={direction === "asc"}
-          onClick={() => onChange("asc")}
-        >
-          Low to high
-        </button>
-      </div>
-    </div>
+    <th aria-sort={currentField === field ? (direction === "asc" ? "ascending" : "descending") : "none"}>
+      <button
+        type="button"
+        className="player-pool-sort-header"
+        onClick={() => onToggle(field)}
+        aria-label={sortAriaLabel(field, currentField, direction)}
+      >
+        {line1}
+        {line2 && (
+          <>
+            <br />
+            {line2}
+          </>
+        )}
+        <span className="player-pool-sort-icon" aria-hidden="true">
+          {sortIcon(field, currentField, direction)}
+        </span>
+      </button>
+    </th>
   );
 }
 
@@ -315,7 +381,7 @@ function SortDirectionControls({ direction, onChange }: { direction: SortDirecti
 // Ownership Pivots tab's own mock-scrape/live-scrape snapshot (see
 // backend/api/ownership/projections.py's docstring) -- there's nothing to
 // "load" here, just whatever's already on disk from Settings' upload.
-export function OwnershipSummaryView({ season, week, platform }: OwnershipSummaryViewProps) {
+export function OwnershipSummaryView({ season, week, platform, contest }: OwnershipSummaryViewProps) {
   const [players, setPlayers] = useState<OwnershipProjectionsPlayer[] | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -336,6 +402,11 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
   const [teamSort, setTeamSort] = useState<SortDirection>("desc");
   const [gameSortField, setGameSortField] = useState<SortField>("current");
   const [gameSort, setGameSort] = useState<SortDirection>("desc");
+  // Shared across every expanded game's own player-detail table below --
+  // one sort state for all of them, same as Team/Game above each having
+  // one shared state rather than a state per row.
+  const [detailSortField, setDetailSortField] = useState<SortField>("current");
+  const [detailSortDirection, setDetailSortDirection] = useState<SortDirection>("desc");
   // Individual per-game expand/collapse (inside the "Ownership by game"
   // panel) -- separate from gamePanelExpanded above, which hides/shows the
   // whole panel. Expand all/Collapse all just set this to every/no key at
@@ -349,6 +420,30 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
   // implied total yet" handling, rather than blocking or erroring this
   // tab's main players/team/game panels.
   const [vegasLines, setVegasLines] = useState<VegasLinesSnapshot | null>(null);
+
+  // Also best-effort, purely for the home/away lookup (see buildHomeByTeam)
+  // -- the week's DK salary file for this contest, unrelated to the
+  // ownership file itself. A missing salary upload just means every Opp
+  // renders with no vs/@ prefix, same graceful degradation as the Vegas
+  // Lines fetch above, rather than blocking this tab on a file it doesn't
+  // otherwise need.
+  const [salaryPlayers, setSalaryPlayers] = useState<PlayerPoolPlayer[]>([]);
+
+  // Actual ownership from the week's Contest Standings (player -> summed
+  // %Drafted across every roster slot they were used in -- a flex-eligible
+  // RB shows up as two reference rows, one for RB and one for FLEX, each
+  // with their own partial %Drafted; their real usage rate is the sum, same
+  // aggregation contest_results_engine.py's own ownership_rank uses). Best-
+  // effort, same graceful-degradation pattern as Vegas Lines/the salary
+  // file above -- no Contest Standings uploaded yet (or none for this
+  // specific contest) just means every Actual cell renders "-" and every
+  // rollup's actual total is 0, not an error blocking the rest of the tab.
+  // A player missing from this map is indistinguishable between "never
+  // rostered in the contest" and "no Contest Standings uploaded at all" --
+  // both render the same "-", which is the right call either way (there's
+  // nothing more specific to say in the first case, and the second is
+  // covered by the tab still working normally otherwise).
+  const [actualOwnershipByPlayer, setActualOwnershipByPlayer] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
     setFetchLoading(true);
@@ -377,7 +472,33 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
       .catch(() => setVegasLines(null));
   }, [season, week]);
 
+  useEffect(() => {
+    // apply_selection_filter=false -- this is only ever used to look up a
+    // team's home/away, so a player being unchecked in Settings' Player
+    // Selection has no bearing on it; every rostered team should resolve
+    // regardless.
+    fetchPlayerPool(season, week, platform, contest, false)
+      .then((result) => setSalaryPlayers(result.players))
+      .catch(() => setSalaryPlayers([]));
+  }, [season, week, platform, contest]);
+
+  useEffect(() => {
+    // Best-effort, same reasoning as the salary-file fetch above -- no
+    // Contest Standings uploaded yet for this (season, week, platform,
+    // contest) just leaves the map empty rather than erroring.
+    fetchContestResultRows(season, week, platform, contest)
+      .then((result) => {
+        const totals = new Map<string, number>();
+        for (const row of result.rows) {
+          totals.set(row.player, (totals.get(row.player) ?? 0) + row.pct_drafted);
+        }
+        setActualOwnershipByPlayer(totals);
+      })
+      .catch(() => setActualOwnershipByPlayer(new Map()));
+  }, [season, week, platform, contest]);
+
   const teamTiers = useMemo(() => buildTeamTiers(vegasLines), [vegasLines]);
+  const homeByTeam = useMemo(() => buildHomeByTeam(salaryPlayers), [salaryPlayers]);
 
   const isNotFound = fetchError !== null && fetchError.includes("No ownership projections file uploaded yet");
 
@@ -386,8 +507,14 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
   // above them, per an explicit design decision (a team/game's total
   // shouldn't silently shrink just because you're currently looking at
   // one position's rows).
-  const teamOwnership = useMemo(() => computeTeamOwnership(players ?? []), [players]);
-  const gameOwnership = useMemo(() => computeGameOwnership(players ?? []), [players]);
+  const teamOwnership = useMemo(
+    () => computeTeamOwnership(players ?? [], actualOwnershipByPlayer),
+    [players, actualOwnershipByPlayer]
+  );
+  const gameOwnership = useMemo(
+    () => computeGameOwnership(players ?? [], homeByTeam, actualOwnershipByPlayer),
+    [players, homeByTeam, actualOwnershipByPlayer]
+  );
 
   const sortedTeamOwnership = useMemo(
     () =>
@@ -409,8 +536,47 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
     .filter((p) => positionFilter.size === 0 || positionFilter.has(p.position))
     .slice()
     .sort((a, b) =>
-      compareNullable(playerSortValue(a, playersSortField), playerSortValue(b, playersSortField), playersSortDirection)
+      compareNullable(
+        playerSortValue(a, playersSortField, actualOwnershipByPlayer),
+        playerSortValue(b, playersSortField, actualOwnershipByPlayer),
+        playersSortDirection
+      )
     );
+
+  // Click-same-column-again flips direction; clicking a different column
+  // switches to it starting descending -- same convention for all four
+  // tables' independent sort state.
+  function togglePlayersSort(field: SortField) {
+    if (playersSortField === field) setPlayersSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setPlayersSortField(field);
+      setPlayersSortDirection("desc");
+    }
+  }
+
+  function toggleTeamSort(field: SortField) {
+    if (teamSortField === field) setTeamSort((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setTeamSortField(field);
+      setTeamSort("desc");
+    }
+  }
+
+  function toggleGameSort(field: SortField) {
+    if (gameSortField === field) setGameSort((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setGameSortField(field);
+      setGameSort("desc");
+    }
+  }
+
+  function toggleDetailSort(field: SortField) {
+    if (detailSortField === field) setDetailSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    else {
+      setDetailSortField(field);
+      setDetailSortDirection("desc");
+    }
+  }
 
   function toggleGame(key: string) {
     setExpandedGames((prev) => toggleInSet(prev, key));
@@ -448,13 +614,14 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                       Initial upload {new Date(initialUploadedAt).toLocaleString()}, last upload{" "}
                       {new Date(currentUploadedAt).toLocaleString()}.
                     </>
-                  )}
+                  )}{" "}
+                  {actualOwnershipByPlayer.size > 0
+                    ? `Actual columns are from the ${contest} contest's standings (${actualOwnershipByPlayer.size} players).`
+                    : `Actual columns will fill in once the ${contest} Contest Standings file is uploaded.`}
                 </p>
                 <div className="ownership-summary-filter">
                   <ChipMultiSelect label="Position" options={[...POSITIONS]} selected={positionFilter} onChange={setPositionFilter} />
                 </div>
-                <SortFieldControls field={playersSortField} onChange={setPlayersSortField} />
-                <SortDirectionControls direction={playersSortDirection} onChange={setPlayersSortDirection} />
                 {visiblePlayers.length === 0 ? (
                   <p className="hint">No players match the current filter.</p>
                 ) : (
@@ -467,28 +634,37 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                           <th>Team</th>
                           <th>Opp</th>
                           <th>Salary</th>
-                          <th>Initial</th>
-                          <th>Current</th>
-                          <th>Diff</th>
+                          <SortableTh field="initial" currentField={playersSortField} direction={playersSortDirection} onToggle={togglePlayersSort} />
+                          <SortableTh field="current" currentField={playersSortField} direction={playersSortDirection} onToggle={togglePlayersSort} />
+                          <SortableTh field="diff" currentField={playersSortField} direction={playersSortDirection} onToggle={togglePlayersSort} />
+                          <SortableTh field="actual" currentField={playersSortField} direction={playersSortDirection} onToggle={togglePlayersSort} />
+                          <SortableTh field="actualDiff" currentField={playersSortField} direction={playersSortDirection} onToggle={togglePlayersSort} />
                         </tr>
                       </thead>
                       <tbody>
-                        {visiblePlayers.map((row) => (
-                          <tr key={row.player}>
-                            <td className="player-selection-name-col">{row.player}</td>
-                            <td>{row.position}</td>
-                            <td>{row.team}</td>
-                            <td>{opponentLabel(row)}</td>
-                            <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
-                            <td className="player-pool-grid-num">{formatOwnershipPct(row.initial_ownership_pct)}</td>
-                            <td className="player-pool-grid-num">{formatOwnershipPct(row.ownership_pct)}</td>
-                            <td
-                              className={`player-pool-grid-num ${diffClassName(row.initial_ownership_pct, row.ownership_pct) ?? ""}`}
-                            >
-                              {formatOwnershipDelta(row.initial_ownership_pct, row.ownership_pct)}
-                            </td>
-                          </tr>
-                        ))}
+                        {visiblePlayers.map((row) => {
+                          const actual = actualOwnershipByPlayer.get(row.player) ?? null;
+                          return (
+                            <tr key={row.player}>
+                              <td className="player-selection-name-col">{row.player}</td>
+                              <td>{row.position}</td>
+                              <td>{row.team}</td>
+                              <td>{opponentLabel({ opponent: row.opponent, is_home: resolvedIsHome(row.team, homeByTeam) })}</td>
+                              <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
+                              <td className="player-pool-grid-num">{formatOwnershipPct(row.initial_ownership_pct)}</td>
+                              <td className="player-pool-grid-num">{formatOwnershipPct(row.ownership_pct)}</td>
+                              <td
+                                className={`player-pool-grid-num ${diffClassName(row.initial_ownership_pct, row.ownership_pct) ?? ""}`}
+                              >
+                                {formatOwnershipDelta(row.initial_ownership_pct, row.ownership_pct)}
+                              </td>
+                              <td className="player-pool-grid-num">{formatOwnershipPct(actual)}</td>
+                              <td className={`player-pool-grid-num ${diffClassName(row.ownership_pct, actual) ?? ""}`}>
+                                {formatOwnershipDelta(row.ownership_pct, actual)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -506,16 +682,16 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
             {teamPanelExpanded && (
               <>
                 <p className="hint">Combined ownership% across every rostered player on the team (DST excluded).</p>
-                <SortFieldControls field={teamSortField} onChange={setTeamSortField} />
-                <SortDirectionControls direction={teamSort} onChange={setTeamSort} />
                 <div className="player-pool-grid-wrap ownership-summary-grid-wrap">
                   <table className="player-pool-grid ownership-summary-grid">
                     <thead>
                       <tr>
                         <th>Team</th>
-                        <th>Initial</th>
-                        <th>Current</th>
-                        <th>Diff</th>
+                        <SortableTh field="initial" currentField={teamSortField} direction={teamSort} onToggle={toggleTeamSort} />
+                        <SortableTh field="current" currentField={teamSortField} direction={teamSort} onToggle={toggleTeamSort} />
+                        <SortableTh field="diff" currentField={teamSortField} direction={teamSort} onToggle={toggleTeamSort} />
+                        <SortableTh field="actual" currentField={teamSortField} direction={teamSort} onToggle={toggleTeamSort} />
+                        <SortableTh field="actualDiff" currentField={teamSortField} direction={teamSort} onToggle={toggleTeamSort} />
                       </tr>
                     </thead>
                     <tbody>
@@ -528,6 +704,12 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                             className={`player-pool-grid-num ${diffClassName(row.initialTotalOwnership, row.totalOwnership) ?? ""}`}
                           >
                             {formatOwnershipDelta(row.initialTotalOwnership, row.totalOwnership)}
+                          </td>
+                          <td className="player-pool-grid-num">{formatTotalOwnership(row.actualTotalOwnership)}</td>
+                          <td
+                            className={`player-pool-grid-num ${diffClassName(row.totalOwnership, row.actualTotalOwnership) ?? ""}`}
+                          >
+                            {formatOwnershipDelta(row.totalOwnership, row.actualTotalOwnership)}
                           </td>
                         </tr>
                       ))}
@@ -550,8 +732,6 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                   Combined ownership% across every rostered player in the game (DST excluded). Click a game to see
                   its players by ownership.
                 </p>
-                <SortFieldControls field={gameSortField} onChange={setGameSortField} />
-                <SortDirectionControls direction={gameSort} onChange={setGameSort} />
                 <div className="ownership-summary-bulk-actions">
                   <button type="button" onClick={expandAllGames}>
                     Expand all
@@ -567,9 +747,11 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                         <th>Game</th>
                         <th>Away</th>
                         <th>Home</th>
-                        <th>Initial</th>
-                        <th>Current</th>
-                        <th>Diff</th>
+                        <SortableTh field="initial" currentField={gameSortField} direction={gameSort} onToggle={toggleGameSort} />
+                        <SortableTh field="current" currentField={gameSortField} direction={gameSort} onToggle={toggleGameSort} />
+                        <SortableTh field="diff" currentField={gameSortField} direction={gameSort} onToggle={toggleGameSort} />
+                        <SortableTh field="actual" currentField={gameSortField} direction={gameSort} onToggle={toggleGameSort} />
+                        <SortableTh field="actualDiff" currentField={gameSortField} direction={gameSort} onToggle={toggleGameSort} />
                         <th></th>
                       </tr>
                     </thead>
@@ -616,11 +798,17 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                               >
                                 {formatOwnershipDelta(row.initialTotalOwnership, row.totalOwnership)}
                               </td>
+                              <td className="player-pool-grid-num">{formatTotalOwnership(row.actualTotalOwnership)}</td>
+                              <td
+                                className={`player-pool-grid-num ${diffClassName(row.totalOwnership, row.actualTotalOwnership) ?? ""}`}
+                              >
+                                {formatOwnershipDelta(row.totalOwnership, row.actualTotalOwnership)}
+                              </td>
                               <td className="ownership-summary-game-arrow">{open ? "▴" : "▾"}</td>
                             </tr>
                             {open && (
                               <tr className="ownership-summary-game-detail-row">
-                                <td colSpan={7} className="ownership-summary-game-detail">
+                                <td colSpan={9} className="ownership-summary-game-detail">
                                   <div className="player-pool-grid-wrap ownership-summary-grid-wrap">
                                     <table className="player-pool-grid ownership-summary-grid">
                                       <thead>
@@ -629,27 +817,69 @@ export function OwnershipSummaryView({ season, week, platform }: OwnershipSummar
                                           <th>Pos</th>
                                           <th>Team</th>
                                           <th>Salary</th>
-                                          <th>Initial</th>
-                                          <th>Current</th>
-                                          <th>Diff</th>
+                                          <SortableTh
+                                            field="initial"
+                                            currentField={detailSortField}
+                                            direction={detailSortDirection}
+                                            onToggle={toggleDetailSort}
+                                          />
+                                          <SortableTh
+                                            field="current"
+                                            currentField={detailSortField}
+                                            direction={detailSortDirection}
+                                            onToggle={toggleDetailSort}
+                                          />
+                                          <SortableTh
+                                            field="diff"
+                                            currentField={detailSortField}
+                                            direction={detailSortDirection}
+                                            onToggle={toggleDetailSort}
+                                          />
+                                          <SortableTh
+                                            field="actual"
+                                            currentField={detailSortField}
+                                            direction={detailSortDirection}
+                                            onToggle={toggleDetailSort}
+                                          />
+                                          <SortableTh
+                                            field="actualDiff"
+                                            currentField={detailSortField}
+                                            direction={detailSortDirection}
+                                            onToggle={toggleDetailSort}
+                                          />
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {row.players.map((p) => (
-                                          <tr key={p.player}>
-                                            <td className="player-selection-name-col">{p.player}</td>
-                                            <td>{p.position}</td>
-                                            <td>{p.team}</td>
-                                            <td className="player-pool-grid-num">{formatSalary(p.salary)}</td>
-                                            <td className="player-pool-grid-num">{formatOwnershipPct(p.initial_ownership_pct)}</td>
-                                            <td className="player-pool-grid-num">{formatOwnershipPct(p.ownership_pct)}</td>
-                                            <td
-                                              className={`player-pool-grid-num ${diffClassName(p.initial_ownership_pct, p.ownership_pct) ?? ""}`}
-                                            >
-                                              {formatOwnershipDelta(p.initial_ownership_pct, p.ownership_pct)}
-                                            </td>
-                                          </tr>
-                                        ))}
+                                        {[...row.players]
+                                          .sort((a, b) =>
+                                            compareNullable(
+                                              playerSortValue(a, detailSortField, actualOwnershipByPlayer),
+                                              playerSortValue(b, detailSortField, actualOwnershipByPlayer),
+                                              detailSortDirection
+                                            )
+                                          )
+                                          .map((p) => {
+                                            const actual = actualOwnershipByPlayer.get(p.player) ?? null;
+                                            return (
+                                              <tr key={p.player}>
+                                                <td className="player-selection-name-col">{p.player}</td>
+                                                <td>{p.position}</td>
+                                                <td>{p.team}</td>
+                                                <td className="player-pool-grid-num">{formatSalary(p.salary)}</td>
+                                                <td className="player-pool-grid-num">{formatOwnershipPct(p.initial_ownership_pct)}</td>
+                                                <td className="player-pool-grid-num">{formatOwnershipPct(p.ownership_pct)}</td>
+                                                <td
+                                                  className={`player-pool-grid-num ${diffClassName(p.initial_ownership_pct, p.ownership_pct) ?? ""}`}
+                                                >
+                                                  {formatOwnershipDelta(p.initial_ownership_pct, p.ownership_pct)}
+                                                </td>
+                                                <td className="player-pool-grid-num">{formatOwnershipPct(actual)}</td>
+                                                <td className={`player-pool-grid-num ${diffClassName(p.ownership_pct, actual) ?? ""}`}>
+                                                  {formatOwnershipDelta(p.ownership_pct, actual)}
+                                                </td>
+                                              </tr>
+                                            );
+                                          })}
                                       </tbody>
                                     </table>
                                   </div>

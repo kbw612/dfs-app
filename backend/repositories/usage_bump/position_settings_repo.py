@@ -1,11 +1,12 @@
 """
-Loads config/usage-bump-position-settings.json -- the universal (not
+Loads data/nfl/2026/settings/usage_bump_position_settings.json (see
+backend/config.py's usage_bump_position_settings_json) -- the universal (not
 per-team) fallback used when an out player has no entry in
-usage-bump-players.json. Keyed by role label ("RB1" = the real rank-1
+usage_bump_players.json. Keyed by role label ("RB1" = the real rank-1
 running back on whatever team is being evaluated, not a specific named
 player), so the same entry applies across every team.
 
-Sparse by design, same as usage-bump-players.json -- a role with no entry
+Sparse by design, same as usage_bump_players.json -- a role with no entry
 here (and no curated override) simply produces zero bump when that role
 is out. There's no third fallback.
 """

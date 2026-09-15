@@ -8,7 +8,7 @@ def test_missing_file_returns_empty_dict(tmp_path):
 
 
 def test_loads_settings(tmp_path):
-    path = tmp_path / "usage-bump-position-settings.json"
+    path = tmp_path / "usage_bump_position_settings.json"
     path.write_text(
         json.dumps(
             {
@@ -33,7 +33,7 @@ def test_loads_settings(tmp_path):
 
 
 def test_skips_entries_missing_out_position(tmp_path):
-    path = tmp_path / "usage-bump-position-settings.json"
+    path = tmp_path / "usage_bump_position_settings.json"
     path.write_text(
         json.dumps({"settings": [{"usageBumpPositions": ["QB2"]}]}),
         encoding="utf-8",
@@ -43,7 +43,7 @@ def test_skips_entries_missing_out_position(tmp_path):
 
 
 def test_missing_usage_bump_positions_defaults_to_empty_list(tmp_path):
-    path = tmp_path / "usage-bump-position-settings.json"
+    path = tmp_path / "usage_bump_position_settings.json"
     path.write_text(
         json.dumps({"settings": [{"outPosition": "QB1"}]}),
         encoding="utf-8",

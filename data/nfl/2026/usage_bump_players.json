@@ -49,6 +49,31 @@
           ]
         }
       ]
+    },
+    {
+      "teamAbbrev": "LV",
+      "players": [
+        {
+          "name": "Brock Bowers",
+          "moreUsagePlayers": [
+            "Michael Mayer",
+            "Ashton Jeanty",
+            "Tre Tucker",
+            "Jalen Nailor",
+            "Jack Bech"
+          ]
+        },
+        {
+          "name": "Ashton Jeanty",
+          "moreUsagePlayers": [
+            "Mike Washington",
+            "Brock Bowers",
+            "Tre Tucker",
+            "Jalen Nailor",
+            "Michael Mayer"
+          ]
+        }
+      ]
     }
   ]
 }

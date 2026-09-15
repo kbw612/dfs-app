@@ -33,6 +33,8 @@ from backend.api.depth_charts import router as depth_charts_router
 from backend.api.dk_players import router as dk_players_router
 from backend.api.dk_salary import router as dk_salary_router
 from backend.api.game_environment import router as game_environment_router
+from backend.api.game_logs import router as game_logs_router
+from backend.api.game_logs_against import router as game_logs_against_router
 from backend.api.my_player_pool import router as my_player_pool_router
 from backend.api.name_aliases import router as name_aliases_router
 from backend.api.ownership import router as ownership_router
@@ -41,6 +43,7 @@ from backend.api.player_defaults import router as player_defaults_router
 from backend.api.player_pool import router as player_pool_router
 from backend.api.player_selection import router as player_selection_router
 from backend.api.salary_multiplier import router as salary_multiplier_router
+from backend.api.schedule import router as schedule_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.api.vegas_lines import router as vegas_lines_router
 from backend.config import settings
@@ -70,6 +73,9 @@ app.include_router(salary_multiplier_router, prefix="/api")
 app.include_router(contest_results_router, prefix="/api")
 app.include_router(dk_players_router, prefix="/api")
 app.include_router(name_aliases_router, prefix="/api")
+app.include_router(schedule_router, prefix="/api")
+app.include_router(game_logs_router, prefix="/api")
+app.include_router(game_logs_against_router, prefix="/api")
 
 
 @app.get("/health")

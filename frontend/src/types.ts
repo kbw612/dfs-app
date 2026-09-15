@@ -272,12 +272,13 @@ export interface OwnershipImportResult {
 
 // Mirrors backend/schemas/player_pool/player_pool.py. Every score field is
 // null until scored and, when set, constrained server-side to 1.0-3.0 with
-// decimals allowed -- see that module's docstring. The one exception is
-// game_environment (and its _override/_suggested siblings below), which is
-// constrained to its own 0.0-1.0 range (0/0.5/1) instead, so it always
-// carries less maximum weight in `total` than the other fields. `total` is
-// just the sum of whichever fields are non-null (PlayerPoolPlayer.entry_total()),
-// so a player scored on only 2 of the 6 fields still gets a meaningful total.
+// decimals allowed -- see that module's docstring. game_environment (and
+// its _override/_suggested siblings below) shares this same range -- it
+// used to be constrained to its own smaller 0.0-1.0 scale, which gave it
+// less maximum weight in `total` than the other fields, but that's no
+// longer the case. `total` is just the sum of whichever fields are
+// non-null (PlayerPoolPlayer.entry_total()), so a player scored on only 2
+// of the 6 fields still gets a meaningful total.
 //
 // game_environment is the *effective* value counted in `total` (an
 // explicit override if one's been saved, otherwise whatever
@@ -465,6 +466,18 @@ export interface VegasLinesApplyResult {
   messages: string[];
 }
 
+// Response from POST /api/player-pool/calculate-ownership-scores -- see
+// backend/api/player_pool/calculate_ownership_scores.py. Bulk-saves each
+// player's Ownership score computed from their current ownership_pct;
+// `skipped_count` covers DST (Ownership doesn't apply) and any player
+// with no ownership_pct to score off of.
+export interface OwnershipScoresApplyResult {
+  season: number;
+  week: number;
+  applied_count: number;
+  skipped_count: number;
+}
+
 // Mirrors backend/schemas/current_week/current_week.py -- the single
 // (season, week) pointer shared across every weekly tab, set via one
 // control in App.tsx rather than each tab keeping its own copy.
@@ -486,6 +499,11 @@ export interface OwnershipProjectionsImportResult {
   message_counts: Record<string, number>;
   messages: Message[];
 }
+
+// Result of scraping OneWeekSeason's DraftKings Main Slate page -- same
+// shape as OwnershipProjectionsImportResult above (it saves through the
+// exact same file), just from a scrape instead of a manual file upload.
+export type OwnershipMainSlateScrapeResult = OwnershipProjectionsImportResult;
 
 // OwnershipPlayer plus the *initial* ownership% -- see backend/schemas/
 // ownership/ownership.py's OwnershipProjectionsPlayer. ownership_pct
@@ -678,23 +696,68 @@ export interface ContestTopLineupsResult {
   lineups: ContestTopLineup[];
 }
 
-// One row of the contest export's own player-reference table (every
-// distinct player+roster-slot combination that appeared anywhere in the
-// contest), reformatted with Salary joined in from the week's DK salary
-// file. Mirrors the dk_{contest}_contest_results_week{week}.csv shape --
-// see backend/api/contest_results/player_results.py's docstring for why
+// One row of the contest export's own player-reference table, collapsed
+// to one row per PLAYER -- %Drafted summed across every roster slot they
+// were used in (DK's own export tracks a flex-eligible player's RB and
+// FLEX usage as two separate, individually-smaller rows -- see backend/
+// schemas/contest_results/contest_results.py's own ContestResultRow
+// docstring for why that reads as confusing shown as-is). `position` is
+// the player's true position (QB/RB/WR/TE/DST) from the DK salary file,
+// never "FLEX" -- null if their name didn't match anything there.
+// Reformatted with Salary joined in from the week's DK salary file.
+// Mirrors the dk_{contest}_contest_results_week{week}.csv shape -- see
+// backend/api/contest_results/player_results.py's docstring for why
 // `contest` itself never appears here (a frontend-only export label).
 export interface ContestResultRow {
   week: number;
   player: string;
   salary: number | null;
-  roster_position: string;
+  position: string | null;
   pct_drafted: number;
   fpts: number;
 }
 
+// One slot in an OptimalLineup -- unlike ContestLineupPlayer above, every
+// field here is a plain non-optional value; see backend/services/
+// contest_results/optimal_lineup.py -- a player only makes it into an
+// OptimalLineup if they had a real salary and true position to begin
+// with.
+export interface OptimalLineupPlayer {
+  roster_position: string;
+  player: string;
+  position: string;
+  salary: number;
+  fpts: number;
+}
+
+// The single highest actual-FPTS DK Classic lineup (1 QB, 2 RB, 3 WR, 1
+// TE, 1 FLEX, 1 DST) buildable under a salary cap, computed from this
+// week's own Contest results player list -- "if you'd known the real
+// scores in advance, what's the best possible lineup." See backend/
+// services/contest_results/optimal_lineup.py's own docstring for how
+// it's solved and its player-pool coverage caveat (only players someone
+// actually rostered in the contest are eligible).
+export interface OptimalLineup {
+  players: OptimalLineupPlayer[];
+  total_salary: number;
+  total_fpts: number;
+  salary_leftover: number;
+}
+
 export interface ContestResultRowsResult {
   rows: ContestResultRow[];
+}
+
+// A pool of the 10 exact highest-scoring distinct (not real-contest-
+// entry) OptimalLineups -- see backend/services/contest_results/
+// lineup_generators.py's build_top10_by_points for the generation
+// algorithm, behind fetchOptimalLineupsTop10. Cached to a JSON file on
+// the backend the first time it's generated for a given week -- see
+// backend/repositories/contest_results/optimal_lineups_cache_repo.py --
+// so a later page visit just reads that file back instead of
+// regenerating.
+export interface OptimalLineupsResult {
+  lineups: OptimalLineup[];
 }
 
 // Result of POST /api/contest-results/import-csv -- see backend/api/
@@ -784,12 +847,31 @@ export interface WeeklyStatsImportResult {
 
 export interface WeeklyStatsFileStatus {
   position: string;
+  // Season-long file's own name (e.g. "FantasyData_QBs.csv"), present
+  // once ANY week has ever been saved for this position.
   filename: string | null;
+  // Season file's on-disk mtime -- last time ANY week was saved to it,
+  // not necessarily the currently-selected week's.
   uploaded_at: string | null;
+  // Whether the currently-selected week specifically already has rows in
+  // the season file -- this is what should gate an overwrite warning.
+  week_has_data: boolean;
 }
 
 export interface WeeklyStatsFileInfoResult {
   files: WeeklyStatsFileStatus[];
+}
+
+export interface WeeklyStatsScrapePositionResult {
+  position: string;
+  row_count: number | null;
+  error: string | null;
+}
+
+export interface WeeklyStatsScrapeResult {
+  season: number;
+  week: number;
+  results: WeeklyStatsScrapePositionResult[];
 }
 
 // Name Aliases -- see backend/schemas/name_aliases/name_aliases.py. Global
@@ -825,4 +907,80 @@ export interface SalaryMultiplierResult {
 export interface SalaryMultiplierEntryInput {
   platform: string;
   multiplier: number | null;
+}
+
+// Mirrors backend/api/schedule/import_csv.py's response -- the full-
+// season Team/Week/Opponent/GameLocation schedule upload, one file per
+// season (see FileInfo above for the matching file-info shape, reused
+// as-is since Schedule's status has the same {filename, uploaded_at}
+// shape as every other upload).
+export interface ScheduleImportResult {
+  season: number;
+  row_count: number;
+}
+
+// Mirrors backend/schemas/game_logs/game_logs.py exactly.
+export interface GameLogRow {
+  week: number;
+  name: string;
+  position: string;
+  team: string;
+  salary: number;
+  opponent: string | null;
+  game_location: "Home" | "Away" | "BYE" | null;
+  multiplier: number | null;
+  fpts: number;
+  non_td_fpts: number;
+  non_td_fpts_pct: number | null;
+  td_fpts: number;
+  td_fpts_pct: number | null;
+  touches: number | null;
+  targets: number | null;
+  receptions: number | null;
+  receiving_yards: number | null;
+  rush_att: number | null;
+  rush_yards: number | null;
+}
+
+export interface GameOption {
+  key: string;
+  label: string;
+  teams: string[];
+}
+
+export interface GameLogsResult {
+  season: number;
+  week: number;
+  reference_week: number;
+  lookback_weeks: number;
+  games: GameOption[];
+  rows: GameLogRow[];
+}
+
+// Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the
+// Game Logs Against tab's row shape. No Touches/Targets/etc. (unlike
+// GameLogRow) and no `team`/`opponent` display columns -- `against_team`
+// is only for grouping/filtering, the panel heading ("Against {team}")
+// already says which team this row's player faced.
+export interface GameLogAgainstRow {
+  against_team: string;
+  week: number;
+  name: string;
+  position: string;
+  salary: number;
+  game_location: "Home" | "Away" | "BYE" | null;
+  multiplier: number | null;
+  fpts: number;
+  non_td_fpts: number;
+  non_td_fpts_pct: number | null;
+  td_fpts: number;
+  td_fpts_pct: number | null;
+}
+
+export interface GameLogsAgainstResult {
+  season: number;
+  week: number;
+  lookback_weeks: number;
+  games: GameOption[];
+  rows: GameLogAgainstRow[];
 }

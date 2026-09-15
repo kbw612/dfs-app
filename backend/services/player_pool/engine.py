@@ -22,6 +22,17 @@ Settings grid, one value per player per season, not tied to any specific
 week), and falls back further to a neutral 2.0 if there's no Default
 either. See _resolve_direct_scores and _DEFAULT_SCORE_FIELDS.
 
+Player Defaults are looked up by player name, but Settings' grid and this
+week's DK salary export are independently maintained and can disagree on
+a generational suffix ("Brian Thomas" saved in Settings vs. this week's
+salary file spelling it "Brian Thomas Jr.") -- exact-string matching alone
+would silently drop back to the neutral 2.0 default for a player who
+actually has a real, curated Default, with no error to say so. Name
+Aliases (same mechanism DK Players' stat-file matching uses, see
+backend/services/shared/name_match.py's name_lookup_candidates) resolves
+this: see _resolve_direct_scores' `name_aliases` param and
+compute_player_pool's own `name_aliases_json`.
+
 Game Matchup and Ownership don't have a per-player Default the way Volume/
 Talent do -- they're expected to be re-entered fresh each week -- but a
 brand new week still starts them at that same neutral 2.0 rather than
@@ -33,11 +44,12 @@ field, its *effective* value is the explicit per-player override if
 there is one, otherwise whatever backend/services/game_environment/
 scoring.py's formula suggests from that player's team's implied total
 (pulled from the shared Game Environment data for that player's game),
-otherwise a neutral 0.5 default if there's no Game Environment data for
-that game yet -- 0.5, not 2.0, since Game Environment lives on its own
-0.0-1.0 scale rather than the 1.0-3.0 scale every other field here uses
-(see backend/schemas/player_pool/player_pool.py's docstring). See
-PlayerPoolPlayer's docstring for the three related fields this produces
+otherwise a neutral 2.0 default if there's no Game Environment data for
+that game yet -- the same 1.0-3.0 scale and same neutral midpoint every
+other field here uses (see backend/schemas/player_pool/player_pool.py's
+docstring; Game Environment used to live on its own smaller 0.0-1.0
+scale, but that's no longer the case). See PlayerPoolPlayer's docstring
+for the three related fields this produces
 (game_environment/_override/_suggested).
 
 expected_fpts is unrelated to scoring/total entirely -- it's Player
@@ -51,6 +63,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from backend.repositories.game_environment.game_environment_repo import load_game_environment_for_week
+from backend.repositories.name_aliases.name_aliases_repo import load_name_aliases
 from backend.repositories.player_defaults.defaults_repo import load_defaults_for_season
 from backend.repositories.player_pool.entries_repo import load_entries_for_week
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
@@ -59,6 +72,7 @@ from backend.schemas.player_pool.player_pool import GameOption, PlayerPoolEntry,
 from backend.services.game_environment.scoring import score_game_environment, team_implied_total
 from backend.services.ownership.position_blocks import game_key, game_label
 from backend.services.salary_multiplier.engine import expected_fantasy_points
+from backend.services.shared.name_match import name_lookup_candidates
 
 # Every score field Player Pool saves directly, except game_environment
 # (handled separately -- see _resolve_game_environment) since it blends an
@@ -70,15 +84,18 @@ _DIRECT_SCORE_FIELDS = ["game_matchup", "ownership", "salary_value", "volume", "
 # 1.0-3.0 scale) instead of blank, until explicitly scored that week --
 # for Volume/Talent this is the last-resort fallback, checked only after
 # that player's own Player Default (see _resolve_direct_scores); for Game
-# Matchup/Ownership it's the only fallback, since they have no per-player
-# Default concept. Salary Value (DST-only) deliberately isn't here -- only
-# Game Environment/Matchup/Ownership/Volume/Talent default this way, per
-# the explicit request that introduced this.
-_DEFAULT_SCORE_FIELDS = {"game_matchup": 2.0, "ownership": 2.0, "volume": 2.0, "talent": 2.0}
-# 0.5, not 2.0 -- Game Environment is on its own 0.0-1.0 scale (see
-# backend/services/game_environment/scoring.py), not the 1.0-3.0 scale
-# the fields above use.
-_DEFAULT_GAME_ENVIRONMENT = 0.5
+# Matchup/Ownership/Salary Value it's the only fallback, since they have
+# no per-player Default concept. Every _DIRECT_SCORE_FIELDS entry defaults
+# this way now (Salary Value used to be a deliberate exception, staying
+# blank until explicitly scored -- that's no longer the case).
+_DEFAULT_SCORE_FIELDS = {"game_matchup": 2.0, "ownership": 2.0, "volume": 2.0, "talent": 2.0, "salary_value": 2.0}
+# Same neutral 2.0 midpoint as the fields above -- Game Environment used
+# to live on its own 0.0-1.0 scale (0.5 default) but now shares the
+# 1.0-3.0 scale every other field uses (see backend/services/
+# game_environment/scoring.py), so its default matches too. Kept as its
+# own constant (rather than folded into _DEFAULT_SCORE_FIELDS) since it's
+# resolved through a different path -- see _resolve_game_environment.
+_DEFAULT_GAME_ENVIRONMENT = 2.0
 
 # Which fields actually apply to a position -- DSTs only ever use Game
 # Matchup + Salary Value (no Ownership/Volume/Talent/Game Environment
@@ -102,15 +119,41 @@ def entry_total(scores: dict[str, float | None]) -> float:
     return sum(value for value in scores.values() if value is not None)
 
 
+def _resolve_player_defaults(
+    player_name: str, defaults_by_player: dict[str, object], name_aliases: dict[str, str]
+) -> dict[str, float | None]:
+    """Alias-aware, per-field merge across every name_lookup_candidates
+    spelling of `player_name` -- not just a single winning entry. This
+    matters for real, messy Settings data: a suffix-mismatch cleanup can
+    leave a stub Default behind under the "new" spelling (e.g. "Brian
+    Thomas Jr." saved with dfs_type set but volume/talent never filled
+    in) alongside the original, fully-scored entry under the old spelling
+    ("Brian Thomas"). Picking whichever single entry matches `player_name`
+    first would lock in that stub's blank fields and never fall through to
+    the real values sitting under the alias -- merging field-by-field (own
+    spelling's value if set, else the first alias candidate's) gets the
+    real Volume/Talent regardless of which spelling happens to hold them."""
+    merged: dict[str, float | None] = {"volume": None, "talent": None}
+    for candidate in name_lookup_candidates(player_name, name_aliases):
+        entry = defaults_by_player.get(candidate)
+        if entry is None:
+            continue
+        if merged["volume"] is None and entry.volume is not None:
+            merged["volume"] = entry.volume
+        if merged["talent"] is None and entry.talent is not None:
+            merged["talent"] = entry.talent
+    return merged
+
+
 def _resolve_direct_scores(
     position: str, saved_entry: PlayerPoolEntry | None, player_defaults: dict[str, float | None]
 ) -> dict[str, float | None]:
     """This exact week's explicitly saved value if there is one; otherwise
     `player_defaults` (that player's Settings Default -- only populated
     for volume/talent, see compute_player_pool); otherwise the flat 2.0 in
-    _DEFAULT_SCORE_FIELDS. Fields with neither a per-player Default nor a
-    flat default (salary_value) stay None once both lookups miss, same as
-    always."""
+    _DEFAULT_SCORE_FIELDS -- every _DIRECT_SCORE_FIELDS entry has one now,
+    so a field only stays None here when it doesn't apply to `position` at
+    all (see _fields_for_position)."""
     applicable = _fields_for_position(position)
     resolved: dict[str, float | None] = {}
     for field in _DIRECT_SCORE_FIELDS:
@@ -131,7 +174,7 @@ def _resolve_game_environment(
 ) -> tuple[float | None, float | None, float | None]:
     """(effective, override, suggested) -- see PlayerPoolPlayer's
     docstring for what each means. `suggested` always resolves to a
-    number (the formula's output, or the 0.5 default when there's no
+    number (the formula's output, or the 2.0 default when there's no
     Game Environment data yet for this game) -- there's no "no
     suggestion" state, just varying confidence in what it's based on.
     None for a position Game Environment doesn't apply to (see
@@ -158,6 +201,7 @@ def compute_player_pool(
     nfl_data_dir: Path,
     ownership_retrieved: bool = False,
     multiplier: float = 1.0,
+    name_aliases_json: Path | None = None,
 ) -> PlayerPoolResult:
     """`ownership_retrieved` should be True whenever the caller found an
     actual Ownership snapshot for this (season, week) to merge ownership_pct
@@ -174,13 +218,23 @@ def compute_player_pool(
     engine.py's resolve_multiplier -- the caller resolves it, this
     function just applies it uniformly to every row's expected_fpts).
     Defaults to 1.0 so existing callers/tests that don't pass it get a
-    harmless expected_fpts = salary / 1000 rather than an error."""
+    harmless expected_fpts = salary / 1000 rather than an error.
+
+    `name_aliases_json` should be settings.name_aliases_json in real
+    callers -- see _resolve_player_defaults. Defaults to None (no aliases
+    applied, plain exact-name lookup) so existing callers/tests that don't
+    pass it keep today's behavior."""
     saved_entries = load_entries_for_week(nfl_data_dir, season, week, platform)
     game_env_by_key = load_game_environment_for_week(game_environment_dir, season, week)
     # Season-wide, not per-week -- a player's Default doesn't change week
     # to week the way their Player Pool entry does, so this is loaded once
     # up front rather than per player.
     defaults_by_player = load_defaults_for_season(nfl_data_dir, season)
+    name_aliases = (
+        {alias.alias: alias.canonical for alias in load_name_aliases(name_aliases_json)}
+        if name_aliases_json is not None
+        else {}
+    )
 
     rows: list[PlayerPoolPlayer] = []
     game_options_by_key: dict[str, GameOption] = {}
@@ -188,13 +242,10 @@ def compute_player_pool(
         key = game_key(player)
         game_id = "-".join(sorted(key))
         if game_id not in game_options_by_key:
-            game_options_by_key[game_id] = GameOption(key=game_id, label=game_label(key))
+            game_options_by_key[game_id] = GameOption(key=game_id, label=game_label(player))
 
         saved_entry = saved_entries.get(player.player)
-        default_entry = defaults_by_player.get(player.player)
-        player_defaults = (
-            {"volume": default_entry.volume, "talent": default_entry.talent} if default_entry is not None else {}
-        )
+        player_defaults = _resolve_player_defaults(player.player, defaults_by_player, name_aliases)
         direct_scores = _resolve_direct_scores(player.position, saved_entry, player_defaults)
         effective_env, override_env, suggested_env = _resolve_game_environment(
             player, saved_entry, game_env_by_key.get(game_id)

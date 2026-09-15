@@ -32,12 +32,17 @@ inventing a shared return-type/error-code contract for two call sites that
 otherwise have no relationship. See position_blocks.py's own docstring for
 what each of those enrichment steps does and why.
 
-Filtering order matches /position-blocks: team (optional) -> game
-(optional) -> compute_game_blocks() decides the combinations -> salary_bucket
-(post-filter on generated blocks) -> primary_size/bringback_size (also
-post-filters). `team`/`game`/`salary_bucket`/`primary_size`/
-`bringback_size` are all repeatable query params, matching the frontend's
-multi-select chip filters.
+Filtering order matches /position-blocks: Settings' Player Selection
+(`apply_selection_filter`, default true) -> My Player Pool's own saved
+shortlist (`apply_my_player_pool_filter`, default false) -> team (optional)
+-> game (optional) -> compute_game_blocks() decides the combinations ->
+salary_bucket (post-filter on generated blocks) -> primary_size/
+bringback_size (also post-filters). `team`/`game`/`salary_bucket`/
+`primary_size`/`bringback_size` are all repeatable query params, matching
+the frontend's multi-select chip filters. The two pool filters are
+independent and both optional, same as /position-blocks -- see that
+endpoint's docstring for why that's a deliberate difference from Boom/
+Bust's mutually-exclusive all-vs-selected toggle.
 
 `max_size` (default game_blocks.py's MAX_GAME_BLOCK_SIZE) is Onslaught's
 own escape hatch for a bigger overall block -- its own UI requests a
@@ -67,11 +72,13 @@ from backend.repositories.ownership.snapshot_repo import (
     find_latest_snapshot as find_latest_ownership_snapshot,
     load_snapshot as load_ownership_snapshot,
 )
+from backend.repositories.my_player_pool.my_player_pool_repo import load_membership
 from backend.repositories.player_selection.player_selection_repo import load_overrides
 from backend.repositories.salary_multiplier.salary_multiplier_repo import load_multipliers
-from backend.schemas.ownership.ownership import GameBlock
+from backend.schemas.ownership.ownership import GameBlock, OwnershipPlayer
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
+from backend.services.my_player_pool.engine import in_my_player_pool
 from backend.services.ownership.game_blocks import (
     GAME_BLOCK_POSITIONS,
     MIN_GAME_BLOCK_SIZE,
@@ -115,6 +122,8 @@ def game_blocks_endpoint(
     bringback_size: list[int] = Query(default=[]),
     max_size: int = DEFAULT_MAX_GAME_BLOCK_SIZE,
     games_only: bool = False,
+    apply_selection_filter: bool = True,
+    apply_my_player_pool_filter: bool = False,
 ) -> GameBlocksResult:
     cap = SALARY_CAPS.get(platform)
     if cap is None:
@@ -146,16 +155,28 @@ def game_blocks_endpoint(
     multiplier = resolve_multiplier(platform, load_multipliers(settings.salary_multiplier_dir).get(platform))
     players = [p.model_copy(update={"expected_fpts": expected_fantasy_points(p.salary, multiplier)}) for p in players]
 
-    overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
-    players = filter_selected_players(players, overrides)
+    if apply_selection_filter:
+        overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
+        players = filter_selected_players(players, overrides)
+
+    if apply_my_player_pool_filter:
+        membership = load_membership(settings.nfl_data_dir, season, week, platform, contest)
+        players = [p for p in players if in_my_player_pool(p.player, membership)]
 
     eligible_players = [p for p in players if p.position in GAME_BLOCK_POSITIONS]
 
     game_options_by_key = {}
+    # A representative player per matchup -- game_label() needs one to know
+    # which side is home (see position_blocks.py's game_label docstring).
+    # Built from `eligible_players` (the full, unfiltered slate) rather
+    # than `pool` below, so it still covers every key skipped_game_keys
+    # could ever contain even after team/game filtering narrows `pool`.
+    representative_player_by_key: dict[frozenset[str], OwnershipPlayer] = {}
     for player in eligible_players:
         key = game_key(player)
+        representative_player_by_key.setdefault(key, player)
         if key not in game_options_by_key:
-            game_options_by_key[key] = GameOption(key="-".join(sorted(key)), label=game_label(key))
+            game_options_by_key[key] = GameOption(key="-".join(sorted(key)), label=game_label(player))
     games = sorted(game_options_by_key.values(), key=lambda g: g.label)
 
     if games_only:
@@ -177,6 +198,9 @@ def game_blocks_endpoint(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    skipped_games = [GameOption(key="-".join(sorted(key)), label=game_label(key)) for key in skipped_game_keys]
+    skipped_games = [
+        GameOption(key="-".join(sorted(key)), label=game_label(representative_player_by_key[key]))
+        for key in skipped_game_keys
+    ]
 
     return GameBlocksResult(blocks=blocks, games=games, skipped_games=skipped_games)

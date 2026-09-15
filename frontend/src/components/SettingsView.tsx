@@ -18,6 +18,7 @@ import { NameAliasesPanel } from "./NameAliasesPanel";
 import { OwnershipFileStatus } from "./OwnershipFileStatus";
 import { OwnershipProjectionsUpload } from "./OwnershipProjectionsUpload";
 import { PlayerSelectionGrid } from "./PlayerSelectionGrid";
+import { ScheduleUpload } from "./ScheduleUpload";
 import { TALENT_EXPLOSIVENESS_NOTES, VOLUME_OPPORTUNITIES_NOTES } from "./scoringNotes";
 import { WeeklyStatsFileStatusList, WeeklyStatsUpload } from "./WeeklyStatsUpload";
 
@@ -122,6 +123,7 @@ export function SettingsView({
   onContestChange,
 }: SettingsViewProps) {
   const [dkSalaryRefresh, setDkSalaryRefresh] = useState(0);
+  const [scheduleRefresh, setScheduleRefresh] = useState(0);
   const [contestStandingsRefresh, setContestStandingsRefresh] = useState(0);
   const [weeklyStatsRefresh, setWeeklyStatsRefresh] = useState(0);
   const [ownershipRefresh, setOwnershipRefresh] = useState(0);
@@ -406,6 +408,15 @@ export function SettingsView({
             />
           </label>
         </div>
+      </section>
+
+      <section className="ownership-section settings-panel">
+        <h2>Schedule</h2>
+        <p className="hint">
+          Team/Week/Opponent/GameLocation for the whole season -- feeds the Game Logs tab's Opponent, GameLoc, and
+          Game filter. One file per season, not tied to week/platform/contest.
+        </p>
+        <ScheduleUpload season={season} refreshToken={scheduleRefresh} onUploaded={() => setScheduleRefresh((n) => n + 1)} />
       </section>
 
       <section className="ownership-section settings-panel">

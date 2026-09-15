@@ -5,6 +5,8 @@ import { BoomBustView } from "./components/BoomBustView";
 import { CompareView } from "./components/CompareView";
 import { ContestResultsView } from "./components/ContestResultsView";
 import { DkPlayersView } from "./components/DkPlayersView";
+import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
+import { GameLogsView } from "./components/GameLogsView";
 import { MyPlayerPoolView } from "./components/MyPlayerPoolView";
 import { OwnershipSummaryView } from "./components/OwnershipSummaryView";
 import { OwnershipView } from "./components/OwnershipView";
@@ -28,7 +30,9 @@ type View =
   | "myPlayerPool"
   | "boomBust"
   | "contestResults"
-  | "dkPlayers";
+  | "dkPlayers"
+  | "gameLogs"
+  | "gameLogsAgainst";
 
 // How long to wait after the last edit before persisting season/week to
 // the backend (see backend/api/current_week) -- avoids a PUT on every
@@ -264,6 +268,22 @@ function App() {
         >
           DK Players
         </button>
+        <button
+          type="button"
+          className={`view-tab${view === "gameLogs" ? " selected" : ""}`}
+          aria-pressed={view === "gameLogs"}
+          onClick={() => setView("gameLogs")}
+        >
+          Game Logs
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "gameLogsAgainst" ? " selected" : ""}`}
+          aria-pressed={view === "gameLogsAgainst"}
+          onClick={() => setView("gameLogsAgainst")}
+        >
+          Game Logs Against
+        </button>
       </div>
 
       {view === "settings" && (
@@ -282,7 +302,9 @@ function App() {
       {view === "vegasLines" && <VegasLinesView season={season} week={week} />}
       {view === "bump" && <UsageBumpView refreshSignal={refreshSignal} />}
       {view === "salaryBlocks" && <SalaryBlocksView season={season} week={week} platform={platform} contest={contest} />}
-      {view === "ownershipSummary" && <OwnershipSummaryView season={season} week={week} platform={platform} />}
+      {view === "ownershipSummary" && (
+        <OwnershipSummaryView season={season} week={week} platform={platform} contest={contest} />
+      )}
       {view === "ownership" && <OwnershipView season={season} week={week} platform={platform} />}
       {view === "boomBust" && <BoomBustView season={season} week={week} platform={platform} contest={contest} />}
       {view === "playerPool" && <PlayerPoolView season={season} week={week} platform={platform} contest={contest} />}
@@ -293,6 +315,8 @@ function App() {
         <ContestResultsView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
+      {view === "gameLogs" && <GameLogsView season={season} week={week} platform={platform} />}
+      {view === "gameLogsAgainst" && <GameLogsAgainstView season={season} week={week} platform={platform} />}
     </div>
   );
 }

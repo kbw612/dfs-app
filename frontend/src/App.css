@@ -656,6 +656,32 @@ button.calendar-cell.no-data .day-number {
   border-color: #2b6cb0;
 }
 
+/* ConfirmDialog -- reuses modal-backdrop/modal-dialog/modal-header above,
+   just with a message + two action buttons instead of a time picker. */
+.confirm-dialog {
+  min-width: 280px;
+}
+
+.confirm-dialog-message {
+  margin: 0 0 14px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-dialog-cancel {
+  background: #f7f7f8;
+  color: #1a1a1a;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 14px;
+}
+
 .bump-controls {
   display: flex;
   flex-wrap: wrap;
@@ -1130,7 +1156,8 @@ button.calendar-cell.no-data .day-number {
 }
 
 .ownership-leverage-reason {
-  padding: 5px 0;
+  padding: 8px 0;
+  margin-bottom: 6px;
   border-bottom: 1px solid #eee;
   font-size: 0.85rem;
   color: #444;
@@ -1138,6 +1165,7 @@ button.calendar-cell.no-data .day-number {
 
 .ownership-leverage-reason:last-child {
   border-bottom: none;
+  margin-bottom: 0;
 }
 
 /* Pivot Players section: a .ownership-player-row (same fixed-width grid
@@ -1605,6 +1633,60 @@ table.player-selection-grid .player-selection-checkbox-input {
   background: #fafafa;
 }
 
+/* Player Rankings' sortable column headers (Salary, Total) -- a plain
+   <button> filling the whole header cell rather than adding a separate
+   icon-only control, so clicking anywhere on "Salary" or "Rank/Total"
+   toggles the sort, not just a small arrow glyph. Reset to look like the
+   surrounding header text (no button chrome) until hovered. */
+.player-pool-sort-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.player-pool-sort-header:hover {
+  color: #2b6cb0;
+}
+
+/* Total's header is two lines ("Rank" / "Total ⇅") -- a plain <br/>
+   doesn't reliably force a line break between flex items, so this stacks
+   two child spans in a column instead; .player-pool-sort-header-row is
+   the inner flex row pairing "Total" with its icon on the second line. */
+.player-pool-sort-header-stacked {
+  flex-direction: column;
+  gap: 0;
+}
+
+.player-pool-sort-header-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.player-pool-sort-icon {
+  font-size: 0.7rem;
+  color: #999;
+}
+
+.player-pool-sort-header:hover .player-pool-sort-icon {
+  color: #2b6cb0;
+}
+
+.player-pool-grid th[aria-sort="ascending"] .player-pool-sort-icon,
+.player-pool-grid th[aria-sort="descending"] .player-pool-sort-icon {
+  color: #2b6cb0;
+}
+
 .player-pool-grid-num {
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -1848,11 +1930,17 @@ table.ownership-summary-grid {
    the input rather than inside it -- only rendered at all when
    PlayerPoolPlayer.ownership_pct is non-null (see PlayerPoolView.tsx's
    gating), so there's nothing to style/hide for the "not retrieved yet"
-   case. */
+   case. Fixed width + tabular-nums + right-align (same convention as
+   .player-pool-grid-num elsewhere) so "5.29%" and "44.59%" line up their
+   decimal points down the column instead of each just hugging the input
+   box at whatever width its own digits happen to need. */
 .player-pool-ownership-pct {
   display: inline-block;
+  width: 48px;
   margin-left: 3px;
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
   color: #555;
   vertical-align: middle;
   white-space: nowrap;
@@ -1942,17 +2030,15 @@ table.ownership-summary-grid {
 }
 
 /* Team + current implied total, colored by the same tiering rule as
-   backend/services/game_environment/scoring.py's 0/0.5/1 point bands (see
-   VegasLinesView.tsx's gameEnvironmentTier) -- green/yellow/red text on
-   the light background these list items already sit on, not a filled
-   badge, so it reads at a glance without fighting the surrounding line's
-   own bold weight. */
+   backend/services/game_environment/scoring.py's 1/2/3 point bands (see
+   VegasLinesView.tsx's gameEnvironmentTier) -- green/red text on the
+   light background these list items already sit on, not a filled badge,
+   so it reads at a glance without fighting the surrounding line's own
+   bold weight. The middle tier deliberately gets no color at all (falls
+   back to the default text color) -- only the top/bottom tiers are
+   meant to stand out here. */
 .vegas-lines-tier-green {
   color: #2f855a;
-}
-
-.vegas-lines-tier-yellow {
-  color: #a68b00;
 }
 
 .vegas-lines-tier-red {
@@ -1973,6 +2059,68 @@ table.ownership-summary-grid {
 
 .boom-bust-tier-red {
   color: #c53030;
+}
+
+/* Game Logs tab's Multiplier column -- unlike Vegas Lines'/Boom-Bust's
+   own tiering (which colors the text), this tints the whole cell's
+   background so the standout multipliers are visible at a glance down
+   the column, not just on close reading. Colors match the 4-band scale
+   from the user's own original Google Sheet exactly (>=4 dark green,
+   3.5-3.99 light green, 3-3.499 dark gold, 2-2.999 light gold). Text
+   stays the default color on every band, same as that sheet's own
+   black-on-color swatches. */
+.game-logs-tier-green-dark {
+  background-color: #6aa84f;
+}
+
+.game-logs-tier-green-light {
+  background-color: #b6d7a8;
+}
+
+.game-logs-tier-yellow-dark {
+  background-color: #f1c232;
+}
+
+.game-logs-tier-yellow-light {
+  background-color: #ffe599;
+}
+
+/* Repeated column-header row before each position group inside a team's
+   table (QB/RB/WR/TE/DST, interleaved by week within each) -- real <th>
+   cells (not a plain label row), so every position group reads like its
+   own mini table. The Pos column doubles as this row's own label (e.g.
+   "QB") instead of literal "Pos" text -- see GameLogsView.tsx. */
+.game-logs-position-header-row {
+  background: #f3f4f6;
+}
+
+/* Blank gap row between one position group's rows and the next group's
+   own header -- no border/background of its own, just vertical breathing
+   room so groups don't run directly into each other. */
+.game-logs-position-spacer-row td {
+  border-top: none;
+  padding: 14px 0;
+}
+
+.game-logs-position-header-row th {
+  font-weight: 600;
+  color: #444;
+}
+
+/* Sits alongside the Game/Team chip-filters in the same
+   .ownership-summary-filter row -- a plain labeled number input, not a
+   chip, so it needs its own small flex/spacing rule rather than reusing
+   .chip-filter. */
+.game-logs-lookback-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  color: #444;
+}
+
+.game-logs-lookback-field input {
+  width: 60px;
 }
 
 .boom-bust-sort {
@@ -2021,13 +2169,11 @@ table.ownership-summary-grid {
   color: #333;
 }
 
-/* Only rendered when a game's current line differs from its initial
-   scrape -- an unchanged game shows no delta line at all (see the
-   "current line + delta only" display decision). */
-.vegas-lines-delta {
-  font-size: 0.8rem;
-  color: #b7791f;
-}
+/* .vegas-lines-delta (see VegasLinesView.tsx) intentionally has no rule
+   here -- only rendered when a game's current line differs from its
+   initial scrape (an unchanged game shows no delta line at all), and
+   renders as plain/normal text with no special color or size, matching
+   the rest of the row. */
 
 /* Contest Results tab -- one heading + table per top-finishing lineup,
    stacked with breathing room between them since there can be several
@@ -2130,6 +2276,13 @@ table.contest-results-grid {
    TE), a fixed-width label keeping the file inputs/buttons aligned. */
 .weekly-stats-upload-row {
   align-items: center;
+}
+
+.weekly-stats-scrape-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .weekly-stats-position-label {

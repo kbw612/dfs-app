@@ -133,7 +133,13 @@ def parse_contest_standings_csv(csv_text: str) -> ContestStandings:
             if pct_drafted is not None and fpts is not None:
                 reference_rows.append(
                     ContestReferenceRow(
-                        player=player,
+                        # DK's own export pads every DST row's Player cell
+                        # with a trailing space (e.g. "Raiders ", "Packers
+                        # "), unlike individual player names -- stripped
+                        # here so every downstream exact-name lookup
+                        # (salary file, tracker, ...) actually matches
+                        # instead of silently missing every DST.
+                        player=player.strip(),
                         roster_position=roster_position,
                         pct_drafted=pct_drafted,
                         fpts=fpts,

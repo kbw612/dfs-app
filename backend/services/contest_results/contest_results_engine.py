@@ -82,6 +82,25 @@ def _reference_lookups(
     return by_slot, by_player
 
 
+def _total_pct_drafted_by_player(reference_rows: list[ContestReferenceRow]) -> dict[str, float]:
+    """{player: summed %Drafted across every reference row for them} -- the
+    one place this sum is computed, shared by build_contest_result_rows
+    (the Contest results table) and build_top_lineups (each lineup's own
+    per-player %Drafted) so both agree on the same number for the same
+    player. See ContestResultRow's own docstring in schemas/
+    contest_results/contest_results.py for why summing matters: DK's own
+    export tracks a flex-eligible player's ownership separately per
+    roster slot (e.g. one row for RB, a second smaller one for FLEX), and
+    neither row alone is that player's real total draft rate. Unlike
+    _build_player_rank_lookup below, this doesn't require (or use) a
+    salary-file match -- every reference row counts, so a player who
+    didn't match the salary file still gets a real summed total here."""
+    totals: dict[str, float] = {}
+    for row in reference_rows:
+        totals[row.player] = totals.get(row.player, 0.0) + row.pct_drafted
+    return totals
+
+
 class _RankInfo:
     """Internal only -- (position, ownership_rank, points_rank) for one
     player, not a Pydantic model since this never leaves the engine."""
@@ -106,17 +125,16 @@ def _build_player_rank_lookup(
     no salary-file match has no known position and is left out of both
     rankings entirely (there's no group to rank them within).
 
-    %Drafted is SUMMED across every roster slot a player was used in --
-    the real-world quirk that motivated this (see
-    contest_standings_parser.py) is a player like a flex-eligible RB
-    showing up as two separate reference rows, one for RB and one for
-    FLEX, each with their own partial %Drafted -- their *total* usage
-    rate is what "the Nth-most-owned RB" should mean, not either slot's
-    own smaller number. FPTS is a real player's one actual score for the
-    week -- every slot's row already carries the same value, so the last
-    one seen wins (they should never disagrees)."""
+    %Drafted is SUMMED across every roster slot a player was used in (see
+    _total_pct_drafted_by_player above) -- the real-world quirk that
+    motivated this (see contest_standings_parser.py) is a player like a
+    flex-eligible RB showing up as two separate reference rows, one for RB
+    and one for FLEX, each with their own partial %Drafted -- their
+    *total* usage rate is what "the Nth-most-owned RB" should mean, not
+    either slot's own smaller number. FPTS is a real player's one actual
+    score for the week -- every slot's row already carries the same
+    value, so the last one seen wins (they should never disagrees)."""
     positions: dict[str, str] = {}
-    total_pct: dict[str, float] = {}
     fpts_by_player: dict[str, float] = {}
 
     for row in reference_rows:
@@ -124,8 +142,9 @@ def _build_player_rank_lookup(
         if salary_row is None:
             continue
         positions[row.player] = salary_row.position
-        total_pct[row.player] = total_pct.get(row.player, 0.0) + row.pct_drafted
         fpts_by_player[row.player] = row.fpts
+
+    total_pct = _total_pct_drafted_by_player(reference_rows)
 
     by_position: dict[str, list[str]] = {}
     for player, position in positions.items():
@@ -290,12 +309,26 @@ def build_top_lineups(
     against the salary file and the export's own reference table. A
     player who doesn't match either lookup gets None fields rather than
     dropping the row entirely -- a lineup should always show all 9 slots,
-    even if one player's own numbers are unavailable."""
+    even if one player's own numbers are unavailable.
+
+    LineupPlayer.pct_drafted is that player's %Drafted SUMMED across every
+    roster slot they were used in for the whole contest (via
+    _total_pct_drafted_by_player), not just the one slot this particular
+    lineup happened to use -- see ContestResultRow's own docstring in
+    schemas/contest_results/contest_results.py for why a flex-eligible
+    player's ownership needs summing. act_pts still comes from ref_row
+    (by_slot/by_player) since a player's actual score is the same real
+    number regardless of slot."""
     salaries = _salary_lookup(salary_players)
     by_slot, by_player = _reference_lookups(standings.reference_rows)
     # Computed once for the whole contest (not per lineup) -- every
     # lineup's players are ranked against the same contest-wide pool.
     rank_lookup = _build_player_rank_lookup(standings.reference_rows, salaries)
+    # Same summed-across-roster-slots %Drafted the Contest Results table
+    # shows (build_contest_result_rows) -- a lineup's own display of a
+    # flex-eligible player's ownership should match that number, not just
+    # the one slot this particular lineup happened to use them in.
+    total_pct_by_player = _total_pct_drafted_by_player(standings.reference_rows)
 
     lineups: list[TopLineup] = []
     for entry in standings.entries[:top_n]:
@@ -311,7 +344,7 @@ def build_top_lineups(
 
             salary = salary_row.salary if salary_row else None
             position = salary_row.position if salary_row else None
-            pct_drafted = ref_row.pct_drafted if ref_row else None
+            pct_drafted = total_pct_by_player.get(name)
             act_pts = ref_row.fpts if ref_row else None
             exp_pts = salary * EXP_PTS_MULTIPLIER / 1000 if salary is not None else None
             diff = (act_pts - exp_pts) if (act_pts is not None and exp_pts is not None) else None
@@ -371,22 +404,44 @@ def build_contest_result_rows(
     salary_players: list[OwnershipPlayer],
     week: int,
 ) -> list[ContestResultRow]:
-    """Every reference row (see contest_standings_parser.py), reformatted
-    with Salary joined in and `week` attached -- one row per distinct
-    player+roster-slot combination the contest actually saw, same order
-    the export itself already sorted them in (%Drafted descending)."""
+    """Every reference row (see contest_standings_parser.py), collapsed to
+    one row per PLAYER rather than the raw export's own one-row-per-
+    roster-slot shape -- see this module's own ContestResultRow docstring
+    for why (DK splits a flex-eligible player's %Drafted across their RB
+    and FLEX rows separately, which reads as each one being "wrong" on its
+    own). %Drafted is summed across every slot a player was used in --
+    same _total_pct_drafted_by_player aggregation _build_player_rank_lookup
+    uses internally for ownership_rank, just surfaced here as a real
+    displayed number instead of staying an internal-only ranking input.
+    FPTS is a player's one real
+    score for the week -- every one of their reference rows already
+    carries the same value (see _build_player_rank_lookup's own docstring
+    for why), so the first one seen is used as-is, not summed. `position`
+    comes from the salary file (the same lookup ownership_rank uses), not
+    the raw roster_position column -- None if this player's name didn't
+    match anything there. Sorted by the summed %Drafted descending, most-
+    owned player first -- the frontend's own default sort matches this,
+    but a caller reading the raw response gets a sensible order too."""
     salaries = _salary_lookup(salary_players)
-    rows: list[ContestResultRow] = []
+
+    fpts_by_player: dict[str, float] = {}
+    order: list[str] = []
     for ref in standings.reference_rows:
-        salary_row = salaries.get(ref.player)
-        rows.append(
-            ContestResultRow(
-                week=week,
-                player=ref.player,
-                salary=salary_row.salary if salary_row else None,
-                roster_position=ref.roster_position,
-                pct_drafted=ref.pct_drafted,
-                fpts=ref.fpts,
-            )
+        if ref.player not in fpts_by_player:
+            order.append(ref.player)
+            fpts_by_player[ref.player] = ref.fpts
+    pct_drafted_by_player = _total_pct_drafted_by_player(standings.reference_rows)
+
+    rows = [
+        ContestResultRow(
+            week=week,
+            player=player,
+            salary=salaries[player].salary if player in salaries else None,
+            position=salaries[player].position if player in salaries else None,
+            pct_drafted=pct_drafted_by_player[player],
+            fpts=fpts_by_player[player],
         )
+        for player in order
+    ]
+    rows.sort(key=lambda r: r.pct_drafted, reverse=True)
     return rows

@@ -157,6 +157,14 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
   const [teamFilter, setTeamFilter] = useState<Set<string>>(new Set());
   const [gameFilterLabels, setGameFilterLabels] = useState<Set<string>>(new Set());
   const [salaryBucketLabels, setSalaryBucketLabels] = useState<Set<string>>(new Set());
+  // Independent, both-optional pool filters -- not a mutually-exclusive
+  // pair like Boom/Bust's PoolFilter, since "shortlisted AND still checked
+  // in Settings" is a meaningful combination here (see backend/api/
+  // ownership/position_blocks.py's docstring). Settings Player Pool starts
+  // selected to match this view's behavior before either filter existed;
+  // My Player Pool starts off since it's the newer, narrower one.
+  const [useSettingsPool, setUseSettingsPool] = useState(true);
+  const [useMyPlayerPool, setUseMyPlayerPool] = useState(false);
 
   // Only one of these is ever populated at a time, matching whichever
   // endpoint blockType currently calls for -- kept separate rather than a
@@ -310,6 +318,8 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
           bringbackSizes: [...bringbackSizes].map(Number),
           maxSize: blockType === "onslaught" ? ONSLAUGHT_MAX_SIZE : undefined,
           gamesOnly,
+          useSettingsPool,
+          useMyPlayerPool,
         }).then((result) => {
           setGameData(result);
           setPositionData(null);
@@ -327,6 +337,8 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
           contest,
           salaryBuckets,
           sameTeamSizes: [...sameTeamSizes].map(Number),
+          useSettingsPool,
+          useMyPlayerPool,
         }).then((result) => {
           setPositionData(result);
           setGameData(null);
@@ -367,6 +379,8 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
     platform,
     contest,
     salaryBucketLabels,
+    useSettingsPool,
+    useMyPlayerPool,
   ]);
 
   const isNotFound = error !== null && error.includes("No DK salary file uploaded yet");
@@ -388,6 +402,28 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
                 {t.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="chip-filter">
+          <span className="filter-label">Player pool</span>
+          <div className="chip-row">
+            <button
+              type="button"
+              className={`chip${useSettingsPool ? " selected" : ""}`}
+              aria-pressed={useSettingsPool}
+              onClick={() => setUseSettingsPool((prev) => !prev)}
+            >
+              Settings Player Pool
+            </button>
+            <button
+              type="button"
+              className={`chip${useMyPlayerPool ? " selected" : ""}`}
+              aria-pressed={useMyPlayerPool}
+              onClick={() => setUseMyPlayerPool((prev) => !prev)}
+            >
+              My Player Pool
+            </button>
           </div>
         </div>
 

@@ -25,7 +25,7 @@ export function formatExpectedFpts(value: number): string {
 // crashing on null.toFixed() or silently showing "0.0%", which would read
 // as a real (very low) ownership figure instead of "not loaded yet".
 export function formatOwnershipPct(pct: number | null): string {
-  return pct === null ? "-" : `${pct.toFixed(1)}%`;
+  return pct === null ? "-" : `${pct.toFixed(2)}%`;
 }
 
 // "vs OPP" / "@OPP" mirrors how the original DK export denoted home/away

@@ -42,7 +42,7 @@ const SALARY_PIVOT_NOTES: string[] = [
 function describeReason(reason: LeverageReason): string {
   const a = reason.against;
   if (reason.kind === "pivot") {
-    return `Pivot for ${a.player} ${roleLabel(a)} — ${formatOwnershipPct(a.ownership_pct)} owned, ${formatSalary(a.salary)}`;
+    return `Salary pivot for ${a.player} ${roleLabel(a)} — ${formatOwnershipPct(a.ownership_pct)} owned, ${formatSalary(a.salary)}`;
   }
   // team/opponent are only null for kind "pivot" (see LeverageReason in
   // types.ts) -- always set by the backend for kind "game".

@@ -174,9 +174,10 @@ export function UsageBumpView({ refreshSignal }: UsageBumpViewProps) {
                 Min bump score
                 <input
                   type="number"
-                  min={1}
+                  min={0}
+                  step={0.25}
                   value={minScore}
-                  onChange={(e) => setMinScore(Math.max(1, Number(e.target.value) || 1))}
+                  onChange={(e) => setMinScore(Math.max(0, Number(e.target.value) || 0))}
                 />
               </label>
               <label className="sort-control">
