@@ -17,8 +17,10 @@ from fastapi import APIRouter
 from backend.api.player_pool.calculate_ownership_scores import router as calculate_ownership_scores_router
 from backend.api.player_pool.entry import router as entry_router
 from backend.api.player_pool.latest import router as latest_router
+from backend.api.player_pool.reset_matchup import router as reset_matchup_router
 
 router = APIRouter(prefix="/player-pool")
 router.include_router(latest_router)
 router.include_router(entry_router)
 router.include_router(calculate_ownership_scores_router)
+router.include_router(reset_matchup_router)

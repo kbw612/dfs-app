@@ -4,6 +4,7 @@ from pathlib import Path
 
 from backend.repositories.player_pool.entries_repo import (
     _path,
+    clear_game_matchup_overrides,
     load_entries_for_week,
     load_entry,
     save_entry,
@@ -130,3 +131,61 @@ def test_save_ownership_scores_does_not_touch_players_not_in_the_scores_dict(tmp
     # Chase wasn't in this refresh's scores dict (e.g. skipped -- no
     # ownership_pct to score off of) -- their prior save stays untouched.
     assert load_entry(tmp_path, 2025, 9, "DraftKings", "Chase").ownership == 2.0
+
+
+def test_clear_game_matchup_overrides_removes_the_field_only(tmp_path: Path):
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Gibbs", game_matchup=3.0, volume=2.0))
+
+    cleared = clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings")
+
+    assert cleared == ["Gibbs"]
+    loaded = load_entry(tmp_path, 2025, 9, "DraftKings", "Gibbs")
+    assert loaded.game_matchup is None
+    # Every other already-saved field is untouched.
+    assert loaded.volume == 2.0
+
+
+def test_clear_game_matchup_overrides_skips_players_with_no_override(tmp_path: Path):
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Gibbs", volume=2.0))
+
+    cleared = clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings")
+
+    assert cleared == []
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Gibbs").volume == 2.0
+
+
+def test_clear_game_matchup_overrides_only_touches_the_target_week(tmp_path: Path):
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Gibbs", game_matchup=3.0))
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=10, player="Gibbs", game_matchup=1.5))
+
+    clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings")
+
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Gibbs").game_matchup is None
+    assert load_entry(tmp_path, 2025, 10, "DraftKings", "Gibbs").game_matchup == 1.5
+
+
+def test_clear_game_matchup_overrides_returns_empty_list_when_no_file_yet(tmp_path: Path):
+    assert clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings") == []
+
+
+def test_clear_game_matchup_overrides_players_filter_narrows_to_given_names(tmp_path: Path):
+    # Mirrors Player Rankings' DST-only Matchup refresh icon -- only the
+    # named players (e.g. this week's DSTs) get cleared, everyone else's
+    # override is left alone even though it also qualifies.
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Ravens", game_matchup=3.0))
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Gibbs", game_matchup=1.0))
+
+    cleared = clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings", players={"Ravens"})
+
+    assert cleared == ["Ravens"]
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Ravens").game_matchup is None
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Gibbs").game_matchup == 1.0
+
+
+def test_clear_game_matchup_overrides_players_filter_excludes_unnamed_player_entirely(tmp_path: Path):
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Gibbs", game_matchup=3.0))
+
+    cleared = clear_game_matchup_overrides(tmp_path, 2025, 9, "DraftKings", players={"SomeoneElse"})
+
+    assert cleared == []
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Gibbs").game_matchup == 3.0

@@ -5,12 +5,27 @@ backend/repositories/dk_players/weekly_stats_repo.py) two ways:
 1. parse_weekly_stats_csv/merge_td_points -- one week's {player_name:
    td_points} map, feeding DK Players' calculate_week_points().
 
-2. load_weekly_stat_lines -- every week's raw usage stats (targets/
-   receptions/receiving_yards/rush_att/rush_yards) at once, keyed by
-   (player, week), feeding the Game Logs tab's Touch/TGTS/REC/REC_YDS/
-   RUSH_ATT/RUSH_YDS columns (backend/services/game_logs/
-   game_logs_engine.py) -- unlike (1), Game Logs needs a whole season's
-   history in one pass, not just the single most-recent week.
+2. load_weekly_stat_lines -- every week's raw usage stats (team/targets/
+   receptions/receiving_yards/rush_att/rush_yards, plus QB's own passing
+   line -- pass_cmp/pass_att/pass_cmp_pct/pass_yds/pass_avg/pass_td/
+   pass_int/pass_sck/pass_rtg) at once, keyed by (player, week), feeding
+   the Game Logs tab's Touch/TGTS/REC/REC_YDS/RUSH_ATT/RUSH_YDS/Pass
+   columns -- unlike (1), Game Logs needs a whole season's history in one
+   pass, not just the single most-recent week.
+
+   TGTSHARE/TOUCHSHARE/OPPSHARE (target_share_pct/touch_share_pct/
+   opp_share_pct) are also read here, from this same file's own
+   TGT_SHARE/TOUCH_SHARE/OPP_SHARE columns -- three extra trailing
+   columns this app adds on top of FantasyData's own layout (see
+   backend/services/shared/usage_shares.py and
+   backend/repositories/dk_players/weekly_stats_repo.py's
+   write_usage_share_columns), written once by the "Calc Week Points"
+   action, not computed live here. A file that predates one of those
+   columns simply has no matching header at all, so that key is omitted
+   from the stat line entirely (same "not applicable yet" convention as
+   every other optional column below); once a column exists, a blank
+   cell (not yet computed for that row, or QB's own always-blank
+   TGT_SHARE) parses to None rather than 0.
 
 Each position's export has a different column set, but every one that can
 score a touchdown carries RUSHING_TD, and WR/RB/TE additionally carry
@@ -39,6 +54,25 @@ def _parse_int(value: str | None) -> int:
     if value is None or value.strip() == "":
         return 0
     return int(float(value))
+
+
+def _parse_float(value: str | None) -> float:
+    """Same blank-cell-defaults-to-0 spirit as _parse_int, but for QB's
+    own decimal passing columns (CMP%, AVG, RATING) -- int() would
+    truncate a real value like a 124.1 passer rating."""
+    if value is None or value.strip() == "":
+        return 0.0
+    return float(value)
+
+
+def _parse_optional_float(value: str | None) -> float | None:
+    """None (not 0) for a blank TGT_SHARE/TOUCH_SHARE/OPP_SHARE cell --
+    unlike every other numeric column in this file, a blank share cell
+    means "not yet computed" or "not applicable" (QB's own TGT_SHARE), not
+    a real 0 -- see this module's own docstring."""
+    if value is None or value.strip() == "":
+        return None
+    return float(value)
 
 
 def parse_weekly_stats_csv(csv_text: str, week: int) -> dict[str, float]:
@@ -91,16 +125,43 @@ _USAGE_STAT_COLUMNS = {
     "rush_yards": "RUSHING_YDS",
 }
 
+# QB's own passing line -- only the QB file carries these columns at all
+# (RB/WR/TE have none of them), so the same "missing column -> key simply
+# omitted" convention as _USAGE_STAT_COLUMNS above makes every non-QB
+# player's stat line naturally have none of these keys, no per-position
+# branching needed. Split into int vs. float groups since CMP%/AVG/RATING
+# are real decimals (_parse_int would truncate a 124.1 passer rating).
+_PASSING_STAT_INT_COLUMNS = {
+    "pass_cmp": "PASSING_CMP",
+    "pass_att": "PASSING_ATT",
+    "pass_yds": "PASSING_YDS",
+    "pass_td": "PASSING_TD",
+    "pass_int": "INT",
+    "pass_sck": "SCK",
+}
+_PASSING_STAT_FLOAT_COLUMNS = {
+    "pass_cmp_pct": "PASSING_CMP%",
+    "pass_avg": "PASSING_AVG",
+    "pass_rtg": "RATING",
+}
 
-def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int]]:
-    """Every row's raw usage stats, keyed by (player name, week) -- reads
-    every week already saved in the file at once (unlike
-    parse_weekly_stats_csv, which filters to exactly one week), since Game
-    Logs needs a whole season's worth of usage numbers in a single pass.
-    A stat column this position's file doesn't have is left out of that
-    row's dict entirely rather than defaulted to 0 -- callers use
-    dict.get(key, 0) explicitly wherever a numeric default is wanted."""
-    lines: dict[tuple[str, int], dict[str, int]] = {}
+
+def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int | float | str]]:
+    """Every row's raw usage stats (plus QB's own passing line) and its
+    own team, keyed by (player name, week) -- reads every week already
+    saved in the file at once (unlike parse_weekly_stats_csv, which
+    filters to exactly one week), since Game Logs needs a whole season's
+    worth of usage numbers in a single pass. A stat column this position's
+    file doesn't have is left out of that row's dict entirely rather than
+    defaulted to 0 -- callers use dict.get(key, 0) explicitly wherever a
+    numeric default is wanted.
+
+    "team" is always present (every FantasyData file has a TEAM column,
+    unlike the position-specific usage columns) -- it's what lets
+    game_logs_engine.py group every player's own line by team to compute
+    that team's weekly target/touch totals for Target Share %/Touch
+    Share %, without a separate parse pass just for that."""
+    lines: dict[tuple[str, int], dict[str, int | float | str]] = {}
     for row in csv.DictReader(io.StringIO(csv_text)):
         try:
             week = int(row["WK"])
@@ -109,6 +170,25 @@ def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int
         name = row.get("NAME", "").strip()
         if not name:
             continue
-        stat_line = {key: _parse_int(row[column]) for key, column in _USAGE_STAT_COLUMNS.items() if column in row}
+        stat_line: dict[str, int | float | str] = {
+            key: _parse_int(row[column]) for key, column in _USAGE_STAT_COLUMNS.items() if column in row
+        }
+        stat_line.update(
+            {key: _parse_int(row[column]) for key, column in _PASSING_STAT_INT_COLUMNS.items() if column in row}
+        )
+        stat_line.update(
+            {key: _parse_float(row[column]) for key, column in _PASSING_STAT_FLOAT_COLUMNS.items() if column in row}
+        )
+        # See this module's own docstring -- these three are only present
+        # once "Calc Week Points" has written them via
+        # write_usage_share_columns; an older/not-yet-computed file simply
+        # has no "TGT_SHARE"/"TOUCH_SHARE"/"OPP_SHARE" header at all.
+        if "TGT_SHARE" in row:
+            stat_line["target_share_pct"] = _parse_optional_float(row["TGT_SHARE"])
+        if "TOUCH_SHARE" in row:
+            stat_line["touch_share_pct"] = _parse_optional_float(row["TOUCH_SHARE"])
+        if "OPP_SHARE" in row:
+            stat_line["opp_share_pct"] = _parse_optional_float(row["OPP_SHARE"])
+        stat_line["team"] = row.get("TEAM", "").strip()
         lines[(name, week)] = stat_line
     return lines

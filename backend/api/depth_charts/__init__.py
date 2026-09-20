@@ -1,9 +1,10 @@
 """
 Combines every depth-chart endpoint (scrape.py, diff.py, snapshots.py,
-roster.py) into one router under the "/depth-charts" prefix. main.py
-mounts this under "/api", giving POST /api/depth-charts/scrape,
+roster.py, latest.py) into one router under the "/depth-charts" prefix.
+main.py mounts this under "/api", giving POST /api/depth-charts/scrape,
 GET /api/depth-charts/diff/latest, GET /api/depth-charts/diff,
-GET /api/depth-charts/snapshots, and GET /api/depth-charts/roster.
+GET /api/depth-charts/snapshots, GET /api/depth-charts/roster, and
+GET /api/depth-charts/latest.
 
 When another resource type gets its own scrape/diff services (e.g.
 injuries), it gets the same shape: backend/api/injuries/__init__.py combining
@@ -14,6 +15,7 @@ same way -- this file doesn't change when that happens.
 from fastapi import APIRouter
 
 from backend.api.depth_charts.diff import router as diff_router
+from backend.api.depth_charts.latest import router as latest_router
 from backend.api.depth_charts.roster import router as roster_router
 from backend.api.depth_charts.scrape import router as scrape_router
 from backend.api.depth_charts.snapshots import router as snapshots_router
@@ -23,3 +25,4 @@ router.include_router(scrape_router)
 router.include_router(diff_router)
 router.include_router(snapshots_router)
 router.include_router(roster_router)
+router.include_router(latest_router)

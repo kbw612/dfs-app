@@ -5,6 +5,7 @@ import type { DiffResult, SnapshotSummary } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { DiffResults } from "./DiffResults";
 import { PositionFilterSelect } from "./PositionFilterSelect";
+import { RetrieveButton } from "./RetrieveButton";
 import { SnapshotPicker } from "./SnapshotPicker";
 import { StatusFilter } from "./StatusFilter";
 import { StatusKey } from "./StatusKey";
@@ -14,9 +15,15 @@ interface CompareViewProps {
   // -- this view's own snapshot list needs to refetch even if the scrape
   // happened while the Usage Bump Players tab was active.
   refreshSignal: number;
+  // Called after RetrieveButton's own scrape succeeds -- App bumps the
+  // same refreshSignal it passes in above, so the Usage Bump Players tab
+  // (which also depends on the latest depth-chart snapshot) still finds
+  // out about a new one even though the button itself now lives here
+  // instead of the shared header.
+  onScraped: () => void;
 }
 
-export function CompareView({ refreshSignal }: CompareViewProps) {
+export function CompareView({ refreshSignal, onScraped }: CompareViewProps) {
   const [snapshots, setSnapshots] = useState<SnapshotSummary[]>([]);
   const [fromId, setFromId] = useState("");
   const [toId, setToId] = useState("");
@@ -65,6 +72,8 @@ export function CompareView({ refreshSignal }: CompareViewProps) {
 
   return (
     <>
+      <RetrieveButton onScraped={onScraped} />
+
       <SnapshotPicker
         snapshots={snapshots}
         fromId={fromId}

@@ -91,6 +91,54 @@ def save_ownership_scores(nfl_data_dir: Path, season: int, week: int, platform: 
     locked_read_modify_write(path, lambda: _load_raw(nfl_data_dir, season, week, platform), modify)
 
 
+def clear_game_matchup_overrides(
+    nfl_data_dir: Path, season: int, week: int, platform: str, players: set[str] | None = None
+) -> list[str]:
+    """Removes this week's explicit Matchup override (if any) for every
+    player who has one, leaving every other already-saved field (Volume,
+    Talent, Ownership, the Game Environment override, Salary Value)
+    untouched -- same "only touch the one key this operation is about"
+    contract as save_ownership_scores above, just clearing instead of
+    setting. Once cleared, that player's Matchup goes back to being
+    resolved purely from the fallback chain (see services/player_pool/
+    engine.py's _resolve_team_factor_default): the opponent's own Team
+    Default Factor at this player's position, or the flat 2.0 neutral if
+    that's never been set either -- exactly as if this player had never
+    been explicitly scored on Matchup this week at all.
+
+    `players`, when given, narrows this to only that set of player names
+    (e.g. just this week's DSTs, for Player Rankings' DST-only Matchup
+    refresh icon -- see api/player_pool/reset_matchup.py) -- every other
+    player's Matchup override is left alone even if they have one. None
+    (the default) keeps the original "clear everyone" behavior, used by
+    the one-off admin reset script.
+
+    Returns the list of players whose entry actually had a game_matchup
+    key removed (for the caller to report what changed) -- a player with
+    no entry, an entry with no game_matchup key already, or a player not
+    in `players` (when given) isn't touched or included."""
+    path = _path(nfl_data_dir, season, week, platform)
+    cleared: list[str] = []
+
+    def modify(data: dict) -> None:
+        for player, fields in data.items():
+            if players is not None and player not in players:
+                continue
+            # fields.get(...) is not None (rather than a plain "in fields"
+            # membership check) since a full save_entry() replace writes
+            # every field via model_dump(), including an explicit
+            # "game_matchup": null for a player who was never actually
+            # scored on Matchup that week (see this module's own
+            # docstring) -- that's not a real override to clear, so it
+            # shouldn't count as one.
+            if fields.get("game_matchup") is not None:
+                del fields["game_matchup"]
+                cleared.append(player)
+
+    locked_read_modify_write(path, lambda: _load_raw(nfl_data_dir, season, week, platform), modify)
+    return cleared
+
+
 def load_entry(nfl_data_dir: Path, season: int, week: int, platform: str, player: str) -> PlayerPoolEntry | None:
     """The entry actually saved for this exact (week, platform), or None
     if this player hasn't been scored yet -- none of Player Pool's own

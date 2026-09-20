@@ -2,7 +2,7 @@
   "season": 2026,
   "week": 1,
   "initial_scraped_at": "2026-09-06T21:50:10-04:00",
-  "current_scraped_at": "2026-09-11T21:16:15-04:00",
+  "current_scraped_at": "2026-09-15T12:38:54-04:00",
   "games": [
     {
       "away_name": "Patriots",
@@ -54,8 +54,8 @@
       },
       "current": {
         "over_under": 40.0,
-        "home_implied_total": 24.75,
-        "away_implied_total": 15.25
+        "home_implied_total": 24.25,
+        "away_implied_total": 15.75
       }
     },
     {
@@ -89,9 +89,9 @@
         "away_implied_total": 25.75
       },
       "current": {
-        "over_under": 48.0,
-        "home_implied_total": 22.5,
-        "away_implied_total": 25.5
+        "over_under": 48.5,
+        "home_implied_total": 22.75,
+        "away_implied_total": 25.75
       }
     },
     {
@@ -108,8 +108,8 @@
       },
       "current": {
         "over_under": 41.0,
-        "home_implied_total": 23.25,
-        "away_implied_total": 17.75
+        "home_implied_total": 23.75,
+        "away_implied_total": 17.25
       }
     },
     {
@@ -161,9 +161,9 @@
         "away_implied_total": 19.0
       },
       "current": {
-        "over_under": 38.5,
-        "home_implied_total": 19.25,
-        "away_implied_total": 19.25
+        "over_under": 39.0,
+        "home_implied_total": 19.5,
+        "away_implied_total": 19.5
       }
     },
     {
@@ -197,9 +197,9 @@
         "away_implied_total": 18.5
       },
       "current": {
-        "over_under": 47.0,
-        "home_implied_total": 28.25,
-        "away_implied_total": 18.75
+        "over_under": 46.5,
+        "home_implied_total": 28.0,
+        "away_implied_total": 18.5
       }
     },
     {
@@ -234,8 +234,8 @@
       },
       "current": {
         "over_under": 44.0,
-        "home_implied_total": 24.5,
-        "away_implied_total": 19.5
+        "home_implied_total": 25.0,
+        "away_implied_total": 19.0
       }
     },
     {
@@ -251,9 +251,9 @@
         "away_implied_total": 22.5
       },
       "current": {
-        "over_under": 46.0,
-        "home_implied_total": 23.5,
-        "away_implied_total": 22.5
+        "over_under": 45.5,
+        "home_implied_total": 23.75,
+        "away_implied_total": 21.75
       }
     },
     {
@@ -269,9 +269,9 @@
         "away_implied_total": 25.5
       },
       "current": {
-        "over_under": 48.0,
-        "home_implied_total": 22.5,
-        "away_implied_total": 25.5
+        "over_under": 47.5,
+        "home_implied_total": 22.25,
+        "away_implied_total": 25.25
       }
     },
     {
@@ -287,9 +287,9 @@
         "away_implied_total": 20.5
       },
       "current": {
-        "over_under": 43.5,
-        "home_implied_total": 23.0,
-        "away_implied_total": 20.5
+        "over_under": 43.0,
+        "home_implied_total": 22.25,
+        "away_implied_total": 20.75
       }
     }
   ]

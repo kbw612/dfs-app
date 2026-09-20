@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Caleb Williams",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 37.26
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 297.56,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Caleb Williams",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 37.26
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Ashton Jeanty",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 296.15999999999997,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Ashton Jeanty",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49200,
+      "total_fpts": 296.04,
+      "salary_leftover": 800
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Ashton Jeanty",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Justin Jefferson",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 296.04,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Ashton Jeanty",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 296.04,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 48700,
+      "total_fpts": 295.74,
+      "salary_leftover": 1300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Justin Jefferson",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49300,
+      "total_fpts": 295.74,
+      "salary_leftover": 700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Chris Olave",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49300,
+      "total_fpts": 295.74,
+      "salary_leftover": 700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bryce Young",
+          "position": "QB",
+          "salary": 5200,
+          "fpts": 35.44
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Justin Jefferson",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 31.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 295.74,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Caleb Williams",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 37.26
+        },
+        {
+          "roster_position": "RB",
+          "player": "Derrick Henry",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Ashton Jeanty",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 5900,
+          "fpts": 35.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jalen Coker",
+          "position": "WR",
+          "salary": 4600,
+          "fpts": 36.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 27.8
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 6500,
+          "fpts": 37.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Bengals",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 50000,
+      "total_fpts": 295.66,
+      "salary_leftover": 0
+    }
+  ]
+}

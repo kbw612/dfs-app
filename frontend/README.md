@@ -163,7 +163,7 @@ just the resulting number:
   exact rule that matched (e.g. "Usage bump players by position: WR1,
   WR3, TE1, RB1" -- the role label itself already shows in the header
   just above, so it isn't repeated in this line); for a curated-list-
-  resolved cause, "Usage bump player for {trigger}" instead, since there's no
+  resolved cause, "Usage bump players for {trigger}" instead, since there's no
   positional rule to show.
 - A "Player out depth(s): ..." caption -- the exact combo that was looked
   up in `player-out-settings.json`'s `player_out_depths` field, in plain

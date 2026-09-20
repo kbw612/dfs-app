@@ -5,10 +5,12 @@ import {
   fetchDkSalaryFileInfo,
   fetchPlayerDefaults,
   fetchSalaryMultiplier,
+  fetchTeamFactors,
   savePlayerDefaultEntry,
   saveSalaryMultiplierEntry,
+  saveTeamFactorEntry,
 } from "../api";
-import type { DepthChartRosterPlayer, PlayerDefaultEntryInput } from "../types";
+import type { DepthChartRosterPlayer, PlayerDefaultEntryInput, TeamFactorEntryInput } from "../types";
 import { DFS_TYPE_OPTIONS } from "../dfsTypes";
 import { ContestStandingsUpload } from "./ContestStandingsUpload";
 import { DkSalaryUpload } from "./DkSalaryUpload";
@@ -19,7 +21,7 @@ import { OwnershipFileStatus } from "./OwnershipFileStatus";
 import { OwnershipProjectionsUpload } from "./OwnershipProjectionsUpload";
 import { PlayerSelectionGrid } from "./PlayerSelectionGrid";
 import { ScheduleUpload } from "./ScheduleUpload";
-import { TALENT_EXPLOSIVENESS_NOTES, VOLUME_OPPORTUNITIES_NOTES } from "./scoringNotes";
+import { GAME_MATCHUP_NOTES, TALENT_EXPLOSIVENESS_NOTES, VOLUME_OPPORTUNITIES_NOTES } from "./scoringNotes";
 import { WeeklyStatsFileStatusList, WeeklyStatsUpload } from "./WeeklyStatsUpload";
 
 // Mirrors Player Pool's own position filter chips (see PlayerPoolView.tsx's
@@ -45,6 +47,36 @@ const DEPTH_CUTOFF_BY_POSITION: Record<DefaultsPosition, number> = {
 function withinDepthCutoff(row: DepthChartRosterPlayer): boolean {
   const cutoff = DEPTH_CUTOFF_BY_POSITION[row.position as DefaultsPosition];
   return cutoff === undefined ? false : row.depth_rank <= cutoff;
+}
+
+// Team Default Factors' own position chips -- unlike Player Default
+// Factors above, DST is included here since a team's Matchup rating
+// against opposing DSTs is a real, separate concept (see
+// backend/schemas/team_factors/team_factors.py).
+const TEAM_FACTOR_POSITIONS = ["QB", "RB", "WR", "TE", "DST"] as const;
+type TeamFactorPosition = (typeof TEAM_FACTOR_POSITIONS)[number];
+
+function teamFactorKey(team: string, position: string): string {
+  return `${team}|${position}`;
+}
+
+// Team Default Factors default every cell to the neutral 2 until
+// explicitly edited -- a deliberate departure from Player Default
+// Factors (blank by default) per the user's own "Default factors to 2
+// all teams and each position" spec, since a never-saved (team,
+// position) pair already resolves to the flat 2.0 fallback in Player
+// Pool anyway (see engine.py's _resolve_team_factor_default) -- showing
+// "2" up front just makes that explicit instead of leaving the cell
+// looking unset.
+function factorToInputValue(value: number | null): string {
+  return value === null ? "2" : String(value);
+}
+
+function inputValueToFactor(value: string): number | null {
+  const trimmed = value.trim();
+  if (trimmed === "") return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 const AUTOSAVE_DEBOUNCE_MS = 800;
@@ -89,39 +121,20 @@ function inputValueToDfsType(value: string | undefined): string | null {
   return value === undefined || value === "None" ? null : value;
 }
 
-// Only "DraftKings" has a real file format behind it today (see
-// backend/services/platform_settings/prefix.py) -- a single chip, always
-// selected, ready for a second option once one's actually supported.
-// "Classic Main" and "All Games" each resolve to their own independent
-// Salary File/Contest Standings file -- see backend/services/
-// platform_settings/prefix.py's contest_slug() and
-// backend/repositories/dk_salary/salary_snapshot_repo.py /
-// backend/repositories/contest_results/contest_standings_repo.py for the
-// exact filenames each one maps to.
-const PLATFORM_OPTIONS = ["DraftKings"] as const;
-const CONTEST_OPTIONS = ["Classic Main", "All Games"] as const;
-
 interface SettingsViewProps {
   season: number;
   week: number;
-  onSeasonChange: (season: number) => void;
-  onWeekChange: (week: number) => void;
   platform: string;
   contest: string;
-  onPlatformChange: (platform: string) => void;
-  onContestChange: (contest: string) => void;
 }
 
-export function SettingsView({
-  season,
-  week,
-  onSeasonChange,
-  onWeekChange,
-  platform,
-  contest,
-  onPlatformChange,
-  onContestChange,
-}: SettingsViewProps) {
+// Editing season/week/platform/contest itself now happens in the header's
+// own HeaderSettingsPopover (see App.tsx) rather than here -- this view
+// still receives all four as plain read values, since every panel below
+// (Salary File, Contest Standings, Player Default Factors, etc.) is scoped
+// to whichever season/week/platform/contest is currently selected, same as
+// before.
+export function SettingsView({ season, week, platform, contest }: SettingsViewProps) {
   const [dkSalaryRefresh, setDkSalaryRefresh] = useState(0);
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
   const [contestStandingsRefresh, setContestStandingsRefresh] = useState(0);
@@ -167,6 +180,29 @@ export function SettingsView({
     };
   }, []);
 
+  // Team Default Factors -- same season-wide, week-independent shape as
+  // Player Default Factors above, but keyed by `${team}|${position}`
+  // (teamFactorKey) instead of by player, and seeded for every position
+  // up front (not just the currently-selected chip) so switching the
+  // Position chip doesn't need a re-fetch.
+  const [teamFactorsPosition, setTeamFactorsPosition] = useState<TeamFactorPosition>("QB");
+  const [teamFactorEditValues, setTeamFactorEditValues] = useState<Record<string, string>>({});
+  const [teamFactorDirtyKeys, setTeamFactorDirtyKeys] = useState<Set<string>>(new Set());
+  const [teamFactorSavingKeys, setTeamFactorSavingKeys] = useState<Set<string>>(new Set());
+
+  const teamFactorEditValuesRef = useRef(teamFactorEditValues);
+  useEffect(() => {
+    teamFactorEditValuesRef.current = teamFactorEditValues;
+  }, [teamFactorEditValues]);
+
+  const teamFactorDebounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  useEffect(() => {
+    const timers = teamFactorDebounceTimers.current;
+    return () => {
+      Object.values(timers).forEach(clearTimeout);
+    };
+  }, []);
+
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -175,8 +211,8 @@ export function SettingsView({
     // needs to be independent of which teams happen to be on a given
     // week's slate. Defaults are still scoped per season, so that half
     // still depends on `season`.
-    Promise.all([fetchDepthChartRoster(), fetchPlayerDefaults(season)])
-      .then(([rosterResult, defaultsResult]) => {
+    Promise.all([fetchDepthChartRoster(), fetchPlayerDefaults(season), fetchTeamFactors(season)])
+      .then(([rosterResult, defaultsResult, teamFactorsResult]) => {
         setRoster(rosterResult.players);
         const defaultsByPlayer: Record<string, PlayerDefaultEntryInput> = {};
         for (const entry of defaultsResult.defaults) {
@@ -199,6 +235,30 @@ export function SettingsView({
           }
           return next;
         });
+
+        // Team Default Factors -- all 32 teams regardless of contest
+        // (same roster source as above), seeded for every position at
+        // once so switching the Position chip below doesn't need its own
+        // fetch. Team is not among the roster's own positions, so this
+        // reads distinct team abbreviations off the roster rather than
+        // filtering by position.
+        const teamFactorByKey: Record<string, TeamFactorEntryInput> = {};
+        for (const entry of teamFactorsResult.factors) {
+          teamFactorByKey[teamFactorKey(entry.team, entry.position)] = entry;
+        }
+        const teams = [...new Set(rosterResult.players.map((p) => p.team))];
+        setTeamFactorEditValues((prev) => {
+          const next = { ...prev };
+          for (const team of teams) {
+            for (const position of TEAM_FACTOR_POSITIONS) {
+              const key = teamFactorKey(team, position);
+              if (!(key in next)) {
+                next[key] = factorToInputValue(teamFactorByKey[key]?.factor ?? null);
+              }
+            }
+          }
+          return next;
+        });
       })
       .catch((err) => {
         setRoster(null);
@@ -209,6 +269,9 @@ export function SettingsView({
 
   useEffect(() => {
     setEditValues({});
+    setTeamFactorEditValues({});
+    setTeamFactorDirtyKeys(new Set());
+    setTeamFactorSavingKeys(new Set());
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [season]);
@@ -323,50 +386,78 @@ export function SettingsView({
     saveRow(key);
   }
 
+  async function saveTeamFactorRow(key: string) {
+    const value = teamFactorEditValuesRef.current[key];
+    if (value === undefined) return;
+    const [team, position] = key.split("|");
+    setTeamFactorSavingKeys((prev) => new Set(prev).add(key));
+    try {
+      // No `week` -- this saves the team's season-wide Default Factor at
+      // this position, not a specific player's week (see
+      // backend/schemas/team_factors/team_factors.py).
+      await saveTeamFactorEntry({
+        season,
+        team,
+        position,
+        factor: inputValueToFactor(value),
+      });
+      setTeamFactorDirtyKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save team default factor");
+    } finally {
+      setTeamFactorSavingKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }
+  }
+
+  function scheduleTeamFactorAutosave(key: string) {
+    if (teamFactorDebounceTimers.current[key]) clearTimeout(teamFactorDebounceTimers.current[key]);
+    teamFactorDebounceTimers.current[key] = setTimeout(() => {
+      delete teamFactorDebounceTimers.current[key];
+      saveTeamFactorRow(key);
+    }, AUTOSAVE_DEBOUNCE_MS);
+  }
+
+  function updateTeamFactorCell(key: string, value: string) {
+    setTeamFactorEditValues((prev) => ({ ...prev, [key]: value }));
+    setTeamFactorDirtyKeys((prev) => new Set(prev).add(key));
+    scheduleTeamFactorAutosave(key);
+  }
+
+  function handleTeamFactorCellBlur(key: string) {
+    if (teamFactorDebounceTimers.current[key]) {
+      clearTimeout(teamFactorDebounceTimers.current[key]);
+      delete teamFactorDebounceTimers.current[key];
+    }
+    saveTeamFactorRow(key);
+  }
+
   const rosterIsEmpty = roster !== null && roster.length === 0;
   const defaultPlayers: DepthChartRosterPlayer[] = (roster ?? [])
     .filter((p) => p.position === defaultsPosition && withinDepthCutoff(p))
     .sort((a, b) => a.player.localeCompare(b.player));
   const saveStatus = savingKeys.size > 0 ? "Saving…" : dirtyKeys.size > 0 ? "Unsaved changes" : "All changes saved";
 
+  // All 32 teams regardless of position or contest -- same roster source
+  // Player Default Factors uses above, just read by team instead of by
+  // player.
+  const teamFactorTeams: string[] = [...new Set((roster ?? []).map((p) => p.team))].sort();
+  const teamFactorSaveStatus =
+    teamFactorSavingKeys.size > 0
+      ? "Saving…"
+      : teamFactorDirtyKeys.size > 0
+        ? "Unsaved changes"
+        : "All changes saved";
+
   return (
     <>
-      <section className="ownership-section settings-panel">
-        <h2>Platform &amp; contest</h2>
-        <div className="chip-filter">
-          <span className="filter-label">Platform</span>
-          <div className="chip-row">
-            {PLATFORM_OPTIONS.map((p) => (
-              <button
-                key={p}
-                type="button"
-                className={`chip${platform === p ? " selected" : ""}`}
-                aria-pressed={platform === p}
-                onClick={() => onPlatformChange(p)}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="chip-filter">
-          <span className="filter-label">Contest</span>
-          <div className="chip-row">
-            {CONTEST_OPTIONS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className={`chip${contest === c ? " selected" : ""}`}
-                aria-pressed={contest === c}
-                onClick={() => onContestChange(c)}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <section className="ownership-section settings-panel">
         <h2>Salary Multiplier</h2>
         <p className="hint">
@@ -388,26 +479,6 @@ export function SettingsView({
           {multiplierSaving && <span className="player-pool-save-status">Saving…</span>}
         </div>
         {multiplierError && <p className="error">{multiplierError}</p>}
-      </section>
-
-      <section className="ownership-section settings-panel">
-        <h2>Season &amp; week</h2>
-        <div className="ownership-load-form">
-          <label>
-            Season
-            <input type="number" value={season} onChange={(e) => onSeasonChange(Number(e.target.value) || season)} />
-          </label>
-          <label>
-            Week
-            <input
-              type="number"
-              min={1}
-              max={18}
-              value={week}
-              onChange={(e) => onWeekChange(Number(e.target.value) || week)}
-            />
-          </label>
-        </div>
       </section>
 
       <section className="ownership-section settings-panel">
@@ -615,6 +686,88 @@ export function SettingsView({
                             </option>
                           ))}
                         </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="ownership-section settings-panel">
+        <div className="player-pool-grid-header">
+          <h2>Team Default Factors</h2>
+          {teamFactorTeams.length > 0 && <span className="player-pool-save-status">{teamFactorSaveStatus}</span>}
+        </div>
+        <p className="hint">
+          Set each team's baseline Matchup rating at a position once here -- how tough that team's defense is
+          against it, e.g. a 3 for WR means any WR facing that team starts with a tough Matchup. Not tied to a
+          specific week, contest, or platform. Player Rankings' own Matchup column starts from the *opponent's*
+          factor at a player's position for a week that hasn't been explicitly scored yet, and any edit made
+          directly in Player Rankings only affects that one week. Every team starts at the neutral 2 until edited.
+          The team list comes straight from the latest depth-chart scrape, so it always covers all 32 teams
+          regardless of the current Contest.
+        </p>
+
+        <div className="filters">
+          <div className="chip-filter">
+            <span className="filter-label">Position</span>
+            <div className="chip-row">
+              {TEAM_FACTOR_POSITIONS.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`chip${teamFactorsPosition === p ? " selected" : ""}`}
+                  aria-pressed={teamFactorsPosition === p}
+                  onClick={() => setTeamFactorsPosition(p)}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {loading && <p className="hint">Loading…</p>}
+        {!loading && error && <p className="error">{error}</p>}
+        {!loading && !error && rosterIsEmpty && (
+          <p className="hint">
+            No depth-chart data yet -- retrieve depth charts (Compare Depth Charts tab) first.
+          </p>
+        )}
+
+        {!loading && !error && !rosterIsEmpty && (
+          <div className="player-pool-grid-wrap player-defaults-grid-wrap">
+            <table className="player-pool-grid player-defaults-grid">
+              <thead>
+                <tr>
+                  <th className="player-pool-grid-sticky player-selection-name-col">Team</th>
+                  <th>
+                    Matchup
+                    <HeaderInfoPopover title="Matchup" lines={GAME_MATCHUP_NOTES} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {teamFactorTeams.map((team) => {
+                  const key = teamFactorKey(team, teamFactorsPosition);
+                  const value = teamFactorEditValues[key] ?? "2";
+                  return (
+                    <tr key={key} className={teamFactorDirtyKeys.has(key) ? "player-pool-row-dirty" : undefined}>
+                      <td className="player-pool-grid-sticky player-selection-name-col">{team}</td>
+                      <td>
+                        <input
+                          type="number"
+                          min={1}
+                          max={3}
+                          step="0.25"
+                          title="Every team starts at the neutral 2 until edited"
+                          value={value}
+                          onChange={(e) => updateTeamFactorCell(key, e.target.value)}
+                          onBlur={() => handleTeamFactorCellBlur(key)}
+                        />
                       </td>
                     </tr>
                   );

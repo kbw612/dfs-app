@@ -67,3 +67,31 @@ def test_covers_every_team_in_the_snapshot():
     roster = flatten_offense_roster(make_snapshot(bills, dolphins))
 
     assert {(p.player, p.team) for p in roster} == {("Josh Allen", "BUF"), ("Tua Tagovailoa", "MIA")}
+
+
+def test_strips_stale_unstripped_status_suffix_from_legacy_snapshot():
+    # A snapshot scraped before the hyphenated-status regex fix (see
+    # test_scraper.py's test_extract_injury_status_hyphenated_code) could
+    # have "(IR-R)" stuck directly on player.player instead of split into
+    # a separate status field -- flatten_offense_roster re-cleans it so
+    # the roster (and anything built on it, like Usage Bump Players'
+    # autocomplete) never shows a raw status suffix, without needing to
+    # edit the historical snapshot file itself.
+    team = Team(
+        team_abbrev="ATL",
+        team_name="Atlanta Falcons",
+        positions={"WR": [Player(player="Beaux Collins (IR-R)")]},
+    )
+    roster = flatten_offense_roster(make_snapshot(team))
+
+    assert [p.player for p in roster] == ["Beaux Collins"]
+
+
+def test_already_clean_name_is_unaffected():
+    # A name with a normal already-extracted status (status lives in
+    # Player.status, not in player.player) passes through unchanged --
+    # extract_injury_status is a no-op when there's no trailing "(...)".
+    team = Team(team_abbrev="BAL", team_name="Baltimore Ravens", positions={"WR": [Player(player="Zay Flowers", status="Q")]})
+    roster = flatten_offense_roster(make_snapshot(team))
+
+    assert [p.player for p in roster] == ["Zay Flowers"]

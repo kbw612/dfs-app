@@ -2,17 +2,19 @@
 POST /calculate-ownership-scores?season=&week=&platform=&contest= (mounted
 at /api/player-pool/calculate-ownership-scores -- see backend/api/
 player_pool/__init__.py). Bulk-computes each player's Ownership score from
-their current ownership_pct (backend/services/ownership/scoring.py's
-score_ownership_pct, same bands as the Ownership popover -- see frontend/
-src/components/scoringNotes.ts's OWNERSHIP_NOTES) and saves it as that
-(season, week, platform)'s Ownership override for every eligible player,
-wholesale-replacing whatever Ownership value was saved before for them --
-"latest applied wins," same philosophy as Vegas Lines' own bulk apply for
-Game Environment (see backend/api/vegas_lines/apply.py). DST is skipped
-(Ownership isn't a field DST uses at all, same scope as compute_player_
-pool's _fields_for_position), as is any player with no ownership_pct to
-score off of (not in the current Ownership projections upload) -- neither
-counts as "applied," both roll into `skipped_count`.
+their current ownership_pct and saves it as that (season, week,
+platform)'s Ownership override for every eligible player, wholesale-
+replacing whatever Ownership value was saved before for them -- "latest
+applied wins," same philosophy as Vegas Lines' own bulk apply for Game
+Environment (see backend/api/vegas_lines/apply.py). Offense uses
+backend/services/ownership/scoring.py's score_ownership_pct (see frontend/
+src/components/scoringNotes.ts's OWNERSHIP_NOTES); DST uses that module's
+score_dst_ownership_pct instead, its own tighter breakpoints (see
+DST_OWNERSHIP_NOTES) -- both share this one endpoint/button since they're
+still the same `ownership` field/column, just scored differently per
+position. Any player with no ownership_pct to score off of (not in the
+current Ownership projections upload) doesn't count as "applied," and
+rolls into `skipped_count`.
 
 Runs against every player in this (season, week, platform, contest)'s
 salary pool, independent of Player Selection's checkboxes -- same
@@ -35,7 +37,7 @@ from backend.config import settings
 from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
 from backend.repositories.player_pool.entries_repo import save_ownership_scores
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
-from backend.services.ownership.scoring import score_ownership_pct
+from backend.services.ownership.scoring import score_dst_ownership_pct, score_ownership_pct
 from backend.services.player_pool.enrichment import enrich_players_for_week
 
 router = APIRouter()
@@ -81,10 +83,8 @@ def calculate_ownership_scores_endpoint(
     scores: dict[str, float] = {}
     skipped_count = 0
     for player in players:
-        if player.position == "DST":
-            skipped_count += 1
-            continue
-        score = score_ownership_pct(player.ownership_pct)
+        scorer = score_dst_ownership_pct if player.position == "DST" else score_ownership_pct
+        score = scorer(player.ownership_pct)
         if score is None:
             skipped_count += 1
             continue

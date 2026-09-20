@@ -89,3 +89,4 @@ def serialize_dk_players_csv(rows: list[DkPlayerRow]) -> str:
             ]
         )
     return buffer.getvalue()
+

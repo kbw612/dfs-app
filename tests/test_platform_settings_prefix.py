@@ -17,7 +17,7 @@ def test_contest_slug_classic_main():
 
 
 def test_contest_slug_all_games():
-    assert contest_slug("All Games") == "all_games"
+    assert contest_slug("All Games") == "classic_all_games"
 
 
 def test_contest_slug_unknown_contest_raises():

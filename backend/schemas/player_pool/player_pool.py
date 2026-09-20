@@ -83,8 +83,10 @@ class PlayerPoolEntry(BaseModel):
     game_environment: _Score = _score_field()
     game_matchup: _Score = _score_field()
     ownership: _Score = _score_field()
-    # DST-only -- there's no separate "ownership"/"talent" concept for a
-    # defense, just how attractively priced it is this week.
+    # DST-only -- there's no separate "talent" concept for a defense, just
+    # how attractively priced it is this week. (Ownership above *does*
+    # apply to DST too, just with its own breakpoints -- see
+    # backend/services/ownership/scoring.py's score_dst_ownership_pct.)
     salary_value: _Score = _score_field()
     # None here means "no explicit save for this exact week" -- falls back
     # to the player's Player Default, then to a neutral 2.0, purely at read

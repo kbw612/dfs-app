@@ -1,32 +1,23 @@
 import { useEffect, useState } from "react";
-import { fetchWeeklyStatsFileInfo, importWeeklyStatsCsv, scrapeWeeklyStats } from "../api";
-import type { WeeklyStatsFileStatus, WeeklyStatsPosition } from "../types";
+import { fetchWeeklyStatsFileInfo, scrapeWeeklyStats } from "../api";
+import type { WeeklyStatsFileStatus } from "../types";
 import { ConfirmDialog } from "./ConfirmDialog";
 
 // Settings' Weekly Stats panel -- the 4 FantasyData exports (QB/RB/WR/TE)
-// that feed DK Players' "Update Week N Points" action (see
+// that feed DK Players' "Calc Week N Points & Fantasy Data" action (see
 // backend/services/dk_players/weekly_stats_loader.py for the column shape
 // each one has). Not platform-scoped -- these are league-wide stats, not
-// tied to a DK contest. `onUploaded` lets Settings refresh the combined
-// status list below after any one of the 4 uploads (or the scrape below)
-// succeeds.
+// tied to a DK contest. Scrape is the only way these files get populated
+// -- there used to also be a manual per-position CSV upload here as a
+// backup, removed since the person always uses Scrape.  `onUploaded` lets
+// Settings refresh the combined status list below after a scrape succeeds.
 interface WeeklyStatsUploadProps {
   season: number;
   week: number;
   onUploaded: () => void;
 }
 
-const POSITIONS: WeeklyStatsPosition[] = ["QB", "RB", "WR", "TE"];
-
 export function WeeklyStatsUpload({ season, week, onUploaded }: WeeklyStatsUploadProps) {
-  const [files, setFiles] = useState<Record<WeeklyStatsPosition, File | null>>({ QB: null, RB: null, WR: null, TE: null });
-  const [uploading, setUploading] = useState<WeeklyStatsPosition | null>(null);
-  const [messages, setMessages] = useState<Record<WeeklyStatsPosition, string | null>>({
-    QB: null,
-    RB: null,
-    WR: null,
-    TE: null,
-  });
   const [scraping, setScraping] = useState(false);
   const [scrapeMessage, setScrapeMessage] = useState<string | null>(null);
   // Pending confirm-popover, if any -- replaces window.confirm (a blocking
@@ -35,58 +26,10 @@ export function WeeklyStatsUpload({ season, week, onUploaded }: WeeklyStatsUploa
   // or clear it.
   const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
 
-  async function handleUpload(position: WeeklyStatsPosition) {
-    const file = files[position];
-    if (!file) return;
-    setUploading(position);
-    setMessages((prev) => ({ ...prev, [position]: null }));
-    try {
-      // This position's season file may already have `week`'s rows in it
-      // (e.g. re-uploading a corrected file, or after a scrape) --
-      // importWeeklyStatsCsv always overwrites just that week's rows, so
-      // confirm first rather than silently replacing them.
-      const info = await fetchWeeklyStatsFileInfo(season, week);
-      const status = info.files.find((f) => f.position === position);
-      if (status?.week_has_data) {
-        setUploading(null);
-        setConfirm({
-          message: `Week ${week} already has saved ${position} stats -- uploading will overwrite them. Continue?`,
-          onConfirm: () => performUpload(position, file),
-        });
-        return;
-      }
-      await performUpload(position, file);
-    } catch (err) {
-      setMessages((prev) => ({
-        ...prev,
-        [position]: err instanceof Error ? err.message : `Failed to upload ${position} stats`,
-      }));
-      setUploading(null);
-    }
-  }
-
-  async function performUpload(position: WeeklyStatsPosition, file: File) {
-    setConfirm(null);
-    setUploading(position);
-    try {
-      const result = await importWeeklyStatsCsv(season, week, position, file);
-      setMessages((prev) => ({ ...prev, [position]: `Loaded ${result.row_count} rows` }));
-      setFiles((prev) => ({ ...prev, [position]: null }));
-      onUploaded();
-    } catch (err) {
-      setMessages((prev) => ({
-        ...prev,
-        [position]: err instanceof Error ? err.message : `Failed to upload ${position} stats`,
-      }));
-    } finally {
-      setUploading(null);
-    }
-  }
-
   // Scrapes all 4 positions from FantasyData in one action. Checks
   // file-info first so an existing week's data isn't silently clobbered --
-  // scrapeWeeklyStats itself always overwrites, same as a manual upload,
-  // so the confirmation has to happen here rather than server-side.
+  // scrapeWeeklyStats itself always overwrites, so the confirmation has to
+  // happen here rather than server-side.
   async function handleScrape() {
     setScraping(true);
     setScrapeMessage(null);
@@ -135,27 +78,6 @@ export function WeeklyStatsUpload({ season, week, onUploaded }: WeeklyStatsUploa
         </button>
         {scrapeMessage && <span className="hint">{scrapeMessage}</span>}
       </div>
-      {POSITIONS.map((position) => (
-        <div key={position} className="player-pool-upload weekly-stats-upload-row">
-          <span className="weekly-stats-position-label">{position}</span>
-          <label className="player-pool-upload-label">
-            <input
-              type="file"
-              accept=".csv"
-              onChange={(e) => setFiles((prev) => ({ ...prev, [position]: e.target.files?.[0] ?? null }))}
-            />
-          </label>
-          <button
-            type="button"
-            className="player-pool-save-button"
-            disabled={!files[position] || uploading === position}
-            onClick={() => handleUpload(position)}
-          >
-            {uploading === position ? "Uploading…" : "Upload"}
-          </button>
-          {messages[position] && <span className="hint">{messages[position]}</span>}
-        </div>
-      ))}
       {confirm && (
         <ConfirmDialog
           message={confirm.message}

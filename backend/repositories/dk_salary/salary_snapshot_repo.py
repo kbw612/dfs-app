@@ -18,7 +18,7 @@ that same module's contest_slug() (e.g. "classic_main" for "Classic
 Main") -- the season is already the parent directory, so it isn't
 repeated in the filename. Every contest gets its own fully independent
 file this way (e.g. "dk_salaries_classic_main_week3.csv" vs.
-"dk_salaries_all_games_week3.csv"), so switching the Contest chip in
+"dk_salaries_classic_all_games_week3.csv"), so switching the Contest chip in
 Settings never overwrites another contest's upload. Deliberately stores
 the raw CSV text as uploaded, not a parsed/JSON representation -- there's
 nothing worth pre-computing here until a caller actually needs player

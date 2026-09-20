@@ -9,7 +9,10 @@ is a one-line addition to _PLATFORM_PREFIXES rather than something
 duplicated in each file-path builder.
 
 Also maps a contest name to the filename slug woven into every
-contest-scoped filename -- e.g. "All Games" -> "all_games", used by
+contest-scoped filename -- e.g. "All Games" -> "classic_all_games" (both
+contests are Classic-format slates, so both slugs carry a "classic_"
+prefix -- "Classic Main"'s own name already supplies it, "All Games"
+doesn't, so it's added explicitly), used by
 backend/repositories/dk_salary/salary_snapshot_repo.py,
 backend/repositories/contest_results/contest_standings_repo.py, and
 backend/repositories/player_selection/player_selection_repo.py. Every
@@ -29,7 +32,7 @@ _PLATFORM_PREFIXES: dict[str, str] = {
 
 _CONTEST_SLUGS: dict[str, str] = {
     "Classic Main": "classic_main",
-    "All Games": "all_games",
+    "All Games": "classic_all_games",
 }
 
 

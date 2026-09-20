@@ -6,6 +6,7 @@ import type {
   ContestTopLineupsResult,
   CurrentWeek,
   DepthChartRosterPlayer,
+  DepthChartSnapshot,
   DiffResult,
   DkPlayersResult,
   DkPlayersWeekStatus,
@@ -15,6 +16,8 @@ import type {
   GameEnvironmentEntry,
   GameLogsAgainstResult,
   GameLogsResult,
+  MatchupResetResult,
+  MultipliersResult,
   MyPlayerPoolEntryInput,
   NameAlias,
   NameAliasesResult,
@@ -37,13 +40,15 @@ import type {
   ScheduleImportResult,
   ScrapeResult,
   SnapshotSummary,
+  TeamFactorEntryInput,
+  UsageBumpPlayersResult,
   UsageBumpsResult,
   VegasLinesApplyResult,
   VegasLinesScrapeResult,
   VegasLinesSnapshot,
+  WeatherScrapeResult,
+  WeatherSnapshot,
   WeeklyStatsFileInfoResult,
-  WeeklyStatsImportResult,
-  WeeklyStatsPosition,
   WeeklyStatsScrapeResult,
 } from "./types";
 
@@ -160,6 +165,16 @@ export function triggerScrape(): Promise<ScrapeResult> {
 // or contest is selected.
 export function fetchDepthChartRoster(): Promise<{ players: DepthChartRosterPlayer[] }> {
   return apiGet<{ players: DepthChartRosterPlayer[] }>("/api/depth-charts/roster");
+}
+
+// The full latest depth-chart snapshot (every team, every position, every
+// player's status) -- see backend/api/depth_charts/latest.py. Backs the
+// Depth Charts tab's by-team browse view (DepthChartsView.tsx), unlike
+// fetchDepthChartRoster above (offense-only, no status, built for a
+// different purpose). 404s until at least one scrape has been retrieved
+// from the Compare Depth Charts tab.
+export function fetchDepthChartLatest(): Promise<DepthChartSnapshot> {
+  return apiGet<DepthChartSnapshot>("/api/depth-charts/latest");
 }
 
 export function fetchUsageBumpsLatest(): Promise<UsageBumpsResult> {
@@ -406,21 +421,6 @@ export function calculateDkPlayersWeekPoints(
   return apiPost<CalculateWeekPointsResult>(`/api/dk-players/calculate-week-points?${params.toString()}`);
 }
 
-// Settings' Weekly Stats panel -- one of the 4 FantasyData exports
-// (QB/RB/WR/TE) for a given (season, week). Not platform-scoped -- these
-// are league-wide stats, not tied to a DK contest.
-export function importWeeklyStatsCsv(
-  season: number,
-  week: number,
-  position: WeeklyStatsPosition,
-  file: File
-): Promise<WeeklyStatsImportResult> {
-  const params = new URLSearchParams({ season: String(season), week: String(week), position });
-  const formData = new FormData();
-  formData.append("file", file);
-  return apiPostForm<WeeklyStatsImportResult>(`/api/dk-players/weekly-stats/import-csv?${params.toString()}`, formData);
-}
-
 // All 4 positions' upload status at once, for Settings' single combined
 // Weekly Stats panel -- see backend/api/dk_players/weekly_stats.py.
 export function fetchWeeklyStatsFileInfo(season: number, week: number): Promise<WeeklyStatsFileInfoResult> {
@@ -449,6 +449,17 @@ export function saveNameAliases(aliases: NameAlias[]): Promise<NameAliasesResult
   return apiPut<NameAliasesResult>("/api/name-aliases", { aliases });
 }
 
+// Usage Bump Players -- global list (not season/week/platform-scoped),
+// see backend/api/usage_bump/players.py. saveUsageBumpPlayers always
+// replaces the whole list, same convention as Name Aliases' own save.
+export function fetchUsageBumpPlayers(): Promise<UsageBumpPlayersResult> {
+  return apiGet<UsageBumpPlayersResult>("/api/usage-bump-players");
+}
+
+export function saveUsageBumpPlayers(result: UsageBumpPlayersResult): Promise<UsageBumpPlayersResult> {
+  return apiPut<UsageBumpPlayersResult>("/api/usage-bump-players", result);
+}
+
 // Schedule -- one full-season Team/Week/Opponent/GameLocation file per
 // season (see backend/api/schedule/__init__.py), not week/platform/
 // contest-scoped like most uploads here. Feeds the Game Logs tab's
@@ -473,13 +484,15 @@ export function fetchGameLogs(
   season: number,
   week: number,
   platform: string,
-  lookbackWeeks: number
+  lookbackWeeks: number,
+  contest: string
 ): Promise<GameLogsResult> {
   const params = new URLSearchParams({
     season: String(season),
     week: String(week),
     platform,
     lookback_weeks: String(lookbackWeeks),
+    contest,
   });
   return apiGet<GameLogsResult>(`/api/game-logs?${params.toString()}`);
 }
@@ -493,15 +506,39 @@ export function fetchGameLogsAgainst(
   season: number,
   week: number,
   platform: string,
-  lookbackWeeks: number
+  lookbackWeeks: number,
+  contest: string
 ): Promise<GameLogsAgainstResult> {
   const params = new URLSearchParams({
     season: String(season),
     week: String(week),
     platform,
     lookback_weeks: String(lookbackWeeks),
+    contest,
   });
   return apiGet<GameLogsAgainstResult>(`/api/game-logs-against?${params.toString()}`);
+}
+
+// Multipliers -- see backend/api/multipliers/multipliers.py. Always reviews
+// `week - 1` (the base week) regardless of the currently-selected week's own
+// tracker/lookback state -- same "last week's own box score plus trailing
+// Multiplier history" shape as the backend engine returns, just passed
+// through untouched; the tab does its own filtering/sorting client-side.
+export function fetchMultipliers(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  trailingWeeks: number
+): Promise<MultipliersResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    contest,
+    trailing_weeks: String(trailingWeeks),
+  });
+  return apiGet<MultipliersResult>(`/api/multipliers?${params.toString()}`);
 }
 
 // applySelectionFilter defaults true (the Player Rankings tab's normal
@@ -546,6 +583,21 @@ export function calculateOwnershipScores(
   return apiPost<OwnershipScoresApplyResult>(`/api/player-pool/calculate-ownership-scores?${params.toString()}`);
 }
 
+// Player Rankings' DST-only Matchup refresh icon -- see backend/api/
+// player_pool/reset_matchup.py. Clears this week's explicit Matchup
+// override for every player at `position` so it falls back to the
+// opponent's own Team Default Factor (or the flat 2.0 neutral).
+export function resetMatchupToTeamFactor(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  position: string,
+): Promise<MatchupResetResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest, position });
+  return apiPost<MatchupResetResult>(`/api/player-pool/reset-matchup-to-team-factor?${params.toString()}`);
+}
+
 // My Player Pool tab -- see backend/api/my_player_pool/latest.py. Returns
 // only the players explicitly added to this personal shortlist, each
 // with the same computed row shape fetchPlayerPool returns (reused
@@ -574,6 +626,17 @@ export function fetchPlayerDefaults(season: number): Promise<{ defaults: PlayerD
 
 export function savePlayerDefaultEntry(entry: PlayerDefaultEntryInput): Promise<PlayerDefaultEntryInput> {
   return apiPut<PlayerDefaultEntryInput>("/api/player-defaults/entry", entry);
+}
+
+// Settings' Team Default Factors grid -- every (team, position)'s saved
+// factor for a season, no week (see backend/api/team_factors/latest.py).
+export function fetchTeamFactors(season: number): Promise<{ factors: TeamFactorEntryInput[] }> {
+  const params = new URLSearchParams({ season: String(season) });
+  return apiGet<{ factors: TeamFactorEntryInput[] }>(`/api/team-factors/latest?${params.toString()}`);
+}
+
+export function saveTeamFactorEntry(entry: TeamFactorEntryInput): Promise<TeamFactorEntryInput> {
+  return apiPut<TeamFactorEntryInput>("/api/team-factors/entry", entry);
 }
 
 // Settings' Player Selection grid -- every QB/RB/WR/TE from this week's
@@ -625,6 +688,23 @@ export function scrapeVegasLines(season: number, week: number): Promise<VegasLin
 export function applyVegasLines(season: number, week: number): Promise<VegasLinesApplyResult> {
   const params = new URLSearchParams({ season: String(season), week: String(week) });
   return apiPost<VegasLinesApplyResult>(`/api/vegas-lines/apply?${params.toString()}`);
+}
+
+// Weather tab -- see backend/api/weather/__init__.py. Fetching "latest"
+// 404s until you've retrieved at least once for this (season, week); the
+// caller checks for that via isNotFound, same pattern as fetchVegasLines.
+export function fetchWeather(season: number, week: number): Promise<WeatherSnapshot> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiGet<WeatherSnapshot>(`/api/weather/latest?${params.toString()}`);
+}
+
+// Scrapes mysportsweather.com/nfl's current "Kevin's note" cards and
+// fully replaces whatever Weather already has saved for this
+// (season, week) -- no merge step, unlike Vegas Lines (see
+// backend/repositories/weather/weather_repo.py's docstring).
+export function scrapeWeather(season: number, week: number): Promise<WeatherScrapeResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiPost<WeatherScrapeResult>(`/api/weather/scrape?${params.toString()}`);
 }
 
 // Uploads DK's own native salary export -- shared by Salary Blocks and

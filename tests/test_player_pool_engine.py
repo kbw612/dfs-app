@@ -4,11 +4,13 @@ from backend.repositories.game_environment.game_environment_repo import save_gam
 from backend.repositories.name_aliases.name_aliases_repo import save_name_aliases
 from backend.repositories.player_defaults.defaults_repo import save_default
 from backend.repositories.player_pool.entries_repo import save_entry
+from backend.repositories.team_factors.team_factors_repo import save_factor
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
 from backend.schemas.name_aliases.name_aliases import NameAlias
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.schemas.player_defaults.player_defaults import PlayerDefaultEntry
 from backend.schemas.player_pool.player_pool import PlayerPoolEntry
+from backend.schemas.team_factors.team_factors import TeamFactorEntry
 from backend.services.player_pool.engine import compute_player_pool, entry_total
 
 
@@ -388,28 +390,32 @@ def test_compute_player_pool_defaults_game_environment_to_neutral_without_data(t
     assert row.total == 10.0
 
 
-def test_compute_player_pool_dst_has_no_ownership_or_game_environment(tmp_path: Path):
-    # DSTs only ever use Game Matchup + Salary Value -- Ownership and
-    # Game Environment shouldn't apply (or default) to them at all, even
-    # though those fields default to something for every offensive
-    # position. Regression test for a bug where DST rows picked up a
-    # phantom Ownership=2.0/Game Environment=2.0 that never showed up in
-    # the DST grid but silently inflated the total anyway.
+def test_compute_player_pool_dst_has_no_game_environment(tmp_path: Path):
+    # DSTs use Game Matchup + Ownership + Salary Value -- only Game
+    # Environment (and Volume/Talent) shouldn't apply (or default) to them
+    # at all, even though those fields default to something for every
+    # offensive position. Regression test for a bug where DST rows picked
+    # up a phantom Game Environment=2.0 that never showed up in the DST
+    # grid but silently inflated the total anyway. (Ownership itself *is*
+    # now expected to default for DST too, per the same neutral-2.0 rule
+    # every other direct score field uses -- see _resolve_direct_scores --
+    # even though it's scored with DST's own breakpoints when the refresh
+    # icon is used, see score_dst_ownership_pct.)
     ge_dir, nfl_dir = dirs(tmp_path)
     players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
 
     result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
     row = result.players[0]
-    assert row.ownership is None
     assert row.game_environment is None
     assert row.game_environment_suggested is None
     assert row.volume is None
     assert row.talent is None
-    # game_matchup and salary_value both default to 2.0 for DST -- the
-    # only two fields DST uses at all.
+    # game_matchup, ownership, and salary_value all default to 2.0 for
+    # DST -- the three fields DST uses.
     assert row.game_matchup == 2.0
+    assert row.ownership == 2.0
     assert row.salary_value == 2.0
-    assert row.total == 4.0
+    assert row.total == 6.0
 
 
 def test_compute_player_pool_dst_ignores_saved_player_default(tmp_path: Path):
@@ -468,3 +474,65 @@ def test_compute_player_pool_returns_saved_game_environment_entries(tmp_path: Pa
     result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
     assert len(result.game_environment) == 1
     assert result.game_environment[0].game_key == "BUF-NO"
+
+
+def test_compute_player_pool_game_matchup_resolves_from_team_factor(tmp_path: Path):
+    # A WR facing CHI should start from CHI's own saved Team Default Factor
+    # at the WR position -- Settings' "for WR and CHI I'd put a 3" example,
+    # not the flat 2.0 neutral.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_factor(nfl_dir, TeamFactorEntry(season=2025, team="CHI", position="WR", factor=3.0))
+    players = [make_player("A", "WR", "SF", "CHI", 6000)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].game_matchup == 3.0
+
+
+def test_compute_player_pool_game_matchup_uses_opponents_factor_not_own_teams(tmp_path: Path):
+    # The lookup key is the *opponent's* (team, position) factor, not the
+    # player's own team -- a factor saved for the player's own team should
+    # have zero effect on that player's Matchup default.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_factor(nfl_dir, TeamFactorEntry(season=2025, team="SF", position="WR", factor=1.0))
+    save_factor(nfl_dir, TeamFactorEntry(season=2025, team="CHI", position="WR", factor=3.0))
+    players = [make_player("A", "WR", "SF", "CHI", 6000)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].game_matchup == 3.0
+
+
+def test_compute_player_pool_explicit_matchup_override_wins_over_team_factor(tmp_path: Path):
+    # This week's own explicit Matchup save (Player Rankings' per-week
+    # override) still takes precedence over the Team Default Factor, same
+    # fallback-chain precedence Volume/Talent already have over their own
+    # Player Defaults.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_factor(nfl_dir, TeamFactorEntry(season=2025, team="CHI", position="WR", factor=3.0))
+    save_entry(nfl_dir, PlayerPoolEntry(season=2025, week=9, player="A", game_matchup=1.5))
+    players = [make_player("A", "WR", "SF", "CHI", 6000)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].game_matchup == 1.5
+
+
+def test_compute_player_pool_game_matchup_falls_back_to_neutral_without_team_factor(tmp_path: Path):
+    # Neither a Team Default Factor nor a per-week override exists -- the
+    # flat 2.0 neutral from _DEFAULT_SCORE_FIELDS still applies, same as
+    # before Team Default Factors existed.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    players = [make_player("A", "WR", "SF", "CHI", 6000)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].game_matchup == 2.0
+
+
+def test_compute_player_pool_dst_game_matchup_resolves_from_team_factor(tmp_path: Path):
+    # DST uses the same (opponent, position) lookup path as offensive
+    # positions -- a Team Default Factor saved under position="DST" should
+    # apply to a DST player facing that team.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_factor(nfl_dir, TeamFactorEntry(season=2025, team="ARI", position="DST", factor=1.5))
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].game_matchup == 1.5

@@ -13,7 +13,7 @@ shape), where prefix/contest_slug come from backend/services/
 platform_settings/prefix.py's platform_file_prefix()/contest_slug().
 Every contest gets its own fully independent file this way (e.g.
 "dk_contest_standings_classic_main_week3.csv" vs.
-"dk_contest_standings_all_games_week3.csv").
+"dk_contest_standings_classic_all_games_week3.csv").
 """
 
 from __future__ import annotations

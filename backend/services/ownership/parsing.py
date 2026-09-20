@@ -15,10 +15,15 @@ import re
 # abbreviation lookup (config/team-info.csv) can resolve on its own since
 # "LA" alone is ambiguous between the two LA teams. The same quirk shows up
 # in the CSV export of that page, so both scraper.py and csv_loader.py need
-# this fix.
+# this fix. "JAC" is the same kind of quirk -- that site spells Jacksonville
+# "JAC" while DK's own salary export (and every other abbreviation this app
+# uses) spells it "JAX"; without this fix, Jacksonville's DST never matched
+# its Ownership projection (see services/dk_salary/ownership_enrich.py's
+# team-based DST match), always falling back to "not projected."
 TEAM_ABBREV_FIXES = {
     "LARC": "LAC",
     "LA": "LAR",
+    "JAC": "JAX",
 }
 
 

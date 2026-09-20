@@ -250,6 +250,7 @@ def test_load_weekly_stat_lines_reads_every_week_at_once():
         "targets": 2,
         "receptions": 1,
         "receiving_yards": 3,
+        "team": "TEN",
     }
     assert lines[("Tony Pollard", 14)]["rush_att"] == 18
 
@@ -260,15 +261,82 @@ def test_load_weekly_stat_lines_qb_file_has_no_receiving_keys():
     stat_line = lines[("Lamar Jackson", 1)]
     assert stat_line["rush_att"] == 6
     assert stat_line["rush_yards"] == 70
+    assert stat_line["team"] == "BAL"
     assert "targets" not in stat_line
     assert "receptions" not in stat_line
     assert "receiving_yards" not in stat_line
+
+
+def test_load_weekly_stat_lines_qb_file_includes_passing_line():
+    csv_text = f"{QB_HEADER}\n1,Lamar Jackson,BAL,QB,1,BUF,14,19,73.7,209,11.0,2,0,39,2,144.4,6,70,11.7,1,29.4\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Lamar Jackson", 1)]
+    assert stat_line["pass_cmp"] == 14
+    assert stat_line["pass_att"] == 19
+    assert stat_line["pass_cmp_pct"] == 73.7
+    assert stat_line["pass_yds"] == 209
+    assert stat_line["pass_avg"] == 11.0
+    assert stat_line["pass_td"] == 2
+    assert stat_line["pass_int"] == 0
+    assert stat_line["pass_sck"] == 2
+    assert stat_line["pass_rtg"] == 144.4
+
+
+def test_load_weekly_stat_lines_non_qb_file_has_no_passing_keys():
+    # RB's file has no PASSING_*/INT/SCK/RATING columns at all -- same
+    # "missing column -> key simply omitted" convention as the receiving
+    # columns being absent from the QB file.
+    csv_text = f"{RB_HEADER}\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Bijan Robinson", 1)]
+    for key in ("pass_cmp", "pass_att", "pass_cmp_pct", "pass_yds", "pass_avg", "pass_td", "pass_int", "pass_sck", "pass_rtg"):
+        assert key not in stat_line
 
 
 def test_load_weekly_stat_lines_blank_cells_parse_as_zero():
     csv_text = f"{RB_HEADER}\n1,Someone,ATL,RB,1,TB,0,0,,0,5,4,40,0,0,0,8.0\n"
     lines = load_weekly_stat_lines(csv_text)
     assert lines[("Someone", 1)]["rush_att"] == 0
+
+
+def test_load_weekly_stat_lines_reads_precomputed_share_columns():
+    # TGT_SHARE/TOUCH_SHARE/OPP_SHARE are three extra trailing columns "Calc Week Points &
+    # Fantasy Data" writes (see usage_shares.compute_usage_share_updates +
+    # weekly_stats_repo.write_usage_share_columns) -- once present, a real
+    # value parses as a float.
+    csv_text = (
+        f"{RB_HEADER},TGT_SHARE,TOUCH_SHARE,OPP_SHARE\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4,28.6,65.0,50.0\n"
+    )
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Bijan Robinson", 1)]
+    assert stat_line["target_share_pct"] == 28.6
+    assert stat_line["touch_share_pct"] == 65.0
+    assert stat_line["opp_share_pct"] == 50.0
+
+
+def test_load_weekly_stat_lines_blank_share_cells_parse_as_none_not_zero():
+    # A blank TGT_SHARE/TOUCH_SHARE/OPP_SHARE cell means "not yet calculated" (or, for
+    # TGT_SHARE, "not applicable" for a QB row) -- unlike every other numeric
+    # column in this file, this must NOT default to 0.
+    csv_text = f"{RB_HEADER},TGT_SHARE,TOUCH_SHARE,OPP_SHARE\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4,,,\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Bijan Robinson", 1)]
+    assert stat_line["target_share_pct"] is None
+    assert stat_line["touch_share_pct"] is None
+    assert stat_line["opp_share_pct"] is None
+
+
+def test_load_weekly_stat_lines_omits_share_keys_when_columns_missing():
+    # An older file, or a week "Calc Week Points" hasn't run for yet --
+    # no TGT_SHARE/TOUCH_SHARE/OPP_SHARE header at all, so the keys are simply absent
+    # (not None) from the stat line, same "not applicable yet" convention
+    # as every other optional column in this file.
+    csv_text = f"{RB_HEADER}\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Bijan Robinson", 1)]
+    assert "target_share_pct" not in stat_line
+    assert "touch_share_pct" not in stat_line
+    assert "opp_share_pct" not in stat_line
 
 
 # -- calculate_week_points ----------------------------------------------------

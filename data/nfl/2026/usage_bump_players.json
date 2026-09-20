@@ -74,6 +74,60 @@
           ]
         }
       ]
+    },
+    {
+      "teamAbbrev": "BAL",
+      "players": [
+        {
+          "name": "Zay Flowers",
+          "moreUsagePlayers": [
+            "Mark Andrews",
+            "Rashod Bateman",
+            "Derrick Henry",
+            "Devontez Walker",
+            "Ja'Kobi Lane"
+          ]
+        },
+        {
+          "name": "Ja'Kobi Lane",
+          "moreUsagePlayers": [
+            "Rashod Bateman",
+            "Zay Flowers",
+            "Mark Andrews",
+            "Derrick Henry",
+            "Devontez Walker"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "HOU",
+      "players": [
+        {
+          "name": "Nico Collins",
+          "moreUsagePlayers": [
+            "Dalton Schultz",
+            "David Montgomery",
+            "Xavier Hutchinson",
+            "Kayshon Boutte",
+            "Jaylin Noel"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "WAS",
+      "players": [
+        {
+          "name": "Chig Okonkwo",
+          "moreUsagePlayers": [
+            "John Bates",
+            "Antonio Williams",
+            "Terry McLaurin",
+            "Stefon Diggs"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -87,6 +87,7 @@ h1 {
 
 .view-tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
 }
@@ -1382,11 +1383,78 @@ button.calendar-cell.no-data .day-number {
   margin: 4px 0 0;
 }
 
-.current-week-readout {
+/* HeaderSettingsPopover -- replaces the old plain .current-week-readout
+   text with a clickable trigger + dropdown, same click-outside-to-close
+   shape as .header-info-wrap/-icon/-popover further down this file, just
+   right-aligned in the header instead of inline next to a column label,
+   and holding form inputs instead of static notes. */
+.header-settings-wrap {
+  position: relative;
+}
+
+.header-settings-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 8px;
+  margin: 2px -8px 0 0;
   font-size: 0.95rem;
   font-weight: 700;
   color: #333;
-  margin: 2px 0 0;
+  cursor: pointer;
+}
+
+.header-settings-trigger:hover,
+.header-settings-trigger[aria-expanded="true"] {
+  border-color: #ccc;
+  background: white;
+}
+
+.header-settings-trigger-caret {
+  font-size: 0.7rem;
+  color: #999;
+}
+
+.header-settings-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 5;
+  margin-top: 6px;
+  width: 260px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  text-align: left;
+  font-weight: normal;
+}
+
+.header-settings-popover .chip-filter:not(:first-child) {
+  margin-top: 10px;
+}
+
+.header-settings-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.header-settings-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.8rem;
+  color: #555;
+  flex: 1;
+}
+
+.header-settings-row input {
+  width: 100%;
 }
 
 .player-selection-row-excluded {
@@ -1673,6 +1741,46 @@ table.player-selection-grid .player-selection-checkbox-input {
   gap: 3px;
 }
 
+/* Multipliers tab only: header cells share one row height (the tallest
+   two-line "Multiplier"/"W12" header), so a plain single-line header
+   (Name, Salary, FPTS...) would otherwise center its text+icon block in
+   the middle of that taller cell, leaving every column's sort icon at a
+   different height depending on how many lines its own label happens to
+   have. Bottom-aligning the cell's content instead means every column's
+   text+icon block hugs the same bottom edge, so the icons line up in a
+   row regardless of label length. */
+table.multipliers-grid thead th {
+  vertical-align: bottom;
+}
+
+/* Player Rankings only (not the shared .player-pool-grid used by every
+   other tab that reuses this table style) -- same bottom-align reasoning
+   as .multipliers-grid above: header cells share one row height (the
+   tallest 2-line label plus an icon row underneath), so every column's
+   label+icon block should hug the same bottom edge regardless of how
+   short its own content is. */
+table.player-rankings-grid thead th {
+  vertical-align: bottom;
+}
+
+/* Splits a score-field header into two stacked blocks: the label text on
+   top, any refresh/info icons in their own row underneath -- rather than
+   the icons trailing inline right after the label text on whatever its
+   last line happens to be. Both are plain <span>s forced to block level
+   so the icons always start a new line even when the label itself is a
+   single line (e.g. Ownership, Salary value). */
+.player-pool-header-label {
+  display: block;
+}
+
+.player-pool-header-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
 .player-pool-sort-icon {
   font-size: 0.7rem;
   color: #999;
@@ -1779,6 +1887,34 @@ table.ownership-summary-grid {
   margin-left: 6px;
   color: #666;
   font-size: 0.8em;
+}
+
+/* CollapsibleHint.tsx -- a tab's own explanatory hint text, collapsed by
+   default (see that component for why). The header line reuses
+   .ownership-summary-collapsible-header/-collapse-icon above for the
+   same click-to-toggle look Ownership Summary/Contest Results use, just
+   inside a plain .hint-styled span instead of an <h2>, since this isn't
+   a section title. */
+.collapsible-hint {
+  margin-bottom: 12px;
+}
+
+.collapsible-hint-header {
+  display: inline-block;
+}
+
+.collapsible-hint-title {
+  display: inline-flex;
+  align-items: center;
+}
+
+.collapsible-hint-list {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.collapsible-hint-list li {
+  margin-bottom: 4px;
 }
 
 /* Expand all/Collapse all for Ownership by game's individual rows --
@@ -2043,6 +2179,106 @@ table.ownership-summary-grid {
 
 .vegas-lines-tier-red {
   color: #c53030;
+}
+
+/* Weather tab: each note card gets a colored left border matching
+   mysportsweather.com's own "Kevin's note" cards (see the screenshot this
+   feature was built from) -- the color itself is whatever raw string the
+   scrape returned (WeatherView.tsx's colorClassName), so only the colors
+   actually observed on the source site get a rule here; an unrecognized
+   color falls back to weather-note-unknown's neutral gray rather than no
+   border at all. */
+.weather-note-card {
+  border-left: 8px solid #ccc;
+  padding-left: 12px;
+  margin-bottom: 12px;
+}
+
+.weather-note-card:last-child {
+  margin-bottom: 0;
+}
+
+.weather-note-yellow {
+  border-left-color: #d4a017;
+}
+
+.weather-note-orange {
+  border-left-color: #d2691e;
+}
+
+.weather-note-green {
+  border-left-color: #2f855a;
+}
+
+.weather-note-red {
+  border-left-color: #c53030;
+}
+
+.weather-note-unknown {
+  border-left-color: #999;
+}
+
+.weather-note-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.weather-note-body {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+}
+
+/* Depth Charts tab: one team's card, position-by-position. Player name +
+   status share one color (see .status-color-red/-gold below and
+   statusCodes.ts's statusColorClassName) rather than badging just the
+   "(status)" text, so a banged-up player's whole entry stands out at a
+   glance. */
+.depth-chart-team-card {
+  margin-top: 16px;
+}
+
+.depth-chart-formation {
+  margin: 2px 0 0;
+}
+
+.depth-chart-position-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.depth-chart-position-row {
+  font-size: 0.9rem;
+}
+
+.depth-chart-position-label {
+  font-weight: 600;
+}
+
+/* No color of its own -- inherits from the enclosing
+   .status-color-red/-gold span (or the default text color for a healthy
+   player), so "(Q)" reads in the same color as the player's name rather
+   than being overridden back to a flat gray. */
+.depth-chart-status {
+  color: inherit;
+}
+
+/* Doubtful or any "Out"-group status (see STATUS_FILTER_GROUPS in
+   statusCodes.ts) -- same red used elsewhere in the app (Vegas Lines'
+   tiering, Boom/Bust's tiering) for "this is bad news." Questionable gets
+   the lighter gold warning color instead of red, same rationale as
+   Boom/Bust's own tiering. */
+.status-color-red {
+  color: #c53030;
+}
+
+.status-color-gold {
+  color: #a68b00;
 }
 
 /* Boom/Bust Players tab -- same green/gold/red palette as Vegas Lines'
@@ -2340,4 +2576,136 @@ table.contest-results-grid {
 
 .contest-results-summary li {
   margin-bottom: 3px;
+}
+
+/* Usage Bump Players tab (UsageBumpPlayersView.tsx) -- single-team editor
+   over usage_bump_players.json, navigated via the shared .chip/.chip-row
+   team filter (see .chip-filter/.chip-row's own rules above). Reuses
+   .ownership-section/.player-pool-grid-header/.player-pool-save-button/
+   .name-aliases-actions for the outer shell and Save row; these are the
+   only new classes. */
+.usage-bump-players-team .player-pool-grid-header {
+  margin-bottom: 8px;
+}
+
+/* Marks a team chip that already has at least one curated trigger player,
+   so scanning all 32 chips for "which teams have I already set up" doesn't
+   require clicking through each one -- a small dot rather than a second
+   color, so it still reads clearly against both the unselected (white)
+   and selected (blue) chip backgrounds. */
+.chip.chip-has-content::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+  vertical-align: middle;
+}
+
+.usage-bump-player-row {
+  border-top: 1px solid #e5e7eb;
+  padding: 10px 0;
+}
+
+.usage-bump-player-row:first-of-type {
+  border-top: none;
+}
+
+.usage-bump-trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.usage-bump-trigger-input input {
+  font-weight: 600;
+}
+
+/* Indented under the trigger row, numbered like the priority list it
+   represents -- ol's own default counter, no extra styling needed for
+   the number itself since .usage-bump-beneficiary-rank shows the rank
+   redundantly (and more prominently) instead. */
+.usage-bump-beneficiary-list {
+  list-style: none;
+  margin: 0 0 6px;
+  padding-left: 28px;
+}
+
+.usage-bump-beneficiary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.usage-bump-beneficiary-rank {
+  color: #888;
+  font-size: 0.85rem;
+  width: 1.2em;
+  text-align: right;
+}
+
+.usage-bump-add-beneficiary {
+  margin-left: 28px;
+}
+
+/* PlayerNameAutocomplete.tsx -- shared by the trigger-player and
+   beneficiary-player name fields above. */
+.player-name-autocomplete {
+  position: relative;
+  flex: 1;
+}
+
+.player-name-autocomplete input {
+  width: 100%;
+}
+
+.player-name-autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 2px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.player-name-autocomplete-list button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  /* The global `button` rule (near the top of this file) sets white text
+     for its default blue-filled look -- this button drops that
+     background to blend into the dropdown, so it needs its own dark text
+     color too, or the names render invisible (white on the dropdown's
+     white background). */
+  color: #1a1a1a;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.player-name-autocomplete-list button:hover {
+  background: #f3f4f6;
+}
+
+.player-name-autocomplete-meta {
+  color: #888;
+  font-size: 0.8rem;
+  margin-left: 8px;
 }

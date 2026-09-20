@@ -2,26 +2,33 @@ import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { fetchGameLogs } from "../api";
 import type { GameLogRow, GameOption } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
+import { CollapsibleHint } from "./CollapsibleHint";
 import {
   formatCount,
+  formatDecimal,
   formatMultiplier,
   formatOpponent,
   formatPct,
   formatSalary,
   multiplierTier,
   positionRank,
+  rankTopSharesByTeamAndWeek,
+  shareRankClassName,
   tierClassName,
 } from "./gameLogsShared";
 
-// season/week/platform come from the shared header control (see App.tsx),
-// same as every other weekly tab. No `contest` -- the DK Players tracker
-// this reads from is hardcoded to always read the All Games files (see
-// DkPlayersView.tsx's own history), so there's nothing contest-scoped to
-// pass through here.
+// season/week/platform/contest come from the shared header control (see
+// App.tsx), same as every other weekly tab. The DK Players tracker this
+// reads from is still hardcoded to always read the All Games files (see
+// DkPlayersView.tsx's own history) -- `contest` here is used only to
+// narrow the Game filter/roster down to the currently-selected Contest's
+// own DK salary slate (see backend/api/game_logs/game_logs.py's own
+// docstring for why), not to change which tracker file is read.
 interface GameLogsViewProps {
   season: number;
   week: number;
   platform: string;
+  contest: string;
 }
 
 // How long to wait after the last keystroke in the "Weeks of history"
@@ -60,10 +67,12 @@ function groupByTeamAndPosition(rows: GameLogRow[]): TeamGroup[] {
 }
 
 // Week, Name, Pos, Salary, Opp, Multiplier, FPTS, Non-TD FPTS, Non-TD %,
-// TD FPTS, TD %, Touches, Tgts, Rec, Rec Yds, Rush Att, Rush Yds.
-const GAME_LOG_COLUMN_COUNT = 17;
+// TD FPTS, TD %, Opp Share, Tgt Share, Touch Share, Touches, Tgts, Rec,
+// Rec Yds, Rush Att, Rush Yds, Pass Cmp, Pass Att, Pass Cmp%, Pass Yds,
+// Pass Avg, Pass TD, Pass Int, Pass Sck, Pass Rtg.
+const GAME_LOG_COLUMN_COUNT = 29;
 
-export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
+export function GameLogsView({ season, week, platform, contest }: GameLogsViewProps) {
   const [lookbackInput, setLookbackInput] = useState("6");
   const [lookbackWeeks, setLookbackWeeks] = useState(6);
   const lookbackDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -85,7 +94,7 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchGameLogs(season, week, platform, lookbackWeeks)
+    fetchGameLogs(season, week, platform, lookbackWeeks, contest)
       .then((result) => {
         setRows(result.rows);
         setGames(result.games);
@@ -98,7 +107,7 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
         setError(err instanceof Error ? err.message : "Failed to load game logs");
       })
       .finally(() => setLoading(false));
-  }, [season, week, platform, lookbackWeeks]);
+  }, [season, week, platform, contest, lookbackWeeks]);
 
   useEffect(() => {
     const timer = lookbackDebounce;
@@ -156,18 +165,42 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
 
   const groups = useMemo(() => groupByTeamAndPosition(filteredRows), [filteredRows]);
 
+  // That team's top 2 Opp Share/Tgt Share/Touch Share values for that
+  // week -- see gameLogsShared.rankTopSharesByTeamAndWeek's own docstring.
+  const oppShareRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.opp_share_pct),
+    [filteredRows]
+  );
+  const targetShareRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.target_share_pct),
+    [filteredRows]
+  );
+  const touchShareRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.touch_share_pct),
+    [filteredRows]
+  );
+
   const isNotFound = error !== null && error.includes("No DK Players tracker started yet");
 
   return (
     <>
-      <p className="hint">
-        Each currently-rostered QB/RB/WR/TE/DST's own history from the last {lookbackWeeks} week
-        {lookbackWeeks === 1 ? "" : "s"}
-        {referenceWeek !== null ? ` (roster as of week ${referenceWeek})` : ""} -- Salary/FPTS/Multiplier come from
-        the DK Players tracker, Opponent/GameLoc from the Schedule file, and Touch/Tgts/Rec/etc. from the FantasyData
-        weekly stats files. Any of those come back "-" until the relevant Settings upload exists. Weeks with 0 FPTS
-        are hidden except for DST, which always shows.
-      </p>
+      <CollapsibleHint
+        items={[
+          `Each currently-rostered QB/RB/WR/TE/DST's own history from the last ${lookbackWeeks} week${
+            lookbackWeeks === 1 ? "" : "s"
+          }${referenceWeek !== null ? ` (roster as of week ${referenceWeek})` : ""}.`,
+          "Salary/FPTS/Multiplier come from the DK Players tracker; Opponent/GameLoc come from the Schedule file.",
+          `Touch/Tgts/Rec/etc./Opp Share/Tgt Share/Touch Share/Pass stats come from the FantasyData weekly stats
+          files, computed once when "Calc Week Points & Fantasy Data" is run for that week.`,
+          "Tgt Share is the player's targets divided by their team's combined pass attempts that week.",
+          "Touch Share is (player carries + receptions) divided by (team carries + team receptions).",
+          "Opp Share is (player carries + targets) divided by (team carries + team targets).",
+          "The 9 Pass columns are QB-only.",
+          `Any of those show "-" until the relevant Settings scrape exists (or, for Pass/Share columns, until Calc
+          Week Points has run, or for Pass columns, for every non-QB row).`,
+          "Weeks with 0 FPTS are hidden except for DST, which always shows.",
+        ]}
+      />
 
       <div className="filters">
         <div className="chip-filter">
@@ -268,6 +301,21 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
                               FPTS
                             </th>
                             <th>TD %</th>
+                            <th>
+                              Opp
+                              <br />
+                              Share
+                            </th>
+                            <th>
+                              Tgt
+                              <br />
+                              Share
+                            </th>
+                            <th>
+                              Touch
+                              <br />
+                              Share
+                            </th>
                             <th>Touches</th>
                             <th>Tgts</th>
                             <th>Rec</th>
@@ -281,6 +329,51 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
                               Rush
                               <br />
                               Yds
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Cmp
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Att
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Cmp%
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Yds
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Avg
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              TD
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Int
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Sck
+                            </th>
+                            <th>
+                              Pass
+                              <br />
+                              Rtg
                             </th>
                           </tr>
                         )}
@@ -298,12 +391,30 @@ export function GameLogsView({ season, week, platform }: GameLogsViewProps) {
                           <td className="player-pool-grid-num">{formatPct(row.non_td_fpts_pct)}</td>
                           <td className="player-pool-grid-num">{row.td_fpts.toFixed(1)}</td>
                           <td className="player-pool-grid-num">{formatPct(row.td_fpts_pct)}</td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(oppShareRanks.get(row))}`}>
+                            {formatPct(row.opp_share_pct)}
+                          </td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(targetShareRanks.get(row))}`}>
+                            {formatPct(row.target_share_pct)}
+                          </td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(touchShareRanks.get(row))}`}>
+                            {formatPct(row.touch_share_pct)}
+                          </td>
                           <td className="player-pool-grid-num">{formatCount(row.touches)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.targets)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receptions)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receiving_yards)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_att)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_yards)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_cmp)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_att)}</td>
+                          <td className="player-pool-grid-num">{formatPct(row.pass_cmp_pct)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_yds)}</td>
+                          <td className="player-pool-grid-num">{formatDecimal(row.pass_avg)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_td)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_int)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.pass_sck)}</td>
+                          <td className="player-pool-grid-num">{formatDecimal(row.pass_rtg)}</td>
                         </tr>
                       </Fragment>
                     );

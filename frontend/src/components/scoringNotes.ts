@@ -18,12 +18,24 @@ export const GAME_MATCHUP_NOTES: string[] = [
   "Does the RB face a defense with a fierce front seven?",
   "Is the defense a high-end unit that's been holding opponents to low yardage and scoring totals?",
   "Scored once per team and position, not per player -- editing one player's value applies it to every teammate at that same position (e.g. all of a team's WRs share one Matchup score).",
+  "For a week that hasn't been explicitly scored yet, this starts from the opponent's own Team Default Factor at this position (set in Settings' Team Default Factors grid) instead of a flat 2.0 -- editing it here only overrides that one week, the team-wide Default itself is unchanged.",
 ];
 
 export const OWNERSHIP_NOTES: string[] = [
   "Sub 10% = 3 points",
   "Between 10 and 20% = 2 points",
   "Over 20% = 1 point",
+];
+
+// DST's own Ownership breakpoints -- tighter than offense's OWNERSHIP_NOTES
+// since DST ownership tends to concentrate on far fewer options each
+// week. Same column/refresh icon as offense, just a different rule behind
+// it for this position (see backend/services/ownership/scoring.py's
+// score_dst_ownership_pct).
+export const DST_OWNERSHIP_NOTES: string[] = [
+  "2% or under = 3 points",
+  "Between 2% and 9.99% = 2 points",
+  "10% or higher = 1 point",
 ];
 
 export const VOLUME_OPPORTUNITIES_NOTES: string[] = [
@@ -39,4 +51,17 @@ export const TALENT_EXPLOSIVENESS_NOTES: string[] = [
   "top player = 1 point",
   "above player = .5 points",
   "average player = 0 points",
+];
+
+// DST-only -- there's no separate Ownership/Talent concept for a defense,
+// just how attractively priced its salary is this week. Unlike Game
+// Environment/Ownership's own suggestions (both computed server-side from
+// Vegas Lines/Ownership% data), this rule is a pure function of the DST's
+// own salary, already known client-side -- see PlayerPoolView.tsx's own
+// suggestedSalaryValue and its header reset (↻) icon for this column.
+export const SALARY_VALUE_NOTES: string[] = [
+  "Salary $3,500 or higher = 1 point",
+  "Salary $2,600 or under = 3 points",
+  "Anything in between = 2 points",
+  "The reset (↻) icon next to this header resets every DST's value back to this rule -- overwrites whatever's currently saved for each one this week.",
 ];

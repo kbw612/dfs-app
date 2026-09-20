@@ -17,6 +17,17 @@ def test_extract_injury_status_multi_word_name():
     assert extract_injury_status("Ka'ena De Cambra") == ("Ka'ena De Cambra", None)
 
 
+def test_extract_injury_status_hyphenated_code():
+    # Compound status codes (Injured Reserve-Designated for Return, etc.)
+    # aren't plain \w+ -- the hyphen used to make the whole regex miss,
+    # leaving "(IR-R)" stuck on the name instead of being split out.
+    assert extract_injury_status("James Conner (IR-R)") == ("James Conner", "IR-R")
+
+
+def test_extract_injury_status_pup_hyphenated_code():
+    assert extract_injury_status("Tip Reiman (PUP-R)") == ("Tip Reiman", "PUP-R")
+
+
 def test_parse_teams_extracts_both_teams():
     teams, messages = parse_teams(FIXTURE_HTML)
     assert [t.team_name for t in teams] == ["Arizona Cardinals", "Atlanta Falcons"]

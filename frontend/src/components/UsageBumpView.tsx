@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { fetchUsageBumpsLatest } from "../api";
+import { fetchPlayerPool, fetchUsageBumpsLatest } from "../api";
 import { OFFENSIVE_FANTASY_POSITIONS } from "../positionFilters";
 import { formatSnapshotLabel } from "../snapshotId";
 import type { UsageBump, UsageBumpCause } from "../types";
@@ -8,7 +8,16 @@ import { ChipMultiSelect } from "./ChipMultiSelect";
 interface UsageBumpViewProps {
   // Bumped by App whenever a new snapshot is retrieved, from either tab.
   refreshSignal: number;
+  // Used only to resolve the currently selected Contest's own team list
+  // (see contestTeams below) -- the usage bump scores themselves come from
+  // the depth-chart snapshot alone, same as before, not from any of these.
+  season: number;
+  week: number;
+  platform: string;
+  contest: string;
 }
+
+type ContestScope = "contest" | "allGames";
 
 type SortOption = "bump-desc" | "bump-asc" | "name" | "team";
 
@@ -44,7 +53,7 @@ function formatPlayerOutDepths(depths: number[]): string {
 // here.
 function formatSourceRule(c: UsageBumpCause): string {
   if (c.source === "curated") {
-    return `Usage bump player for ${c.player}`;
+    return `Usage bump players for ${c.player}`;
   }
   return `Usage bump players by position: ${(c.source_role_positions ?? []).join(", ")}`;
 }
@@ -66,11 +75,25 @@ function sortUsageBumps(usageBumps: UsageBump[], sort: SortOption): UsageBump[] 
   });
 }
 
-export function UsageBumpView({ refreshSignal }: UsageBumpViewProps) {
+export function UsageBumpView({ refreshSignal, season, week, platform, contest }: UsageBumpViewProps) {
   const [usageBumps, setUsageBumps] = useState<UsageBump[]>([]);
   const [snapshotId, setSnapshotId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Which teams belong to the currently selected Contest's own DK salary
+  // slate -- fetched unfiltered by My Pool selection (applySelectionFilter
+  // = false) since this is only used to narrow by team, not to reproduce
+  // Player Rankings' own pool. null means "not resolved yet" (still
+  // loading, or no Salary File uploaded for this contest) -- selecting the
+  // "Contest" scope falls back to showing every team in that case rather
+  // than a misleadingly empty list (see scopedUsageBumps below).
+  const [contestTeams, setContestTeams] = useState<Set<string> | null>(null);
+  const [contestTeamsError, setContestTeamsError] = useState<string | null>(null);
+  // Defaults to "Contest" -- most usage bump review happens in the context
+  // of a specific contest's slate; switch to "All Games" to see the full
+  // league-wide list instead.
+  const [contestScope, setContestScope] = useState<ContestScope>("contest");
 
   const [teamFilter, setTeamFilter] = useState<Set<string>>(new Set());
   const [positionFilter, setPositionFilter] = useState<Set<string>>(new Set());
@@ -116,11 +139,40 @@ export function UsageBumpView({ refreshSignal }: UsageBumpViewProps) {
     };
   }, [refreshSignal]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchPlayerPool(season, week, platform, contest, false)
+      .then((result) => {
+        if (cancelled) return;
+        setContestTeams(new Set(result.players.map((p) => p.team)));
+        setContestTeamsError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setContestTeams(null);
+        setContestTeamsError(err instanceof Error ? err.message : "Failed to load this contest's teams");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [season, week, platform, contest]);
+
+  // Narrowed to the selected Contest's own teams first (when that scope is
+  // chosen and resolved) -- teamOptions/filtered/sorted below all build on
+  // this rather than the raw fetch, so the Team filter's own chip list
+  // only ever offers teams that both (a) are on this contest's slate and
+  // (b) actually have a usage bump entry right now, per the "Teams filter
+  // shows teams with usage bump players listed" requirement.
+  const scopedUsageBumps =
+    contestScope === "contest" && contestTeams !== null
+      ? usageBumps.filter((o) => o.team_abbrev !== null && contestTeams.has(o.team_abbrev))
+      : usageBumps;
+
   const teamOptions = [
-    ...new Set(usageBumps.map((o) => o.team_abbrev).filter((t): t is string => t !== null)),
+    ...new Set(scopedUsageBumps.map((o) => o.team_abbrev).filter((t): t is string => t !== null)),
   ].sort();
 
-  const filtered = usageBumps.filter((o) => {
+  const filtered = scopedUsageBumps.filter((o) => {
     const teamOk = teamFilter.size === 0 || (o.team_abbrev !== null && teamFilter.has(o.team_abbrev));
     // This page is restricted to offensive fantasy positions regardless of
     // the chip selection -- the chips only narrow within that set, they
@@ -150,6 +202,33 @@ export function UsageBumpView({ refreshSignal }: UsageBumpViewProps) {
           <p className="hint">Based on the latest depth chart ({formatSnapshotLabel(snapshotId, true)}).</p>
 
           <div className="filters">
+            <div className="chip-filter">
+              <span className="filter-label">Contest</span>
+              <div className="chip-row">
+                <button
+                  type="button"
+                  className={`chip${contestScope === "contest" ? " selected" : ""}`}
+                  aria-pressed={contestScope === "contest"}
+                  onClick={() => setContestScope("contest")}
+                >
+                  Contest
+                </button>
+                <button
+                  type="button"
+                  className={`chip${contestScope === "allGames" ? " selected" : ""}`}
+                  aria-pressed={contestScope === "allGames"}
+                  onClick={() => setContestScope("allGames")}
+                >
+                  All Games
+                </button>
+              </div>
+            </div>
+            {contestScope === "contest" && contestTeams === null && (
+              <p className="hint">
+                {contestTeamsError ??
+                  `No Salary File uploaded yet for ${contest} -- showing every team until one is.`}
+              </p>
+            )}
             <ChipMultiSelect
               label="Filter by team"
               options={teamOptions}

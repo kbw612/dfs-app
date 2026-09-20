@@ -66,6 +66,40 @@ def test_build_game_options_falls_back_to_vs_when_schedule_entry_missing():
     assert options[0].label == "SF vs TEN"
 
 
+def test_build_game_options_filters_to_contest_teams_when_provided():
+    # SCHEDULE_CSV has games TEN@CLE (wk13), TEN@SF (wk14), TEN@KC (wk15)
+    # -- if only KC/TEN are in this week's Contest slate, week 15's game
+    # (both teams in the salary file) shows but games from other weeks
+    # aren't in games_for_week(week=15) anyway, so build a schedule with
+    # two SIMULTANEOUS week-15 games to actually exercise the filter.
+    schedule_rows = parse_schedule_csv(
+        "Team,Week,Opponent,GameLocation\n"
+        "TEN,15,KC,Away\n"
+        "KC,15,TEN,Home\n"
+        "SF,15,DAL,Away\n"
+        "DAL,15,SF,Home\n"
+    )
+    options = build_game_options(schedule_rows, 15, contest_teams={"TEN", "KC"})
+    assert [o.teams for o in options] == [["KC", "TEN"]]
+
+
+def test_build_game_options_drops_game_with_only_one_team_in_contest():
+    # A game where only one side is on the contest's slate isn't a real
+    # playable matchup for that contest -- drop it entirely rather than
+    # showing a one-sided "game."
+    schedule_rows = parse_schedule_csv(
+        "Team,Week,Opponent,GameLocation\nTEN,15,KC,Away\nKC,15,TEN,Home\n"
+    )
+    options = build_game_options(schedule_rows, 15, contest_teams={"TEN"})
+    assert options == []
+
+
+def test_build_game_options_contest_teams_none_keeps_every_game():
+    # The default (None) -- backward-compatible, no filtering at all.
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    assert build_game_options(schedule_rows, 15, contest_teams=None) == build_game_options(schedule_rows, 15)
+
+
 def test_build_game_log_rows_uses_latest_week_at_or_before_requested_as_reference():
     tracker_rows = [
         _row("Cam Ward", "QB", "TEN", 13, 4600, 6.34, 6.34, 0.0),
@@ -73,11 +107,29 @@ def test_build_game_log_rows_uses_latest_week_at_or_before_requested_as_referenc
     ]
     schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
     # Requesting week 15 (not yet added to the tracker) should fall back to
-    # week 14 as the reference -- and week 14's own row should NOT appear
-    # in the output (only weeks strictly before the reference week do).
+    # week 14 as the reference for ROSTER purposes -- but the history
+    # window itself is anchored on the raw requested week (15), not
+    # reference_week, so week 14's own row DOES still appear as history
+    # (it's strictly before week 15) -- see build_game_log_rows' own
+    # docstring for why this decoupling matters (week 15's own "Add Week
+    # Players" shouldn't gate seeing week 14's already-complete results).
     rows, reference_week = build_game_log_rows(tracker_rows, schedule_rows, {}, week=15, lookback_weeks=6)
     assert reference_week == 14
-    assert [r.week for r in rows] == [13]
+    assert sorted(r.week for r in rows) == [13, 14]
+
+
+def test_build_game_log_rows_history_window_independent_of_reference_week():
+    # The exact scenario the decoupling fixes: it's week 2, but "Add Week 2
+    # Players" hasn't run yet (tracker's latest week is still 1) -- week 1's
+    # own complete history should still show up rather than the tab coming
+    # back empty just because reference_week (1) hasn't caught up to the
+    # requested week (2) yet.
+    tracker_rows = [
+        _row("Cam Ward", "QB", "TEN", 1, 4500, 10.0, 5.0, 5.0),
+    ]
+    rows, reference_week = build_game_log_rows(tracker_rows, [], {}, week=2, lookback_weeks=6)
+    assert reference_week == 1
+    assert sorted(r.week for r in rows) == [1]
 
 
 def test_build_game_log_rows_no_tracker_rows_returns_empty():
@@ -194,6 +246,88 @@ def test_build_game_log_rows_qb_has_no_receiving_stats():
     assert row.touches == 5  # rush_att + 0 receptions (missing key defaults to 0)
 
 
+def test_build_game_log_rows_qb_includes_passing_line():
+    tracker_rows = [
+        _row("Cam Ward", "QB", "TEN", 13, 4600, 29.4, 15.4, 14.0),
+        _row("Cam Ward", "QB", "TEN", 15, 4800, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {
+        "QB": {
+            ("Cam Ward", 13): {
+                "rush_att": 6,
+                "rush_yards": 70,
+                "pass_cmp": 14,
+                "pass_att": 19,
+                "pass_cmp_pct": 73.7,
+                "pass_yds": 209,
+                "pass_avg": 11.0,
+                "pass_td": 2,
+                "pass_int": 0,
+                "pass_sck": 2,
+                "pass_rtg": 144.4,
+                "team": "TEN",
+            }
+        }
+    }
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.pass_cmp == 14
+    assert row.pass_att == 19
+    assert row.pass_cmp_pct == 73.7
+    assert row.pass_yds == 209
+    assert row.pass_avg == 11.0
+    assert row.pass_td == 2
+    assert row.pass_int == 0
+    assert row.pass_sck == 2
+    assert row.pass_rtg == 144.4
+
+
+def test_build_game_log_rows_non_qb_has_no_passing_line():
+    tracker_rows = [
+        _row("Tony Pollard", "RB", "TEN", 13, 4900, 6.3, 6.3, 0.0),
+        _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
+    ]
+    # RB's own stat line has no PASSING_*/INT/SCK/RATING keys at all --
+    # same shape load_weekly_stat_lines produces for a non-QB file.
+    stat_lines = {"RB": {("Tony Pollard", 13): {"rush_att": 12, "rush_yards": 60}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.pass_cmp is None
+    assert row.pass_att is None
+    assert row.pass_cmp_pct is None
+    assert row.pass_yds is None
+    assert row.pass_avg is None
+    assert row.pass_td is None
+    assert row.pass_int is None
+    assert row.pass_sck is None
+    assert row.pass_rtg is None
+
+
+def test_build_game_log_rows_filters_roster_to_contest_teams_when_provided():
+    tracker_rows = [
+        _row("Cam Ward", "QB", "TEN", 14, 5000, 20.0, 5.0, 15.0),
+        _row("Cam Ward", "QB", "TEN", 15, 4800, 0.0, 0.0, 0.0),
+        _row("Some WR", "WR", "SF", 14, 5000, 12.0, 8.0, 4.0),
+        _row("Some WR", "WR", "SF", 15, 4800, 0.0, 0.0, 0.0),
+    ]
+    rows, _ = build_game_log_rows(tracker_rows, [], {}, week=15, lookback_weeks=6, contest_teams={"TEN", "KC"})
+    # SF isn't in the contest's slate this week -- "Some WR" is excluded
+    # even though their tracker row and history are otherwise identical
+    # in shape to Cam Ward's.
+    assert [r.name for r in rows] == ["Cam Ward"]
+
+
+def test_build_game_log_rows_contest_teams_none_keeps_every_team():
+    tracker_rows = [
+        _row("Cam Ward", "QB", "TEN", 14, 5000, 20.0, 5.0, 15.0),
+        _row("Cam Ward", "QB", "TEN", 15, 4800, 0.0, 0.0, 0.0),
+        _row("Some WR", "WR", "SF", 14, 5000, 12.0, 8.0, 4.0),
+        _row("Some WR", "WR", "SF", 15, 4800, 0.0, 0.0, 0.0),
+    ]
+    rows, _ = build_game_log_rows(tracker_rows, [], {}, week=15, lookback_weeks=6)
+    assert sorted(r.name for r in rows) == ["Cam Ward", "Some WR"]
+
+
 def test_build_game_log_rows_excludes_unsupported_positions_but_includes_dst():
     tracker_rows = [
         _row("Some Kicker", "K", "TEN", 13, 4000, 8.0, 8.0, 0.0, roster_position="K"),
@@ -231,3 +365,133 @@ def test_build_game_log_rows_keeps_zero_fpts_dst_rows():
     # a defense's own score is a real signal even when it's zero.
     assert [r.week for r in rows] == [13]
     assert rows[0].fpts == 0.0
+
+
+# -- target_share_pct / touch_share_pct / opp_share_pct -----------------------
+#
+# TGTSHARE/TOUCHSHARE/OPPSHARE are precomputed once by "Calc Week Points &
+# Fantasy Data" (backend/services/shared/usage_shares.py) and stored as
+# TGT_SHARE/TOUCH_SHARE/OPP_SHARE columns on the FantasyData files themselves -- see
+# weekly_stats_loader.load_weekly_stat_lines. build_game_log_rows just
+# reads them straight off the stat line, same as every other usage stat --
+# it does no team-aggregate computation of its own (that's covered by
+# test_usage_shares.py instead).
+
+
+def test_build_game_log_rows_reads_precomputed_shares_from_stat_line():
+    tracker_rows = [
+        _row("Tony Pollard", "RB", "TEN", 13, 4900, 20.0, 14.0, 6.0),
+        _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {
+        "RB": {
+            ("Tony Pollard", 13): {
+                "rush_att": 12,
+                "rush_yards": 60,
+                "targets": 2,
+                "receptions": 1,
+                "receiving_yards": 3,
+                "team": "TEN",
+                "target_share_pct": 28.6,
+                "touch_share_pct": 65.0,
+                "opp_share_pct": 50.0,
+            }
+        },
+    }
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.target_share_pct == 28.6
+    assert row.touch_share_pct == 65.0
+    assert row.opp_share_pct == 50.0
+
+
+def test_build_game_log_rows_shares_none_when_stat_line_has_no_share_keys():
+    tracker_rows = [
+        _row("Tony Pollard", "RB", "TEN", 13, 4900, 6.3, 6.3, 0.0),
+        _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
+    ]
+    # No FantasyData file at all -- stat_lines_by_position is empty, so
+    # there's no stat_line to read target_share_pct/touch_share_pct/
+    # opp_share_pct from.
+    rows, _ = build_game_log_rows(tracker_rows, [], {}, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.target_share_pct is None
+    assert row.touch_share_pct is None
+    assert row.opp_share_pct is None
+
+
+def test_build_game_log_rows_resolves_name_via_alias_when_no_native_match():
+    # Tracker spells the player "Brian Robinson Jr." but the FantasyData
+    # stat file (independently scraped) spells him "Brian Robinson" -- a
+    # direct (name, week) lookup misses, so this should fall back through
+    # name_aliases (Settings' Name Aliases panel) to find the stat line.
+    tracker_rows = [
+        _row("Brian Robinson Jr.", "RB", "ATL", 1, 5500, 12.0, 6.0, 6.0),
+        _row("Brian Robinson Jr.", "RB", "ATL", 2, 5500, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {
+        "RB": {
+            ("Brian Robinson", 1): {"rush_att": 9, "rush_yards": 31, "team": "ATL"},
+        }
+    }
+    name_aliases = {"Brian Robinson Jr.": "Brian Robinson"}
+    rows, _ = build_game_log_rows(
+        tracker_rows, [], stat_lines, week=2, lookback_weeks=6, name_aliases=name_aliases
+    )
+    row = rows[0]
+    assert row.rush_att == 9
+    assert row.rush_yards == 31
+
+
+def test_build_game_log_rows_native_name_tried_before_alias():
+    # If the tracker's own spelling already matches the stat file natively,
+    # the alias (which would point somewhere else) must not be applied --
+    # name_lookup_candidates tries the raw name first.
+    tracker_rows = [
+        _row("Brian Robinson", "RB", "ATL", 1, 5500, 12.0, 6.0, 6.0),
+        _row("Brian Robinson", "RB", "ATL", 2, 5500, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {
+        "RB": {
+            ("Brian Robinson", 1): {"rush_att": 9, "rush_yards": 31, "team": "ATL"},
+        }
+    }
+    name_aliases = {"Brian Robinson Jr.": "Brian Robinson"}
+    rows, _ = build_game_log_rows(
+        tracker_rows, [], stat_lines, week=2, lookback_weeks=6, name_aliases=name_aliases
+    )
+    row = rows[0]
+    assert row.rush_att == 9
+
+
+def test_build_game_log_rows_no_match_still_none_when_alias_missing():
+    # Without a matching alias entry, a genuine spelling mismatch simply
+    # looks like "no stats recorded" -- same as any other missing stat
+    # line, not an error.
+    tracker_rows = [
+        _row("Brian Robinson Jr.", "RB", "ATL", 1, 5500, 12.0, 6.0, 6.0),
+        _row("Brian Robinson Jr.", "RB", "ATL", 2, 5500, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {"RB": {("Brian Robinson", 1): {"rush_att": 9, "rush_yards": 31, "team": "ATL"}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=2, lookback_weeks=6)
+    row = rows[0]
+    assert row.rush_att is None
+    assert row.rush_yards is None
+
+
+def test_build_game_log_rows_shares_none_when_calc_week_points_not_run_yet():
+    # The stat file exists and has this player's raw usage numbers, but
+    # "Calc Week Points & Fantasy Data" hasn't been run for this week yet
+    # -- no TGT_SHARE/TOUCH_SHARE/OPP_SHARE columns in the file yet, so
+    # load_weekly_stat_lines never puts target_share_pct/touch_share_pct/
+    # opp_share_pct in the stat line at all.
+    tracker_rows = [
+        _row("Tony Pollard", "RB", "TEN", 13, 4900, 6.3, 6.3, 0.0),
+        _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {"RB": {("Tony Pollard", 13): {"rush_att": 12, "rush_yards": 60, "team": "TEN"}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.target_share_pct is None
+    assert row.touch_share_pct is None
+    assert row.opp_share_pct is None

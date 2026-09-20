@@ -34,7 +34,7 @@ def test_classic_main_file_lives_under_season_subfolder(tmp_path: Path):
 
 def test_all_games_uses_distinct_filename(tmp_path: Path):
     file_path = save_contest_standings_csv(tmp_path, 2026, 3, "DraftKings", ALL_GAMES, "content")
-    assert file_path == tmp_path / "2026" / "dk_contest_standings_all_games_week3.csv"
+    assert file_path == tmp_path / "2026" / "dk_contest_standings_classic_all_games_week3.csv"
 
 
 def test_classic_main_and_all_games_do_not_collide(tmp_path: Path):

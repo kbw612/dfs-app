@@ -1,6 +1,7 @@
 import { matchesDepth } from "../depthFilter";
 import { positionsForFilter } from "../positionFilters";
 import { formatSnapshotLabel, yearFromId } from "../snapshotId";
+import { statusMatchesFilter } from "../statusCodes";
 import type { Change, ChangeValue, DiffResult } from "../types";
 import { isPlayerChangeValue } from "../types";
 
@@ -68,7 +69,7 @@ export function DiffResults({ diff, positionFilter, statusFilter, depthFilter }:
   // null) never match once a status filter is active.
   function matchesStatus(c: Change): boolean {
     if (statusFilter.size === 0) return true;
-    return isPlayerChangeValue(c.current) && c.current.status !== null && statusFilter.has(c.current.status);
+    return isPlayerChangeValue(c.current) && statusMatchesFilter(c.current.status, statusFilter);
   }
 
   const changesToShow = diff.changes.filter((c) => {

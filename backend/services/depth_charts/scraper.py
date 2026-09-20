@@ -37,11 +37,17 @@ DESIRED_POSITION_ORDER = [
 # the live site turns out to use a different label.
 EXCLUDED_POSITIONS = {"COACHES", "COACH", "COACHING STAFF"}
 
-_INJURY_STATUS_RE = re.compile(r"\((\w+)\)\s*$")
+_INJURY_STATUS_RE = re.compile(r"\(([\w-]+)\)\s*$")
 
 
 def extract_injury_status(raw_name: str) -> tuple[str, str | None]:
-    """'James Conner (Q)' -> ('James Conner', 'Q'). No match -> (name, None)."""
+    """'James Conner (Q)' -> ('James Conner', 'Q'). 'James Conner (IR-R)' ->
+    ('James Conner', 'IR-R') -- the character class includes '-' since
+    compound status codes (Injured Reserve-Designated for Return, etc.)
+    aren't plain \\w+ and previously fell through this regex entirely,
+    leaving the raw "(IR-R)" suffix stuck on the display name everywhere
+    it's used (Settings' Player Default Factors grid, Usage Bump Players'
+    trigger/beneficiary autocomplete, ...). No match -> (name, None)."""
     match = _INJURY_STATUS_RE.search(raw_name)
     if not match:
         return raw_name.strip(), None

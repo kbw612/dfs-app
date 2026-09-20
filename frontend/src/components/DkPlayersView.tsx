@@ -137,7 +137,7 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
       setCalcResult(result);
       await reload();
     } catch (err) {
-      setCalcError(err instanceof Error ? err.message : "Failed to update this week's points");
+      setCalcError(err instanceof Error ? err.message : "Failed to calculate this week's points");
     } finally {
       setCalcBusy(false);
     }
@@ -159,7 +159,7 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
               {addBusy ? "Adding…" : `Add Week ${week} Players`}
             </button>
             <button type="button" className="player-pool-save-button" disabled={calcBusy} onClick={handleCalculate}>
-              {calcBusy ? "Updating…" : `Update Week ${week} Points`}
+              {calcBusy ? "Calculating…" : `Calc Week ${week} Points & Fantasy Data`}
             </button>
           </div>
           {/* One shared, full-width message area below the button row --
@@ -177,7 +177,7 @@ export function DkPlayersView({ season, week, platform }: DkPlayersViewProps) {
                   </p>
                   {calcResult.missing_stat_files.length > 0 && (
                     <p className="hint">
-                      <strong>Missing stat files:</strong> {calcResult.missing_stat_files.join(", ")} -- upload them
+                      <strong>Missing stat files:</strong> {calcResult.missing_stat_files.join(", ")} -- scrape them
                       in Settings
                     </p>
                   )}

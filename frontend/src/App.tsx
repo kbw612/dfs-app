@@ -3,36 +3,45 @@ import "./App.css";
 import { fetchCurrentWeek, fetchPlatformSettings, saveCurrentWeek, savePlatformSettings } from "./api";
 import { BoomBustView } from "./components/BoomBustView";
 import { CompareView } from "./components/CompareView";
+import { ConfirmDialog } from "./components/ConfirmDialog";
 import { ContestResultsView } from "./components/ContestResultsView";
 import { DkPlayersView } from "./components/DkPlayersView";
 import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
 import { GameLogsView } from "./components/GameLogsView";
+import { HeaderSettingsPopover } from "./components/HeaderSettingsPopover";
+import { MultipliersView } from "./components/MultipliersView";
 import { MyPlayerPoolView } from "./components/MyPlayerPoolView";
 import { OwnershipSummaryView } from "./components/OwnershipSummaryView";
 import { OwnershipView } from "./components/OwnershipView";
 import { PlayerPoolView } from "./components/PlayerPoolView";
-import { RetrieveButton } from "./components/RetrieveButton";
 import { SalaryBlocksView } from "./components/SalaryBlocksView";
 import { SettingsView } from "./components/SettingsView";
+import { UsageBumpPlayersView } from "./components/UsageBumpPlayersView";
 import { UsageBumpView } from "./components/UsageBumpView";
+import { DepthChartsView } from "./components/DepthChartsView";
 import { VegasLinesView } from "./components/VegasLinesView";
+import { WeatherView } from "./components/WeatherView";
 import { BUILD_TIME, FRONTEND_VERSION } from "./version";
 
 type View =
   | "settings"
   | "compare"
+  | "depthCharts"
   | "bump"
   | "ownership"
   | "ownershipSummary"
   | "salaryBlocks"
   | "playerPool"
   | "vegasLines"
+  | "weather"
   | "myPlayerPool"
   | "boomBust"
   | "contestResults"
   | "dkPlayers"
   | "gameLogs"
-  | "gameLogsAgainst";
+  | "gameLogsAgainst"
+  | "multipliers"
+  | "usageBumpPlayers";
 
 // How long to wait after the last edit before persisting season/week to
 // the backend (see backend/api/current_week) -- avoids a PUT on every
@@ -45,6 +54,24 @@ function App() {
   // mounted still refetches next time it's shown, and the currently
   // mounted one refetches immediately.
   const [refreshSignal, setRefreshSignal] = useState(0);
+
+  // Fed by UsageBumpPlayersView's onDirtyChange -- true whenever it has an
+  // edit that hasn't been Saved yet. `pendingView` holds the tab the
+  // person clicked while dirty, so requestViewChange can ask via
+  // ConfirmDialog before actually switching rather than silently
+  // discarding the edit (see the tab buttons below, which all route
+  // through requestViewChange instead of calling setView directly).
+  const [usageBumpPlayersDirty, setUsageBumpPlayersDirty] = useState(false);
+  const [pendingView, setPendingView] = useState<View | null>(null);
+
+  function requestViewChange(next: View) {
+    if (next === view) return;
+    if (view === "usageBumpPlayers" && usageBumpPlayersDirty) {
+      setPendingView(next);
+      return;
+    }
+    setView(next);
+  }
 
   // The single (season, week) pointer shared by every weekly tab
   // (Ownership, Salary Blocks, Player Pool) -- one control here instead of
@@ -162,132 +189,10 @@ function App() {
             v{FRONTEND_VERSION} · built {new Date(BUILD_TIME).toLocaleString()}
           </p>
         </div>
-        {/* Editing season/week now happens on the Settings tab -- this is
-            just an at-a-glance readout so the other tabs still show what
-            week they're pointed at. */}
-        <p className="current-week-readout">
-          Season {season} · Week {week}
-        </p>
-        <RetrieveButton onScraped={() => setRefreshSignal((n) => n + 1)} />
-      </header>
-
-      <div className="view-tabs">
-        <button
-          type="button"
-          className={`view-tab${view === "settings" ? " selected" : ""}`}
-          aria-pressed={view === "settings"}
-          onClick={() => setView("settings")}
-        >
-          Settings
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "compare" ? " selected" : ""}`}
-          aria-pressed={view === "compare"}
-          onClick={() => setView("compare")}
-        >
-          Compare Depth Charts
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "vegasLines" ? " selected" : ""}`}
-          aria-pressed={view === "vegasLines"}
-          onClick={() => setView("vegasLines")}
-        >
-          Vegas Lines
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "bump" ? " selected" : ""}`}
-          aria-pressed={view === "bump"}
-          onClick={() => setView("bump")}
-        >
-          Usage Bump Players
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "salaryBlocks" ? " selected" : ""}`}
-          aria-pressed={view === "salaryBlocks"}
-          onClick={() => setView("salaryBlocks")}
-        >
-          Salary Blocks
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "ownershipSummary" ? " selected" : ""}`}
-          aria-pressed={view === "ownershipSummary"}
-          onClick={() => setView("ownershipSummary")}
-        >
-          Ownership Summary
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "ownership" ? " selected" : ""}`}
-          aria-pressed={view === "ownership"}
-          onClick={() => setView("ownership")}
-        >
-          Ownership Pivots
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "boomBust" ? " selected" : ""}`}
-          aria-pressed={view === "boomBust"}
-          onClick={() => setView("boomBust")}
-        >
-          Boom/Bust Players
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "playerPool" ? " selected" : ""}`}
-          aria-pressed={view === "playerPool"}
-          onClick={() => setView("playerPool")}
-        >
-          Player Rankings
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "myPlayerPool" ? " selected" : ""}`}
-          aria-pressed={view === "myPlayerPool"}
-          onClick={() => setView("myPlayerPool")}
-        >
-          My Player Pool
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "contestResults" ? " selected" : ""}`}
-          aria-pressed={view === "contestResults"}
-          onClick={() => setView("contestResults")}
-        >
-          Contest Results
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "dkPlayers" ? " selected" : ""}`}
-          aria-pressed={view === "dkPlayers"}
-          onClick={() => setView("dkPlayers")}
-        >
-          DK Players
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "gameLogs" ? " selected" : ""}`}
-          aria-pressed={view === "gameLogs"}
-          onClick={() => setView("gameLogs")}
-        >
-          Game Logs
-        </button>
-        <button
-          type="button"
-          className={`view-tab${view === "gameLogsAgainst" ? " selected" : ""}`}
-          aria-pressed={view === "gameLogsAgainst"}
-          onClick={() => setView("gameLogsAgainst")}
-        >
-          Game Logs Against
-        </button>
-      </div>
-
-      {view === "settings" && (
-        <SettingsView
+        {/* Editing season/week/platform/contest now happens here, from
+            any tab, instead of requiring a trip to Settings -- see
+            HeaderSettingsPopover's own docstring. */}
+        <HeaderSettingsPopover
           season={season}
           week={week}
           onSeasonChange={setSeason}
@@ -297,10 +202,192 @@ function App() {
           onPlatformChange={setPlatform}
           onContestChange={setContest}
         />
+      </header>
+
+      {/* Ordered by the actual weekly workflow rather than build order:
+          (1) Settings always first -- season/week/platform/contest config
+          everything else reads. (2) Last week's own review, which informs
+          this week's setup -- Contest Results (how your own lineups did),
+          DK Players (the tracker those results/game logs read from), Game
+          Logs/Game Logs Against/Multipliers (recent-history and pricing
+          review). (3) This week's game-environment/usage inputs -- Compare
+          Depth Charts, Vegas Lines, Usage Bump(+Players). (4) This week's
+          pricing/ownership -- Salary Blocks, Ownership Summary/Pivots. (5)
+          Building this week's pool -- Boom/Bust, Player Rankings, My Player
+          Pool, the final step before setting a lineup. */}
+      <div className="view-tabs">
+        <button
+          type="button"
+          className={`view-tab${view === "settings" ? " selected" : ""}`}
+          aria-pressed={view === "settings"}
+          onClick={() => requestViewChange("settings")}
+        >
+          Settings
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "contestResults" ? " selected" : ""}`}
+          aria-pressed={view === "contestResults"}
+          onClick={() => requestViewChange("contestResults")}
+        >
+          Contest Results
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "dkPlayers" ? " selected" : ""}`}
+          aria-pressed={view === "dkPlayers"}
+          onClick={() => requestViewChange("dkPlayers")}
+        >
+          DK Players
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "gameLogs" ? " selected" : ""}`}
+          aria-pressed={view === "gameLogs"}
+          onClick={() => requestViewChange("gameLogs")}
+        >
+          Game Logs
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "gameLogsAgainst" ? " selected" : ""}`}
+          aria-pressed={view === "gameLogsAgainst"}
+          onClick={() => requestViewChange("gameLogsAgainst")}
+        >
+          Game Logs Against
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "multipliers" ? " selected" : ""}`}
+          aria-pressed={view === "multipliers"}
+          onClick={() => requestViewChange("multipliers")}
+        >
+          Multipliers
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "compare" ? " selected" : ""}`}
+          aria-pressed={view === "compare"}
+          onClick={() => requestViewChange("compare")}
+        >
+          Compare Depth Charts
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "depthCharts" ? " selected" : ""}`}
+          aria-pressed={view === "depthCharts"}
+          onClick={() => requestViewChange("depthCharts")}
+        >
+          Depth Charts
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "vegasLines" ? " selected" : ""}`}
+          aria-pressed={view === "vegasLines"}
+          onClick={() => requestViewChange("vegasLines")}
+        >
+          Vegas Lines
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "weather" ? " selected" : ""}`}
+          aria-pressed={view === "weather"}
+          onClick={() => requestViewChange("weather")}
+        >
+          Weather
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "bump" ? " selected" : ""}`}
+          aria-pressed={view === "bump"}
+          onClick={() => requestViewChange("bump")}
+        >
+          Usage Bump
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "usageBumpPlayers" ? " selected" : ""}`}
+          aria-pressed={view === "usageBumpPlayers"}
+          onClick={() => requestViewChange("usageBumpPlayers")}
+        >
+          Usage Bump Players
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "salaryBlocks" ? " selected" : ""}`}
+          aria-pressed={view === "salaryBlocks"}
+          onClick={() => requestViewChange("salaryBlocks")}
+        >
+          Salary Blocks
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "ownershipSummary" ? " selected" : ""}`}
+          aria-pressed={view === "ownershipSummary"}
+          onClick={() => requestViewChange("ownershipSummary")}
+        >
+          Ownership Summary
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "ownership" ? " selected" : ""}`}
+          aria-pressed={view === "ownership"}
+          onClick={() => requestViewChange("ownership")}
+        >
+          Ownership Pivots
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "boomBust" ? " selected" : ""}`}
+          aria-pressed={view === "boomBust"}
+          onClick={() => requestViewChange("boomBust")}
+        >
+          Boom/Bust Players
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "playerPool" ? " selected" : ""}`}
+          aria-pressed={view === "playerPool"}
+          onClick={() => requestViewChange("playerPool")}
+        >
+          Player Rankings
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "myPlayerPool" ? " selected" : ""}`}
+          aria-pressed={view === "myPlayerPool"}
+          onClick={() => requestViewChange("myPlayerPool")}
+        >
+          My Player Pool
+        </button>
+      </div>
+
+      {view === "settings" && (
+        <SettingsView season={season} week={week} platform={platform} contest={contest} />
       )}
-      {view === "compare" && <CompareView refreshSignal={refreshSignal} />}
+      {view === "contestResults" && (
+        <ContestResultsView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
+      {view === "gameLogs" && <GameLogsView season={season} week={week} platform={platform} contest={contest} />}
+      {view === "gameLogsAgainst" && (
+        <GameLogsAgainstView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "multipliers" && (
+        <MultipliersView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "compare" && (
+        <CompareView refreshSignal={refreshSignal} onScraped={() => setRefreshSignal((n) => n + 1)} />
+      )}
+      {view === "depthCharts" && (
+        <DepthChartsView refreshSignal={refreshSignal} onScraped={() => setRefreshSignal((n) => n + 1)} />
+      )}
       {view === "vegasLines" && <VegasLinesView season={season} week={week} />}
-      {view === "bump" && <UsageBumpView refreshSignal={refreshSignal} />}
+      {view === "weather" && <WeatherView season={season} week={week} />}
+      {view === "bump" && (
+        <UsageBumpView refreshSignal={refreshSignal} season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "usageBumpPlayers" && <UsageBumpPlayersView onDirtyChange={setUsageBumpPlayersDirty} />}
       {view === "salaryBlocks" && <SalaryBlocksView season={season} week={week} platform={platform} contest={contest} />}
       {view === "ownershipSummary" && (
         <OwnershipSummaryView season={season} week={week} platform={platform} contest={contest} />
@@ -311,12 +398,18 @@ function App() {
       {view === "myPlayerPool" && (
         <MyPlayerPoolView season={season} week={week} platform={platform} contest={contest} />
       )}
-      {view === "contestResults" && (
-        <ContestResultsView season={season} week={week} platform={platform} contest={contest} />
+
+      {pendingView !== null && (
+        <ConfirmDialog
+          message="You have unsaved changes on the Usage Bump Players tab. Switch tabs and discard them?"
+          confirmLabel="Discard changes"
+          onConfirm={() => {
+            setView(pendingView);
+            setPendingView(null);
+          }}
+          onCancel={() => setPendingView(null)}
+        />
       )}
-      {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
-      {view === "gameLogs" && <GameLogsView season={season} week={week} platform={platform} />}
-      {view === "gameLogsAgainst" && <GameLogsAgainstView season={season} week={week} platform={platform} />}
     </div>
   );
 }

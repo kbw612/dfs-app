@@ -1,10 +1,12 @@
 """
 Game Logs -- for every player currently rostered at QB/RB/WR/TE (per the
 DK Players tracker's most recent snapshot week), their own recent-weeks
-scoring history, enriched with schedule (Opponent/GameLoc) and usage
-(Touches/Targets/Receptions/Receiving Yards/Rush Att/Rush Yards) data.
-See backend/services/game_logs/game_logs_engine.py for how every field
-here is derived -- this module is just the response shapes.
+scoring history, enriched with schedule (Opponent/GameLoc), usage
+(Touches/Targets/Receptions/Receiving Yards/Rush Att/Rush Yards, Target
+Share %/Touch Share %), and -- QB only -- their own passing line (Cmp/
+Att/Cmp%/Yds/Avg/TD/Int/Sck/Rtg) data. See backend/services/game_logs/
+game_logs_engine.py for how every field here is derived -- this module is
+just the response shapes.
 """
 
 from __future__ import annotations
@@ -45,6 +47,31 @@ class GameLogRow(BaseModel):
     receiving_yards: int | None
     rush_att: int | None
     rush_yards: int | None
+    # Read straight off the FantasyData file's own TGT_SHARE/TOUCH_SHARE/
+    # OPP_SHARE columns, same as touches/targets/etc. above -- written once
+    # per week by the "Calc Week Points" action (see backend/services/shared/
+    # usage_shares.py), not recomputed here. None when that week hasn't
+    # been calculated yet, or (target_share_pct only) for QB, same "not
+    # applicable" reasoning as targets/receptions/receiving_yards above --
+    # touch_share_pct and opp_share_pct stay meaningful (carries-only
+    # shares) for a QB instead, see usage_shares.py's own docstring.
+    target_share_pct: float | None
+    touch_share_pct: float | None
+    opp_share_pct: float | None
+    # QB's own passing line, straight from the FantasyData QB file's own
+    # PASSING_* (and INT/SCK/RATING) columns -- always None for every
+    # other position, since none of them have a passing line at all (same
+    # "not applicable" convention as touches/targets/etc. above, just for
+    # the position that has NEITHER of those instead of this).
+    pass_cmp: int | None
+    pass_att: int | None
+    pass_cmp_pct: float | None
+    pass_yds: int | None
+    pass_avg: float | None
+    pass_td: int | None
+    pass_int: int | None
+    pass_sck: int | None
+    pass_rtg: float | None
 
 
 class GameOption(BaseModel):

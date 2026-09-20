@@ -56,7 +56,7 @@ def test_unsupported_contest_raises_value_error(tmp_path: Path):
 
 def test_all_games_uses_distinct_filename(tmp_path: Path):
     file_path = save_salary_csv(tmp_path, 2026, 3, "DraftKings", ALL_GAMES, "content")
-    assert file_path == tmp_path / "2026" / "dk_salaries_all_games_week3.csv"
+    assert file_path == tmp_path / "2026" / "dk_salaries_classic_all_games_week3.csv"
 
 
 def test_classic_main_and_all_games_do_not_collide(tmp_path: Path):

@@ -9,14 +9,19 @@ snapshot in this app which is one file per week. These are league-wide
 stats, not tied to a DK platform/contest, so there's no platform
 dimension here either.
 
-Each save -- whether from a manual CSV upload or the FantasyData scraper
-(see backend/services/dk_players/weekly_stats_scraper.py) -- hands in
-exactly one week's rows. merge_week_into_season_csv folds those into the
-season file: any rows already saved for that same week (identified by
-the file's own WK column) are dropped and replaced by the new ones, every
-other week's rows are left untouched. Rows are kept sorted by (WK, RK) so
-the file reads as a clean week-by-week log regardless of what order saves
-happened to occur in.
+Each scrape (see backend/services/dk_players/weekly_stats_scraper.py)
+hands in exactly one week's rows. merge_week_into_season_csv folds those
+into the season file: any rows already saved for that same week
+(identified by the file's own WK column) are dropped and replaced by the
+new ones, every other week's rows are left untouched. Rows are kept
+sorted by (WK, RK) so the file reads as a clean week-by-week log
+regardless of what order saves happened to occur in.
+
+write_usage_share_columns is a separate, later write to the same file --
+it doesn't touch any of the raw FantasyData columns merge_week_into_season_csv
+manages, only appends/updates this app's own TGT_SHARE/TOUCH_SHARE/OPP_SHARE
+trailing columns (see backend/services/shared/usage_shares.py), once "Calc
+Week Points" has computed them for a given week.
 """
 
 from __future__ import annotations
@@ -118,3 +123,53 @@ def merge_week_into_season_csv(
     file_path.parent.mkdir(parents=True, exist_ok=True)
     file_path.write_text(buffer.getvalue(), encoding="utf-8")
     return file_path
+
+
+def write_usage_share_columns(
+    nfl_data_dir: Path,
+    season: int,
+    position: Position,
+    week: int,
+    shares_by_player: dict[str, tuple[float | None, float | None, float | None]],
+) -> None:
+    """Writes `week`'s freshly-computed (target_share_pct, touch_share_pct,
+    opp_share_pct) values (see backend/services/shared/usage_shares.py's
+    compute_usage_share_updates) onto this position's own season file, as
+    three trailing columns ("TGT_SHARE", "TOUCH_SHARE", "OPP_SHARE") --
+    appended to the header the first time any of them is ever written,
+    same backward-compatible-column convention as dk_players_csv.py's own
+    trailing columns. Only rows matching `week` are touched; every other
+    week's already-written values (if any) are left exactly as they were.
+    A no-op if this position has no season file at all yet (nothing to
+    write into).
+
+    A missing entry in `shares_by_player` for a given row (shouldn't
+    happen -- the caller builds it from this same file's own week-`week`
+    rows -- but defensive against a name that doesn't round-trip cleanly)
+    writes blank cells, same as explicit None share values."""
+    existing_text = load_weekly_stats_csv(nfl_data_dir, season, position)
+    if existing_text is None:
+        return
+    header = next(csv.reader(io.StringIO(existing_text)), [])
+    rows = list(csv.DictReader(io.StringIO(existing_text)))
+
+    for column in ("TGT_SHARE", "TOUCH_SHARE", "OPP_SHARE"):
+        if column not in header:
+            header.append(column)
+
+    for row in rows:
+        if _row_week(row) != week:
+            continue
+        name = row.get("NAME", "").strip()
+        target_share_pct, touch_share_pct, opp_share_pct = shares_by_player.get(name, (None, None, None))
+        row["TGT_SHARE"] = "" if target_share_pct is None else str(target_share_pct)
+        row["TOUCH_SHARE"] = "" if touch_share_pct is None else str(touch_share_pct)
+        row["OPP_SHARE"] = "" if opp_share_pct is None else str(opp_share_pct)
+
+    buffer = io.StringIO()
+    writer = csv.DictWriter(buffer, fieldnames=header, restval="")
+    writer.writeheader()
+    writer.writerows(rows)
+
+    file_path = _path(nfl_data_dir, season, position)
+    file_path.write_text(buffer.getvalue(), encoding="utf-8")

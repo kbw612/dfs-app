@@ -128,3 +128,224 @@ def test_build_game_logs_against_rows_multiplier_none_when_salary_zero():
 def test_build_game_logs_against_rows_empty_when_schedule_missing():
     rows = build_game_logs_against_rows([], [], team="TEN", week=16, lookback_weeks=6)
     assert rows == []
+
+
+# -- touches / targets / receptions / receiving_yards / rush_att / rush_yards --
+
+
+def test_build_game_logs_against_rows_usage_stats_for_rb_include_touches():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Brock Purdy", "RB", "SF", 15, 5800, 22.0, 10.0, 12.0),
+    ]
+    stat_lines = {
+        "RB": {
+            ("Brock Purdy", 15): {
+                "rush_att": 12,
+                "rush_yards": 60,
+                "targets": 2,
+                "receptions": 1,
+                "receiving_yards": 3,
+                "team": "SF",
+            }
+        }
+    }
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.rush_att == 12
+    assert row.rush_yards == 60
+    assert row.targets == 2
+    assert row.receptions == 1
+    assert row.receiving_yards == 3
+    assert row.touches == 13  # 12 rush_att + 1 reception
+
+
+def test_build_game_logs_against_rows_usage_stats_none_for_qb_without_receiving_columns():
+    # QB's own FantasyData file has no targets/receptions/receiving_yards
+    # column at all -- None (not 0), same convention as Game Logs' own
+    # build_game_log_rows.
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Deshaun Watson", "QB", "CLE", 13, 5200, 14.0, 8.0, 6.0),
+    ]
+    stat_lines = {"QB": {("Deshaun Watson", 13): {"rush_att": 5, "rush_yards": 29, "team": "CLE"}}}
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.rush_att == 5
+    assert row.rush_yards == 29
+    assert row.targets is None
+    assert row.receptions is None
+    assert row.receiving_yards is None
+    assert row.touches == 5  # rush_att + 0 receptions (missing key defaults to 0)
+
+
+def test_build_game_logs_against_rows_usage_stats_none_without_stat_lines():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Deshaun Watson", "QB", "CLE", 13, 5200, 14.0, 8.0, 6.0),
+    ]
+    rows = build_game_logs_against_rows(tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6)
+    row = rows[0]
+    assert row.touches is None
+    assert row.targets is None
+    assert row.receptions is None
+    assert row.receiving_yards is None
+    assert row.rush_att is None
+    assert row.rush_yards is None
+
+
+# -- target_share_pct / touch_share_pct / opp_share_pct / passing line --------
+
+
+def test_build_game_logs_against_rows_defaults_shares_and_passing_to_none_without_stat_lines():
+    # No stat_lines_by_position passed at all (the default) -- every
+    # existing caller/test above relies on this staying a safe no-op.
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Deshaun Watson", "QB", "CLE", 13, 5200, 14.0, 8.0, 6.0),
+    ]
+    rows = build_game_logs_against_rows(tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6)
+    row = rows[0]
+    assert row.target_share_pct is None
+    assert row.touch_share_pct is None
+    assert row.opp_share_pct is None
+    assert row.pass_cmp is None
+    assert row.pass_rtg is None
+
+
+def test_build_game_logs_against_rows_reads_precomputed_shares_from_stat_line():
+    # TGTSHARE/TOUCHSHARE/OPPSHARE are precomputed once by "Calc Week
+    # Points & Fantasy Data" (backend/services/shared/usage_shares.py) and
+    # stored as TGT_SHARE/TOUCH_SHARE/OPP_SHARE columns on the FantasyData files -- this
+    # just reads them straight off the stat line, same as Game Logs' own
+    # passthrough (see test_usage_shares.py for the actual team-aggregate
+    # computation).
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Deshaun Watson", "QB", "CLE", 13, 5200, 14.0, 8.0, 6.0),
+    ]
+    stat_lines = {
+        "QB": {
+            ("Deshaun Watson", 13): {
+                "rush_att": 3,
+                "rush_yards": 15,
+                "team": "CLE",
+                "target_share_pct": None,
+                "touch_share_pct": 50.0,
+                "opp_share_pct": 40.0,
+            }
+        },
+    }
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.touch_share_pct == 50.0
+    assert row.target_share_pct is None
+    assert row.opp_share_pct == 40.0
+    assert row.rush_att == 3
+    assert row.rush_yards == 15
+
+
+def test_build_game_logs_against_rows_qb_includes_passing_line():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Deshaun Watson", "QB", "CLE", 13, 5200, 29.4, 15.4, 14.0),
+    ]
+    stat_lines = {
+        "QB": {
+            ("Deshaun Watson", 13): {
+                "rush_att": 6,
+                "rush_yards": 70,
+                "pass_cmp": 14,
+                "pass_att": 19,
+                "pass_cmp_pct": 73.7,
+                "pass_yds": 209,
+                "pass_avg": 11.0,
+                "pass_td": 2,
+                "pass_int": 0,
+                "pass_sck": 2,
+                "pass_rtg": 144.4,
+                "team": "CLE",
+            }
+        }
+    }
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.pass_cmp == 14
+    assert row.pass_att == 19
+    assert row.pass_cmp_pct == 73.7
+    assert row.pass_yds == 209
+    assert row.pass_avg == 11.0
+    assert row.pass_td == 2
+    assert row.pass_int == 0
+    assert row.pass_sck == 2
+    assert row.pass_rtg == 144.4
+
+
+def test_build_game_logs_against_rows_resolves_name_via_alias_when_no_native_match():
+    # Same cross-source spelling drift as Game Logs' own alias test --
+    # tracker "Brian Robinson Jr." vs. stat file "Brian Robinson".
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Brian Robinson Jr.", "RB", "CLE", 13, 5500, 12.0, 6.0, 6.0),
+    ]
+    stat_lines = {
+        "RB": {
+            ("Brian Robinson", 13): {
+                "rush_att": 9,
+                "rush_yards": 31,
+                "team": "CLE",
+                "touch_share_pct": 45.0,
+                "opp_share_pct": 50.0,
+            }
+        }
+    }
+    name_aliases = {"Brian Robinson Jr.": "Brian Robinson"}
+    rows = build_game_logs_against_rows(
+        tracker_rows,
+        schedule_rows,
+        team="TEN",
+        week=16,
+        lookback_weeks=6,
+        stat_lines_by_position=stat_lines,
+        name_aliases=name_aliases,
+    )
+    row = rows[0]
+    assert row.touch_share_pct == 45.0
+    assert row.opp_share_pct == 50.0
+
+
+def test_build_game_logs_against_rows_no_match_still_none_when_alias_missing():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Brian Robinson Jr.", "RB", "CLE", 13, 5500, 12.0, 6.0, 6.0),
+    ]
+    stat_lines = {"RB": {("Brian Robinson", 13): {"rush_att": 9, "rush_yards": 31, "team": "CLE"}}}
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.target_share_pct is None
+    assert row.touch_share_pct is None
+    assert row.opp_share_pct is None
+
+
+def test_build_game_logs_against_rows_non_qb_has_no_passing_line():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Brock Purdy", "RB", "SF", 15, 5800, 22.0, 10.0, 12.0),
+    ]
+    stat_lines = {"RB": {("Brock Purdy", 15): {"rush_att": 10, "rush_yards": 50, "team": "SF"}}}
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.pass_cmp is None
+    assert row.pass_rtg is None

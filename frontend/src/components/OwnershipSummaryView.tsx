@@ -52,7 +52,10 @@ interface TeamOwnership {
   team: string;
   initialTotalOwnership: number;
   totalOwnership: number;
-  actualTotalOwnership: number;
+  // null when the week's Contest Standings haven't been uploaded at all
+  // (see computeTeamOwnership's own docstring) -- renders "-", not 0%, so
+  // "unknown" and "really did land at 0%" stay visually distinct.
+  actualTotalOwnership: number | null;
 }
 
 interface GameOwnership {
@@ -62,7 +65,7 @@ interface GameOwnership {
   homeTeam: string | null;
   initialTotalOwnership: number;
   totalOwnership: number;
-  actualTotalOwnership: number;
+  actualTotalOwnership: number | null;
   // Every player in the game (any position, including DST) sorted by
   // ownership% descending -- shown when the row is expanded. Distinct
   // from totalOwnership, which excludes DST (see this function's own
@@ -81,12 +84,19 @@ interface GameOwnership {
 // list. initialTotalOwnership sums initial_ownership_pct the same way --
 // a player added since the initial upload contributes 0 to it, same
 // convention. actualTotalOwnership sums actualByPlayer (the week's Contest
-// Standings %Drafted, see actualOwnershipByPlayer below) the same way too
-// -- 0 for a player with no contest data yet, not skipped.
+// Standings %Drafted, see actualOwnershipByPlayer below) the same way --
+// EXCEPT it comes back null instead of a real number whenever
+// actualByPlayer is empty (no Contest Standings uploaded for this week at
+// all), so the Actual/Actual-Diff columns render "-" for "we don't know
+// yet" rather than a misleading 0%. Once Contest Standings exist, a
+// team/game that genuinely has 0% actual ownership across its players
+// still returns a real 0, not null -- only "no data uploaded" hides the
+// column, not "the real total happens to be zero."
 function computeTeamOwnership(
   players: OwnershipProjectionsPlayer[],
   actualByPlayer: Map<string, number>
 ): TeamOwnership[] {
+  const hasContestData = actualByPlayer.size > 0;
   const totals = new Map<string, { initial: number; current: number; actual: number }>();
   for (const p of players) {
     if (p.position === "DST") continue;
@@ -100,7 +110,7 @@ function computeTeamOwnership(
     team,
     initialTotalOwnership: initial,
     totalOwnership: current,
-    actualTotalOwnership: actual,
+    actualTotalOwnership: hasContestData ? actual : null,
   }));
 }
 
@@ -135,6 +145,7 @@ function computeGameOwnership(
   homeByTeam: Map<string, boolean>,
   actualByPlayer: Map<string, number>
 ): GameOwnership[] {
+  const hasContestData = actualByPlayer.size > 0;
   const byKey = new Map<string, GameOwnership>();
   for (const p of players) {
     const key = gameKey(p.team, p.opponent);
@@ -156,7 +167,7 @@ function computeGameOwnership(
     if (p.position !== "DST") {
       entry.initialTotalOwnership += p.initial_ownership_pct ?? 0;
       entry.totalOwnership += p.ownership_pct ?? 0;
-      entry.actualTotalOwnership += actualByPlayer.get(p.player) ?? 0;
+      entry.actualTotalOwnership = (entry.actualTotalOwnership ?? 0) + (actualByPlayer.get(p.player) ?? 0);
     }
     const isHome = resolvedIsHome(p.team, homeByTeam);
     if (isHome === true) entry.homeTeam = p.team;
@@ -164,12 +175,20 @@ function computeGameOwnership(
   }
   for (const entry of byKey.values()) {
     entry.players.sort((a, b) => (b.ownership_pct ?? -1) - (a.ownership_pct ?? -1));
+    // Same "no Contest Standings uploaded at all" null-out as
+    // computeTeamOwnership -- applied after accumulation so a real 0 total
+    // (Contest Standings exist, this game's players just summed to zero)
+    // is left alone.
+    if (!hasContestData) entry.actualTotalOwnership = null;
   }
   return [...byKey.values()];
 }
 
-function formatTotalOwnership(value: number): string {
-  return `${value.toFixed(2)}%`;
+// null (no Contest Standings uploaded for this week at all -- see
+// computeTeamOwnership/computeGameOwnership) renders "-", same convention
+// as every other "unknown" ownership figure on this tab.
+function formatTotalOwnership(value: number | null): string {
+  return value === null ? "-" : `${value.toFixed(2)}%`;
 }
 
 // "+3.2" / "-1.5" / "0.0" -- "-" when either side is missing (a player
@@ -222,18 +241,21 @@ function playerSortValue(p: OwnershipProjectionsPlayer, field: SortField, actual
   return actual - p.ownership_pct;
 }
 
-// Same idea for the Team/Game rollups -- their Initial/Current/Actual
-// totals are always real numbers (they start at 0 and only ever add to
-// it, see computeTeamOwnership/computeGameOwnership above), so neither
-// Diff needs the null case playerSortValue has to handle.
+// Same idea for the Team/Game rollups -- Initial/Current/Diff are always
+// real numbers (they start at 0 and only ever add to it), but
+// actualTotalOwnership (and therefore actualDiff) comes back null whenever
+// no Contest Standings are uploaded yet (see computeTeamOwnership's own
+// docstring) -- compareNullable (both call sites below) already sorts a
+// null to the bottom regardless of direction, same as playerSortValue's.
 function rollupSortValue(
-  row: { initialTotalOwnership: number; totalOwnership: number; actualTotalOwnership: number },
+  row: { initialTotalOwnership: number; totalOwnership: number; actualTotalOwnership: number | null },
   field: SortField
-): number {
+): number | null {
   if (field === "initial") return row.initialTotalOwnership;
   if (field === "current") return row.totalOwnership;
   if (field === "actual") return row.actualTotalOwnership;
   if (field === "diff") return row.totalOwnership - row.initialTotalOwnership;
+  if (row.actualTotalOwnership === null) return null;
   return row.actualTotalOwnership - row.totalOwnership; // actualDiff
 }
 

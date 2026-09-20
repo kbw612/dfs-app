@@ -38,6 +38,31 @@ export interface SnapshotSummary {
   team_count: number;
 }
 
+// Mirrors backend/schemas/depth_charts/snapshot.py's Player/Team/Snapshot
+// exactly -- the full current depth chart (every position, every player's
+// status), unlike DepthChartRosterPlayer below (a flattened offense-only
+// view built for a different purpose -- Settings' Player Default Factors
+// grid). Backs GET /api/depth-charts/latest, which the Depth Charts tab
+// reads from -- see DepthChartsView.tsx.
+export interface DepthChartPlayer {
+  player: string;
+  status: string | null;
+}
+
+export interface DepthChartTeam {
+  team_abbrev: string | null;
+  team_name: string;
+  defensive_formation: string | null;
+  positions: Record<string, DepthChartPlayer[]>;
+}
+
+export interface DepthChartSnapshot {
+  scraped_at: string;
+  source_url: string;
+  messages: Message[];
+  teams: DepthChartTeam[];
+}
+
 export interface Message {
   level: "error" | "warning" | "info";
   step: string;
@@ -377,6 +402,25 @@ export interface PlayerDefaultEntryInput {
   dfs_type: string | null;
 }
 
+// Body sent to/from PUT /api/team-factors/entry and returned by GET
+// /api/team-factors/latest -- Settings' Team Default Factors grid (see
+// backend/schemas/team_factors/team_factors.py). Keyed by (season, team,
+// position) rather than by player: "how tough is this team's defense
+// against this offensive position." No `week` -- same "set once per
+// season, not per week" shape as PlayerDefaultEntryInput above. Player
+// Pool's Matchup field falls back to the *opponent's* saved factor at a
+// player's own position when that week has no explicit Matchup save of
+// its own (see backend/services/player_pool/engine.py's
+// _resolve_team_factor_default). factor is null when this (team,
+// position) pair has never been explicitly set -- Player Pool then falls
+// through to the flat 2.0 neutral, same as an unset Player Default.
+export interface TeamFactorEntryInput {
+  season: number;
+  team: string;
+  position: string;
+  factor: number | null;
+}
+
 // GET /api/depth-charts/roster -- the latest depth-chart snapshot,
 // flattened to one row per (team, position, depth_rank) for QB/RB/WR/TE
 // across all 32 teams, independent of any week's DK salary file (see
@@ -389,6 +433,26 @@ export interface DepthChartRosterPlayer {
   position: string;
   team: string;
   depth_rank: number;
+}
+
+// GET/PUT /api/usage-bump-players -- the hand-curated Usage Bump Players
+// list (backend/schemas/usage_bump/usage_bump_players.py), edited from
+// the Usage Bump Players tab. Field names are camelCase to match the
+// file's own on-disk keys exactly (see that schema's own docstring).
+// `moreUsagePlayers` is priority-ordered -- first name is the biggest
+// beneficiary.
+export interface UsageBumpPlayerEntry {
+  name: string;
+  moreUsagePlayers: string[];
+}
+
+export interface UsageBumpTeamEntry {
+  teamAbbrev: string;
+  players: UsageBumpPlayerEntry[];
+}
+
+export interface UsageBumpPlayersResult {
+  teams: UsageBumpTeamEntry[];
 }
 
 // Body sent to/returned from PUT /api/game-environment/entry -- one
@@ -466,6 +530,39 @@ export interface VegasLinesApplyResult {
   messages: string[];
 }
 
+// away_team/home_team/game_key are null when away_name/home_name didn't
+// resolve to one of this app's team abbreviations (see backend/services/
+// weather/scraper.py) -- the note still shows up, it just can't be tied
+// to a specific game_key. `color` is whatever raw color word the source
+// site used (e.g. "yellow", "orange", "green", "red") -- passed through
+// as-is rather than mapped to a fixed set, since new colors may appear.
+export interface WeatherGame {
+  away_name: string;
+  home_name: string;
+  away_team: string | null;
+  home_team: string | null;
+  game_key: string | null;
+  kickoff_label: string | null;
+  color: string;
+  note: string;
+}
+
+export interface WeatherSnapshot {
+  season: number;
+  week: number;
+  scraped_at: string;
+  games: WeatherGame[];
+}
+
+// Response from POST /api/weather/scrape -- see backend/api/weather/
+// scrape.py. `messages` covers any note card on the source page that
+// couldn't be parsed (or whose team names didn't resolve -- still
+// included in the snapshot, just flagged here too).
+export interface WeatherScrapeResult {
+  snapshot: WeatherSnapshot;
+  messages: string[];
+}
+
 // Response from POST /api/player-pool/calculate-ownership-scores -- see
 // backend/api/player_pool/calculate_ownership_scores.py. Bulk-saves each
 // player's Ownership score computed from their current ownership_pct;
@@ -476,6 +573,17 @@ export interface OwnershipScoresApplyResult {
   week: number;
   applied_count: number;
   skipped_count: number;
+}
+
+// See backend/api/player_pool/reset_matchup.py -- Player Rankings' DST
+// Matchup refresh icon. reset_count is how many DSTs actually had an
+// explicit Matchup override cleared (a DST with no override to begin with
+// isn't counted).
+export interface MatchupResetResult {
+  season: number;
+  week: number;
+  position: string;
+  reset_count: number;
 }
 
 // Mirrors backend/schemas/current_week/current_week.py -- the single
@@ -838,13 +946,6 @@ export interface CalculateWeekPointsResult {
 
 export type WeeklyStatsPosition = "QB" | "RB" | "WR" | "TE";
 
-export interface WeeklyStatsImportResult {
-  season: number;
-  week: number;
-  position: WeeklyStatsPosition;
-  row_count: number;
-}
-
 export interface WeeklyStatsFileStatus {
   position: string;
   // Season-long file's own name (e.g. "FantasyData_QBs.csv"), present
@@ -940,6 +1041,25 @@ export interface GameLogRow {
   receiving_yards: number | null;
   rush_att: number | null;
   rush_yards: number | null;
+  // TGTSHARE/TOUCHSHARE/OPPSHARE -- see backend's usage_shares.py for the
+  // exact formula each one uses. All three null when the underlying team
+  // total is unavailable; target_share_pct is additionally null for QB
+  // (no FantasyData file carries a QB's own targets), while touch_share_pct
+  // and opp_share_pct stay meaningful (carries-only) for a QB instead.
+  target_share_pct: number | null;
+  touch_share_pct: number | null;
+  opp_share_pct: number | null;
+  // QB's own passing line -- always null for every other position, same
+  // "not applicable" convention as the usage fields above.
+  pass_cmp: number | null;
+  pass_att: number | null;
+  pass_cmp_pct: number | null;
+  pass_yds: number | null;
+  pass_avg: number | null;
+  pass_td: number | null;
+  pass_int: number | null;
+  pass_sck: number | null;
+  pass_rtg: number | null;
 }
 
 export interface GameOption {
@@ -957,11 +1077,63 @@ export interface GameLogsResult {
   rows: GameLogRow[];
 }
 
+// Mirrors backend/schemas/multipliers/multipliers.py's TrailingMultiplier --
+// one prior week's own Multiplier, pivoted onto the base week's row instead
+// of appearing as its own row (unlike Game Logs). `multiplier` is null when
+// that player has no tracker row at all for `week` (bye, not yet rostered,
+// tracker not backfilled that far) -- same "no data" convention as every
+// other nullable field in this app, not a real 0.
+export interface TrailingMultiplier {
+  week: number;
+  multiplier: number | null;
+}
+
+// Mirrors backend/schemas/multipliers/multipliers.py's MultiplierRow exactly
+// -- the Multipliers tab's row shape. One row per rostered player: the base
+// week's own box score (same fields as GameLogRow's own Salary/Opponent/
+// Multiplier/FPTS/Non-TD/TD set) plus `trailing`, always exactly
+// `trailing_weeks` entries long, one per week working backwards from
+// `base_week - 1`.
+export interface MultiplierRow {
+  name: string;
+  position: string;
+  team: string;
+  week: number;
+  salary: number;
+  opponent: string | null;
+  game_location: "Home" | "Away" | "BYE" | null;
+  multiplier: number | null;
+  fpts: number;
+  non_td_fpts: number;
+  non_td_fpts_pct: number | null;
+  td_fpts: number;
+  td_fpts_pct: number | null;
+  trailing: TrailingMultiplier[];
+}
+
+// Mirrors backend/schemas/multipliers/multipliers.py's MultipliersResult.
+// `base_week` is always `week - 1` -- see the backend engine's own
+// docstring for why this tab is always strictly "last week's review," not
+// tied to whichever week is currently reference-scoped elsewhere. `games`
+// is built from the base week's own schedule (see build_multiplier_rows),
+// same reused GameOption shape as Game Logs/Game Logs Against.
+export interface MultipliersResult {
+  season: number;
+  week: number;
+  base_week: number;
+  trailing_weeks: number;
+  games: GameOption[];
+  rows: MultiplierRow[];
+}
+
 // Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the
-// Game Logs Against tab's row shape. No Touches/Targets/etc. (unlike
-// GameLogRow) and no `team`/`opponent` display columns -- `against_team`
-// is only for grouping/filtering, the panel heading ("Against {team}")
-// already says which team this row's player faced.
+// Game Logs Against tab's row shape. Still no raw Touches/Targets/etc.
+// (unlike GameLogRow) and no `team`/`opponent` display columns --
+// `against_team` is only for grouping/filtering, the panel heading
+// ("Against {team}") already says which team this row's player faced.
+// target_share_pct/touch_share_pct/opp_share_pct and the Pass fields ARE
+// the same as GameLogRow's own, though -- same null-when conditions, see
+// there.
 export interface GameLogAgainstRow {
   against_team: string;
   week: number;
@@ -975,6 +1147,24 @@ export interface GameLogAgainstRow {
   non_td_fpts_pct: number | null;
   td_fpts: number;
   td_fpts_pct: number | null;
+  touches: number | null;
+  targets: number | null;
+  receptions: number | null;
+  receiving_yards: number | null;
+  rush_att: number | null;
+  rush_yards: number | null;
+  target_share_pct: number | null;
+  touch_share_pct: number | null;
+  opp_share_pct: number | null;
+  pass_cmp: number | null;
+  pass_att: number | null;
+  pass_cmp_pct: number | null;
+  pass_yds: number | null;
+  pass_avg: number | null;
+  pass_td: number | null;
+  pass_int: number | null;
+  pass_sck: number | null;
+  pass_rtg: number | null;
 }
 
 export interface GameLogsAgainstResult {

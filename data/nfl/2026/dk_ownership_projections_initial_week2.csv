@@ -1,0 +1,151 @@
+Player,Team,Position,Opponent,Salary,Proj.,Ceiling,% ownership,Tm Own
+Bijan Robinson,ATL,RB,CAR,"$8,200",23.42,31.73,38.27%,46.22%
+Javonte Williams,DAL,RB,WAS,"$6,400",17.74,24.28,21.93%,74.93%
+Christian McCaffrey,SF,RB,MIA,"$8,000",23.73,31.51,21.85%,53.97%
+CeeDee Lamb,DAL,WR,WAS,"$7,300",21.67,34.35,19.39%,74.93%
+Derrick Henry,BAL,RB,NO,"$7,200",17.37,23.98,18.83%,49.50%
+Ashton Jeanty,LV,RB,LAC,"$6,800",11.78,16.59,18.23%,39.69%
+Aaron Jones Sr.,MIN,RB,CHI,"$5,100",11.22,16.00,18.07%,40.66%
+George Pickens,DAL,WR,WAS,"$6,300",18.50,30.20,16.01%,74.93%
+Michael Mayer,LV,TE,LAC,"$3,600",3.64,7.65,15.24%,39.69%
+Dalton Schultz,HOU,TE,CIN,"$3,200",11.12,17.86,14.84%,27.61%
+De'Von Achane,MIA,RB,SF,"$6,700",17.30,23.63,14.59%,26.61%
+Ja'Marr Chase,CIN,WR,HOU,"$7,600",18.56,30.08,14.36%,26.22%
+Ladd McConkey,LAC,WR,LV,"$6,200",11.15,17.93,13.30%,33.69%
+Rhamondre Stevenson,NE,RB,PIT,"$5,700",12.31,17.46,12.48%,31.45%
+Mark Andrews,BAL,TE,NO,"$4,400",9.25,14.83,12.38%,49.50%
+Jaxon Smith-Njigba,SEA,WR,ARI,"$8,100",21.94,34.73,12.28%,17.56%
+Justin Jefferson,MIN,WR,CHI,"$7,800",16.46,27.80,11.86%,40.66%
+Bucky Irving,TB,RB,CLE,"$6,100",12.30,17.14,11.78%,27.16%
+Garrett Wilson,NYJ,WR,GB,"$6,000",12.44,19.82,11.47%,22.63%
+Brock Purdy,SF,QB,MIA,"$6,200",22.91,31.32,11.32%,53.97%
+Zay Flowers,BAL,WR,NO,"$6,700",14.09,24.97,11.30%,49.50%
+Dak Prescott,DAL,QB,WAS,"$6,400",25.06,34.05,10.70%,74.93%
+Chris Olave,NO,WR,BAL,"$7,200",15.57,26.50,10.51%,28.07%
+Breece Hall,NYJ,RB,GB,"$6,200",15.22,21.26,10.11%,22.63%
+Terry McLaurin,WAS,WR,DAL,"$5,200",12.38,23.17,9.86%,22.42%
+Saquon Barkley,PHI,RB,TEN,"$7,000",12.55,17.39,9.24%,22.55%
+Parker Washington,JAC,WR,DEN,"$5,900",9.48,16.21,9.21%,23.82%
+Trey McBride,ARI,TE,SEA,"$6,900",14.60,21.98,8.77%,14.41%
+Christian Watson,GB,WR,NYJ,"$6,200",14.04,25.45,8.51%,40.34%
+Jalen Coker,CAR,WR,ATL,"$5,100",9.40,15.71,8.46%,25.23%
+Tampa Bay Buccaneers,TB,DST,CLE,"$3,600",6.75,13.00,8.32%,27.16%
+Matthew Golden,GB,WR,NYJ,"$4,700",9.35,15.77,8.31%,40.34%
+DK Metcalf,PIT,WR,NE,"$5,200",10.19,16.71,7.98%,15.74%
+George Kittle,SF,TE,MIA,"$4,600",11.85,19.03,7.88%,53.97%
+MarShawn Lloyd,GB,RB,NYJ,"$5,300",12.01,16.80,7.37%,40.34%
+Baltimore Ravens,BAL,DST,NO,"$3,300",5.72,11.00,7.26%,49.50%
+Tetairoa McMillan,CAR,WR,ATL,"$6,100",12.59,22.85,7.24%,25.23%
+Colston Loveland,CHI,TE,MIN,"$5,000",11.88,19.08,7.09%,23.73%
+Justin Herbert,LAC,QB,LV,"$6,000",18.41,26.32,6.81%,33.69%
+Denver Broncos,DEN,DST,JAC,"$2,800",7.71,14.00,6.38%,17.93%
+Juwan Johnson,NO,TE,BAL,"$3,900",8.96,14.83,6.20%,28.07%
+Chuba Hubbard,CAR,RB,ATL,"$5,800",11.25,15.74,6.10%,25.23%
+Jayden Reed,GB,WR,NYJ,"$4,500",8.06,13.64,6.09%,40.34%
+Drake London,ATL,WR,CAR,"$6,000",15.24,26.33,6.01%,46.22%
+D'Andre Swift,CHI,RB,MIN,"$6,300",11.38,15.86,5.90%,23.73%
+David Montgomery,HOU,RB,CIN,"$6,500",16.22,22.33,5.85%,27.61%
+Mike Evans,SF,WR,MIA,"$6,600",16.94,28.58,5.82%,53.97%
+Bo Nix,DEN,QB,JAC,"$5,700",17.86,25.44,5.66%,17.93%
+Omarion Hampton,LAC,RB,LV,"$6,600",13.18,17.76,5.57%,33.69%
+Philadelphia Eagles,PHI,DST,TEN,"$3,700",6.94,13.00,5.57%,22.55%
+Seattle Seahawks,SEA,DST,ARI,"$3,500",6.91,13.00,5.47%,17.56%
+Chase Brown,CIN,RB,HOU,"$6,900",14.41,19.73,5.45%,26.22%
+Luther Burden III,CHI,WR,MIN,"$5,700",13.02,23.58,5.43%,23.73%
+Devaughn Vele,NO,WR,BAL,"$4,200",8.31,13.88,5.34%,28.07%
+Chicago Bears,CHI,DST,MIN,"$3,000",6.43,12.00,5.20%,23.73%
+KC Concepcion Jr.,CLE,WR,TB,"$4,100",9.38,15.31,5.19%,12.17%
+Stefon Diggs,WAS,WR,DAL,"$5,300",9.85,16.22,5.17%,22.42%
+Trevor Lawrence,JAC,QB,DEN,"$5,800",15.28,21.54,5.16%,23.82%
+Jaylen Waddle,DEN,WR,JAC,"$6,500",14.48,25.25,5.14%,17.93%
+Hunter Henry,NE,TE,PIT,"$4,000",10.67,18.00,5.13%,31.45%
+Tucker Kraft,GB,TE,NYJ,"$4,900",11.04,18.01,5.09%,40.34%
+C.J. Stroud,HOU,QB,CIN,"$5,500",21.37,30.08,5.06%,27.61%
+DeVonta Smith,PHI,WR,TEN,"$6,800",12.96,24.20,5.05%,22.55%
+Tennessee Titans,TEN,DST,PHI,"$2,100",4.79,10.00,5.04%,2.78%
+San Francisco 49ers,SF,DST,MIA,"$3,800",4.97,10.00,5.00%,53.97%
+Drake Maye,NE,QB,PIT,"$6,100",20.95,29.88,4.99%,31.45%
+Lamar Jackson,BAL,QB,NO,"$7,300",18.29,24.24,4.99%,49.50%
+Jordan Love,GB,QB,NYJ,"$5,900",18.72,27.46,4.96%,40.34%
+Tyler Shough,NO,QB,BAL,"$5,300",18.21,26.18,4.88%,28.07%
+Jayden Daniels,WAS,QB,DAL,"$6,300",20.52,28.01,4.87%,22.42%
+Caleb Douglas,MIA,WR,SF,"$3,700",8.36,14.11,4.82%,26.61%
+Carolina Panthers,CAR,DST,ATL,"$2,700",7.98,15.00,4.80%,25.23%
+Malik Washington,MIA,WR,SF,"$4,000",6.22,10.47,4.62%,26.61%
+T.J. Hockenson,MIN,TE,CHI,"$3,500",7.13,12.62,4.58%,40.66%
+Tee Higgins,CIN,WR,HOU,"$6,100",13.30,23.92,4.55%,26.22%
+Cleveland Browns,CLE,DST,TB,"$2,200",5.67,11.00,4.49%,12.17%
+Baker Mayfield,TB,QB,CLE,"$5,600",17.51,24.98,4.38%,27.16%
+Jake Ferguson,DAL,TE,WAS,"$3,800",10.20,16.00,4.34%,74.93%
+DeMario Douglas,NE,WR,PIT,"$3,800",6.02,10.80,4.26%,31.45%
+Carson Wentz,MIN,QB,CHI,"$4,600",—,—,4.26%,40.66%
+Deebo Samuel Sr.,SF,WR,MIA,"$5,300",11.55,18.16,4.19%,53.97%
+Quentin Johnston,LAC,WR,LV,"$5,000",9.68,16.62,4.18%,33.69%
+Emeka Egbuka,TB,WR,CLE,"$6,400",12.98,23.51,4.17%,27.16%
+Tre Tucker,LV,WR,LAC,"$4,500",6.26,11.57,4.13%,39.69%
+Cade Otton,TB,TE,CLE,"$3,400",6.40,11.19,4.10%,27.16%
+Los Angeles Chargers,LAC,DST,LV,"$3,200",8.34,15.00,3.84%,33.69%
+Caleb Williams,CHI,QB,MIN,"$6,800",20.28,28.65,3.79%,23.73%
+Harold Fannin Jr.,CLE,TE,TB,"$4,100",10.93,17.54,3.77%,12.17%
+Brenton Strange,JAC,TE,DEN,"$3,900",6.42,11.78,3.74%,23.82%
+Dallas Goedert,PHI,TE,TEN,"$4,800",9.84,16.45,3.72%,22.55%
+Arizona Cardinals,ARI,DST,SEA,"$2,500",3.17,8.00,3.61%,14.41%
+Jadarian Price,SEA,RB,ARI,"$5,500",13.22,18.26,3.45%,17.56%
+Bryce Young,CAR,QB,ATL,"$5,400",17.33,24.31,3.43%,25.23%
+New England Patriots,NE,DST,PIT,"$3,100",4.75,10.00,3.42%,31.45%
+Miami Dolphins,MIA,DST,SF,"$2,000",3.67,9.00,3.31%,26.61%
+Pittsburgh Steelers,PIT,DST,NE,"$2,800",5.92,11.00,3.27%,15.74%
+Jalen Hurts,PHI,QB,TEN,"$6,700",18.70,26.16,3.07%,22.55%
+Jacksonville Jaguars,JAC,DST,DEN,"$2,400",4.65,10.00,2.96%,23.82%
+Jakobi Meyers,JAC,WR,DEN,"$4,900",7.28,12.49,2.94%,23.82%
+Demarcus Robinson,SF,WR,MIA,"$3,900",7.51,12.83,2.92%,53.97%
+Houston Texans,HOU,DST,CIN,"$3,000",5.62,11.00,2.85%,27.61%
+Brian Thomas Jr.,JAC,WR,DEN,"$4,800",8.20,14.24,2.78%,23.82%
+Green Bay Packers,GB,DST,NYJ,"$3,400",8.44,15.00,2.77%,40.34%
+Chris Godwin Jr.,TB,WR,CLE,"$5,600",9.15,15.00,2.72%,27.16%
+Atlanta Falcons,ATL,DST,CAR,"$2,900",5.38,11.00,2.67%,46.22%
+Las Vegas Raiders,LV,DST,LAC,"$2,600",7.53,14.00,2.60%,39.69%
+Tre' Harris,LAC,WR,LV,"$4,000",5.85,10.85,2.59%,33.69%
+Evan Engram,DEN,TE,JAC,"$3,300",5.74,10.37,2.56%,17.93%
+Ryan Flournoy,DAL,WR,WAS,"$3,800",8.51,14.33,2.55%,74.93%
+Romeo Doubs,NE,WR,PIT,"$5,000",11.95,19.22,2.54%,31.45%
+Jacory Croskey-Merritt,WAS,RB,DAL,"$5,500",8.60,11.92,2.51%,22.42%
+Wan'Dale Robinson,TEN,WR,PHI,"$4,600",8.24,14.04,2.43%,2.78%
+Cincinnati Bengals,CIN,DST,HOU,"$2,700",3.62,8.00,2.36%,26.22%
+Dallas Cowboys,DAL,DST,WAS,"$2,900",4.07,9.00,2.31%,74.93%
+New York Jets,NYJ,DST,GB,"$2,400",3.34,8.00,2.31%,22.63%
+Pat Freiermuth,PIT,TE,NE,"$3,700",6.32,11.42,2.19%,15.74%
+Mack Hollins,NE,WR,PIT,"$4,300",5.04,9.68,2.04%,31.45%
+Quinshon Judkins,CLE,RB,TB,"$5,400",12.16,17.01,2.01%,12.17%
+Rashod Bateman,BAL,WR,NO,"$4,400",4.98,9.60,2.01%,49.50%
+Courtland Sutton,DEN,WR,JAC,"$5,800",10.64,17.36,1.95%,17.93%
+Michael Wilson,ARI,WR,SEA,"$5,400",9.84,16.36,1.95%,14.41%
+Jordan Addison,MIN,WR,CHI,"$5,100",10.27,17.38,1.90%,40.66%
+Michael Pittman Jr.,PIT,WR,NE,"$4,700",9.60,15.70,1.88%,15.74%
+Joe Burrow,CIN,QB,HOU,"$6,600",18.13,26.48,1.86%,26.22%
+Xavier Hutchinson,HOU,WR,CIN,"$3,500",9.92,16.67,1.86%,27.61%
+Drew Lock,SEA,QB,ARI,"$4,900",19.19,27.69,1.83%,17.56%
+Jaylen Warren,PIT,RB,NE,"$5,400",10.72,15.37,1.69%,15.74%
+Jacoby Brissett,ARI,QB,SEA,"$5,000",15.82,22.95,1.66%,14.41%
+Pat Bryant,DEN,WR,JAC,"$4,200",6.94,12.24,1.58%,17.93%
+Malik Willis,MIA,QB,SF,"$5,200",18.22,24.10,1.55%,26.61%
+Rome Odunze,CHI,WR,MIN,"$5,500",11.10,18.23,1.53%,23.73%
+Minnesota Vikings,MIN,DST,CHI,"$2,600",3.60,8.00,1.51%,40.66%
+Dontayvion Wicks,PHI,WR,TEN,"$4,300",8.05,13.80,1.47%,22.55%
+Jalen Nailor,LV,WR,LAC,"$3,900",6.01,11.05,1.44%,39.69%
+Washington Commanders,WAS,DST,DAL,"$2,500",2.78,8.00,1.44%,22.42%
+New Orleans Saints,NO,DST,BAL,"$2,300",5.89,11.00,1.35%,28.07%
+Rico Dowdle,PIT,RB,NE,"$4,900",9.66,13.71,1.30%,15.74%
+David Njoku,LAC,TE,LV,"$3,000",5.61,9.99,1.24%,33.69%
+Deshaun Watson,CLE,QB,TB,"$4,500",14.49,20.62,1.20%,12.17%
+Travis Etienne Jr.,NO,RB,BAL,"$6,000",11.55,16.21,1.13%,28.07%
+Kyle Pitts Sr.,ATL,TE,CAR,"$4,500",9.88,16.38,1.11%,46.22%
+Geno Smith,NYJ,QB,GB,"$4,800",12.49,17.81,1.05%,22.63%
+Greg Dulcich,MIA,TE,SF,"$3,200",9.14,15.19,1.04%,26.61%
+J.K. Dobbins,DEN,RB,JAC,"$5,000",7.80,10.96,1.03%,17.93%
+Kendrick Bourne,ARI,WR,SEA,"$3,900",3.35,7.23,1.02%,14.41%
+Marvin Harrison Jr.,ARI,WR,SEA,"$4,900",11.21,18.29,1.01%,14.41%
+Cooper Rush,ATL,QB,CAR,"$4,200",12.98,19.81,0.83%,46.22%
+Aaron Rodgers,PIT,QB,NE,"$5,100",13.57,18.85,0.70%,15.74%
+Kirk Cousins,LV,QB,LAC,"$5,000",12.48,17.92,0.66%,39.69%
+Cam Ward,TEN,QB,PHI,"$4,900",13.55,18.83,0.36%,2.78%

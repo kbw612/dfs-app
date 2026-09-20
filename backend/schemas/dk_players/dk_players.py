@@ -28,6 +28,14 @@ dk_players_engine.py):
    contest's own reported FPTS rather than re-deriving the whole scoring
    formula).
 
+TGTSHARE / TOUCHSHARE / OPPSHARE are NOT tracked here -- they're computed
+once, right after a scrape or manual import of the 4 FantasyData stat
+files, and stored as TGT_SHARE/TOUCH_SHARE/OPP_SHARE trailing columns on
+those files themselves (see backend/services/shared/usage_shares.py and
+backend/repositories/dk_players/weekly_stats_repo.py's
+write_usage_share_columns). Game Logs / Game Logs Against read them
+straight off those files, same as every other usage stat.
+
 Unlike every other per-(season, week, platform) snapshot in this app
 (Salary File, Contest Standings, ...), this file is per-(season, platform)
 and keeps growing across weeks rather than being overwritten each time --
@@ -35,8 +43,6 @@ see backend/repositories/dk_players/dk_players_repo.py's own docstring.
 """
 
 from __future__ import annotations
-
-from typing import Literal
 
 from pydantic import BaseModel
 
@@ -122,10 +128,3 @@ class CalculateWeekPointsResult(BaseModel):
     # equivalent "simply wasn't scraped" explanation to distinguish from a
     # spelling issue.
     unmatched_contest_players: list[str]
-
-
-class WeeklyStatsImportResult(BaseModel):
-    season: int
-    week: int
-    position: Literal["QB", "RB", "WR", "TE"]
-    row_count: int

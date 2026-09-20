@@ -68,6 +68,23 @@ def test_normalizes_la_team_quirks(tmp_path: Path):
     assert by_name["Justin Herbert"].team == "LAC"
 
 
+def test_normalizes_jacksonville_team_quirk(tmp_path: Path):
+    # oneweekseason.com spells Jacksonville "JAC"; every other abbreviation
+    # this app uses (including DK's own salary export) spells it "JAX" --
+    # without normalizing this, Jacksonville's DST never matched its own
+    # Ownership projection via the team-based DST lookup (see
+    # services/dk_salary/ownership_enrich.py).
+    write_offense_csv(
+        tmp_path,
+        15,
+        ['0,Trevor Lawrence,QB,JAC,DEN,"$6,000",8.0%\n'],
+    )
+    snapshot, _ = load_ownership_csv(2025, 15, tmp_path)
+    by_name = {p.player: p for p in snapshot.players}
+
+    assert by_name["Trevor Lawrence"].team == "JAX"
+
+
 def test_missing_offense_csv_produces_error_and_empty_snapshot(tmp_path: Path):
     snapshot, messages = load_ownership_csv(2025, 15, tmp_path)
 

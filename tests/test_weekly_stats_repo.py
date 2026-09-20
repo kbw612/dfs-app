@@ -1,10 +1,14 @@
 from pathlib import Path
 
+import csv
+import io
+
 from backend.repositories.dk_players.weekly_stats_repo import (
     load_weekly_stats_csv,
     merge_week_into_season_csv,
     week_has_data,
     weekly_stats_csv_path,
+    write_usage_share_columns,
 )
 
 WEEK1_QB = "RK,NAME,TEAM,POS,WK,OPP,FPTS\n1,Josh Allen,BUF,QB,1,BAL,38.8\n2,Justin Fields,NYJ,QB,1,PIT,29.5\n"
@@ -75,3 +79,79 @@ def test_different_positions_are_independent_files(tmp_path: Path):
     merge_week_into_season_csv(tmp_path, 2026, "QB", 1, WEEK1_QB)
     assert load_weekly_stats_csv(tmp_path, 2026, "RB") is None
     assert weekly_stats_csv_path(tmp_path, 2026, "RB").exists() is False
+
+
+# -- write_usage_share_columns ------------------------------------------------
+
+
+def _rows_by_name(csv_text: str) -> dict[str, dict[str, str]]:
+    return {row["NAME"]: row for row in csv.DictReader(io.StringIO(csv_text))}
+
+
+def test_write_usage_share_columns_appends_header_and_writes_values(tmp_path: Path):
+    merge_week_into_season_csv(tmp_path, 2026, "QB", 1, WEEK1_QB)
+    write_usage_share_columns(
+        tmp_path, 2026, "QB", 1, {"Josh Allen": (None, 42.5, 30.0), "Justin Fields": (10.0, 20.0, 15.0)}
+    )
+    csv_text = load_weekly_stats_csv(tmp_path, 2026, "QB")
+    header = next(csv.reader(io.StringIO(csv_text)))
+    assert "TGT_SHARE" in header
+    assert "TOUCH_SHARE" in header
+    assert "OPP_SHARE" in header
+    rows = _rows_by_name(csv_text)
+    assert rows["Josh Allen"]["TGT_SHARE"] == ""
+    assert rows["Josh Allen"]["TOUCH_SHARE"] == "42.5"
+    assert rows["Josh Allen"]["OPP_SHARE"] == "30.0"
+    assert rows["Justin Fields"]["TGT_SHARE"] == "10.0"
+    assert rows["Justin Fields"]["TOUCH_SHARE"] == "20.0"
+    assert rows["Justin Fields"]["OPP_SHARE"] == "15.0"
+
+
+def test_write_usage_share_columns_only_touches_matching_week(tmp_path: Path):
+    merge_week_into_season_csv(tmp_path, 2026, "QB", 1, WEEK1_QB)
+    merge_week_into_season_csv(tmp_path, 2026, "QB", 2, WEEK2_QB)
+    write_usage_share_columns(
+        tmp_path, 2026, "QB", 1, {"Josh Allen": (5.0, 6.0, 7.0), "Justin Fields": (7.0, 8.0, 9.0)}
+    )
+    csv_text = load_weekly_stats_csv(tmp_path, 2026, "QB")
+    rows = _rows_by_name(csv_text)
+    assert rows["Josh Allen"]["TGT_SHARE"] == "5.0"
+    # Week 2's row is untouched -- no shares computed for it yet, so the
+    # newly-appended columns are simply blank for it.
+    assert rows["Patrick Mahomes"]["TGT_SHARE"] == ""
+    assert rows["Patrick Mahomes"]["TOUCH_SHARE"] == ""
+    assert rows["Patrick Mahomes"]["OPP_SHARE"] == ""
+
+
+def test_write_usage_share_columns_missing_player_writes_blank(tmp_path: Path):
+    merge_week_into_season_csv(tmp_path, 2026, "QB", 1, WEEK1_QB)
+    write_usage_share_columns(tmp_path, 2026, "QB", 1, {"Josh Allen": (5.0, 6.0, 7.0)})
+    csv_text = load_weekly_stats_csv(tmp_path, 2026, "QB")
+    rows = _rows_by_name(csv_text)
+    # Justin Fields has no entry in shares_by_player at all.
+    assert rows["Justin Fields"]["TGT_SHARE"] == ""
+    assert rows["Justin Fields"]["TOUCH_SHARE"] == ""
+    assert rows["Justin Fields"]["OPP_SHARE"] == ""
+
+
+def test_write_usage_share_columns_no_op_when_file_missing(tmp_path: Path):
+    write_usage_share_columns(tmp_path, 2026, "QB", 1, {"Josh Allen": (5.0, 6.0, 7.0)})
+    assert load_weekly_stats_csv(tmp_path, 2026, "QB") is None
+
+
+def test_write_usage_share_columns_reapplies_cleanly_on_rerun(tmp_path: Path):
+    # Re-running "Calc Week Points" for the same week should simply
+    # overwrite that week's own TGT_SHARE/TOUCH_SHARE/OPP_SHARE values, not duplicate
+    # columns.
+    merge_week_into_season_csv(tmp_path, 2026, "QB", 1, WEEK1_QB)
+    write_usage_share_columns(tmp_path, 2026, "QB", 1, {"Josh Allen": (5.0, 6.0, 7.0)})
+    write_usage_share_columns(tmp_path, 2026, "QB", 1, {"Josh Allen": (9.0, 10.0, 11.0)})
+    csv_text = load_weekly_stats_csv(tmp_path, 2026, "QB")
+    header = next(csv.reader(io.StringIO(csv_text)))
+    assert header.count("TGT_SHARE") == 1
+    assert header.count("TOUCH_SHARE") == 1
+    assert header.count("OPP_SHARE") == 1
+    rows = _rows_by_name(csv_text)
+    assert rows["Josh Allen"]["TGT_SHARE"] == "9.0"
+    assert rows["Josh Allen"]["TOUCH_SHARE"] == "10.0"
+    assert rows["Josh Allen"]["OPP_SHARE"] == "11.0"

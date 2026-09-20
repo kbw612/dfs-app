@@ -91,6 +91,17 @@ class Settings(BaseSettings):
     # above) -- verified live before building the scraper.
     oneweekseason_week_url_template: str = "https://oneweekseason.com/week/week-{week}-{season}/"
 
+    # Weather tab's scrape button (backend/services/weather/scraper.py) --
+    # a single public page (not per-week like oneweekseason.com above) that
+    # always shows the *current* week's games and, for a subset of them, a
+    # meteorologist's ("Kevin's") color-coded note on notable game-weather
+    # risk. No login required -- confirmed live before building the
+    # scraper. Since the URL itself isn't season/week-scoped, the season/
+    # week passed to the scrape endpoint are only used to label/save the
+    # resulting snapshot under the right file -- scrape it during the week
+    # it's actually for.
+    mysportsweather_nfl_url: str = "https://mysportsweather.com/nfl"
+
     # DraftKings Main Slate ownership/salary/projections page -- backs the
     # Settings tab's "Scrape from OneWeekSeason" ownership control (backend/
     # services/ownership/main_slate_scraper.py). Also no login required,

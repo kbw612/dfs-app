@@ -30,6 +30,13 @@ export function formatCount(value: number | null): string {
   return value === null ? "-" : String(value);
 }
 
+// For a plain decimal stat that isn't a percentage or a "3.6x"-style
+// multiplier -- QB's own passing Avg (yards/attempt) and Rtg (passer
+// rating) -- one decimal place, no suffix.
+export function formatDecimal(value: number | null): string {
+  return value === null ? "-" : value.toFixed(1);
+}
+
 export function formatSalary(value: number): string {
   return `$${value.toLocaleString()}`;
 }
@@ -52,6 +59,56 @@ export function multiplierTier(value: number | null): MultiplierTier {
 
 export function tierClassName(tier: MultiplierTier): string | undefined {
   return tier ? `game-logs-tier-${tier}` : undefined;
+}
+
+// Highlights the top 2 Tgt Share %/Touch Share % values on the SAME team
+// in the SAME week -- ranked independently per column (a player's Touch
+// Share rank has no bearing on their Tgt Share rank) and independently
+// per (team, week) pair, not across the whole visible row set -- a team's
+// own leader in Week 3 shouldn't be compared against a different team's
+// leader in Week 5. `getTeam` is passed in rather than assumed to be a
+// fixed field name since Game Logs' own rows carry the rostered player's
+// `team` while Game Logs Against's rows carry `against_team` instead (see
+// each view's own caller).
+//
+// Ties share a rank -- if two players on that team are tied for that
+// week's single highest value, both get the dark shade and there is no
+// light-shade player that week (rather than arbitrarily picking one as
+// "2nd"). Reuses the same two green shades as the Multiplier column's own
+// tiering (game-logs-tier-green-dark/-light) rather than inventing new
+// colors.
+export function rankTopSharesByTeamAndWeek<T extends { week: number }>(
+  rows: T[],
+  getTeam: (row: T) => string,
+  getValue: (row: T) => number | null
+): Map<T, 1 | 2> {
+  const rowsByTeamWeek = new Map<string, T[]>();
+  for (const row of rows) {
+    const key = `${getTeam(row)}|${row.week}`;
+    if (!rowsByTeamWeek.has(key)) rowsByTeamWeek.set(key, []);
+    rowsByTeamWeek.get(key)!.push(row);
+  }
+
+  const ranks = new Map<T, 1 | 2>();
+  for (const groupRows of rowsByTeamWeek.values()) {
+    const distinctValuesDesc = [
+      ...new Set(groupRows.map(getValue).filter((value): value is number => value !== null)),
+    ].sort((a, b) => b - a);
+    const [topValue, secondValue] = distinctValuesDesc;
+    for (const row of groupRows) {
+      const value = getValue(row);
+      if (value === null) continue;
+      if (value === topValue) ranks.set(row, 1);
+      else if (value === secondValue) ranks.set(row, 2);
+    }
+  }
+  return ranks;
+}
+
+export function shareRankClassName(rank: 1 | 2 | undefined): string {
+  if (rank === 1) return "game-logs-tier-green-dark";
+  if (rank === 2) return "game-logs-tier-green-light";
+  return "";
 }
 
 // "vs CLE" / "@ CLE" / "BYE" / "-" (opponent or game_location missing --

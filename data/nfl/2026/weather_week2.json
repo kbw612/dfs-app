@@ -1,0 +1,77 @@
+{
+  "season": 2026,
+  "week": 2,
+  "scraped_at": "2026-09-20T09:29:12-04:00",
+  "games": [
+    {
+      "away_name": "New Orleans Saints",
+      "home_name": "Baltimore Ravens",
+      "away_team": "NO",
+      "home_team": "BAL",
+      "game_key": "BAL-NO",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "There's certainly rain around, right now models show the best chance for rain comes after the game, not during it, but we'll need to see higher resolution forecast data closer to gameday to really know."
+    },
+    {
+      "away_name": "Minnesota Vikings",
+      "home_name": "Chicago Bears",
+      "away_team": "MIN",
+      "home_team": "CHI",
+      "game_key": "CHI-MIN",
+      "kickoff_label": "1:00 PM ET",
+      "color": "orange",
+      "note": "Decent chance of some rain, though higher resolution models for now are keeping rain fairly light and spotty (not a true washout). Winds should come in around 20mph sustained, gusts 25-30mph. It's not catastrophic weather by any means, but a longer throw or a few FG's could be impacted."
+    },
+    {
+      "away_name": "Cleveland Browns",
+      "home_name": "Tampa Bay Buccaneers",
+      "away_team": "CLE",
+      "home_team": "TB",
+      "game_key": "CLE-TB",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "Storms are going to pop Sunday afternoon in Tampa. Whether those pop near the stadium or over the stadium is going to be impossible to tell until it's too late. Best guess: This game starts dry, then they get some heavy rain and possibly even a lightning delay."
+    },
+    {
+      "away_name": "Green Bay Packers",
+      "home_name": "New York Jets",
+      "away_team": "GB",
+      "home_team": "NYJ",
+      "game_key": "GB-NYJ",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "Current expectation is off and on light showers. No true downpours, and likely minimal overall impact."
+    },
+    {
+      "away_name": "Pittsburgh Steelers",
+      "home_name": "New England Patriots",
+      "away_team": "PIT",
+      "home_team": "NE",
+      "game_key": "NE-PIT",
+      "kickoff_label": "1:00 PM ET",
+      "color": "orange",
+      "note": "Latest models show a steady, soaking, light rain essentially all game. That may start off a bit spotty, but by the 2nd half I'd expect the ball and the field are quite wet, and the game will start being impacted. You could argue I'm trying to be too specific a full day ahead of gametime, and you are probably right, but that's my read for now, will circle back Sunday with fresh eyes and fresh forecast data."
+    },
+    {
+      "away_name": "Jacksonville Jaguars",
+      "home_name": "Denver Broncos",
+      "away_team": "JAX",
+      "home_team": "DEN",
+      "game_key": "DEN-JAX",
+      "kickoff_label": "4:05 PM ET",
+      "color": "green",
+      "note": "I won't rule out a stray shower, but I think this looks mostly (if not fully) dry."
+    },
+    {
+      "away_name": "Indianapolis Colts",
+      "home_name": "Kansas City Chiefs",
+      "away_team": "IND",
+      "home_team": "KC",
+      "game_key": "IND-KC",
+      "kickoff_label": "8:20 PM ET",
+      "color": "green",
+      "note": "A chance for showers, but recent high-res forecast models are showing this dry for now. I'll keep a watch on how the forecast evolves, maybe I'll need to tweak things, but I'm cautiously optimistic for clear gametime conditions at the moment."
+    }
+  ]
+}

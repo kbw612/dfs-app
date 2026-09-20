@@ -4,6 +4,7 @@ import {
   calculateOwnershipScores,
   fetchMyPlayerPool,
   fetchPlayerPool,
+  resetMatchupToTeamFactor,
   saveMyPlayerPoolEntry,
   savePlayerPoolEntry,
 } from "../api";
@@ -11,9 +12,11 @@ import type { GameEnvironmentEntry, PlayerPoolPlayer, PlayerPoolResult } from ".
 import { HeaderInfoPopover } from "./HeaderInfoPopover";
 import { formatOwnershipPct, formatSalary } from "./playerDisplay";
 import {
+  DST_OWNERSHIP_NOTES,
   GAME_ENVIRONMENT_NOTES,
   GAME_MATCHUP_NOTES,
   OWNERSHIP_NOTES,
+  SALARY_VALUE_NOTES,
   TALENT_EXPLOSIVENESS_NOTES,
   VOLUME_OPPORTUNITIES_NOTES,
 } from "./scoringNotes";
@@ -50,11 +53,14 @@ interface ScoreFieldConfig {
   label: string;
 }
 
-// QBs/RBs/WRs/TEs share the same 5 rules; DSTs use their own 2 (see the
-// plan discussion -- there's no "ownership"/"talent" concept for a
-// defense, just Game Matchup + how attractively priced it is this week).
-// Column sets differ by position, so the grid shows exactly one
-// position's columns at a time rather than a combined "All" view.
+// QBs/RBs/WRs/TEs share the same 5 rules; DSTs use their own 3 (Game
+// Matchup, Ownership, and how attractively priced it is this week --
+// there's no "talent" concept for a defense). Ownership shares the same
+// field/column as offense but is scored with DST's own breakpoints (see
+// DST_OWNERSHIP_NOTES and backend/services/ownership/scoring.py's
+// score_dst_ownership_pct). Column sets differ by position, so the grid
+// shows exactly one position's columns at a time rather than a combined
+// "All" view.
 const OFFENSE_SCORE_FIELDS: ScoreFieldConfig[] = [
   { key: "game_environment", label: "Game Environment" },
   { key: "game_matchup", label: "Matchup" },
@@ -65,11 +71,25 @@ const OFFENSE_SCORE_FIELDS: ScoreFieldConfig[] = [
 
 const DST_SCORE_FIELDS: ScoreFieldConfig[] = [
   { key: "game_matchup", label: "Matchup" },
+  { key: "ownership", label: "Ownership" },
   { key: "salary_value", label: "Salary value" },
 ];
 
 function scoreFieldsForPosition(position: string): ScoreFieldConfig[] {
   return position === "DST" ? DST_SCORE_FIELDS : OFFENSE_SCORE_FIELDS;
+}
+
+// DST's Salary value rule -- unlike Game Environment/Ownership's own
+// suggestions (both computed server-side from Vegas Lines/Ownership%
+// data), this is a pure function of a DST's own salary, which is already
+// known client-side, so there's no backend endpoint behind this column's
+// reset icon (see handleResetSalaryValues below). See SALARY_VALUE_NOTES
+// (scoringNotes.ts) for the same rule, shown to the user via that
+// column's info icon.
+function suggestedSalaryValue(salary: number): number {
+  if (salary >= 3500) return 1;
+  if (salary <= 2600) return 3;
+  return 2;
 }
 
 // Fields that fall back to that player's Settings Default (Player Default
@@ -190,6 +210,9 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
   const [gameEnvUpdateMessage, setGameEnvScrapeMessage] = useState<string | null>(null);
   const [ownershipUpdating, setOwnershipUpdating] = useState(false);
   const [ownershipUpdateMessage, setOwnershipUpdateMessage] = useState<string | null>(null);
+  const [salaryValueResetMessage, setSalaryValueResetMessage] = useState<string | null>(null);
+  const [matchupResetting, setMatchupResetting] = useState(false);
+  const [matchupResetMessage, setMatchupResetMessage] = useState<string | null>(null);
 
   const [sortField, setSortField] = useState<SortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -485,6 +508,45 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
     }
   }
 
+  // Bulk-resets every currently-loaded DST's Salary value to
+  // suggestedSalaryValue(row.salary) -- same "one click, every row"
+  // convention as handleApplyVegasLines/handleCalculateOwnershipScores
+  // above, just entirely client-side since the rule needs nothing but a
+  // salary already on hand. Goes through the normal updateCell path (not
+  // a direct save), so each row still autosaves on its own existing
+  // debounce and still shows up as "dirty" until that save lands.
+  function handleResetSalaryValues() {
+    for (const row of filteredPlayers) {
+      updateCell(playerKey(row), "salary_value", String(suggestedSalaryValue(row.salary)));
+    }
+    setSalaryValueResetMessage(
+      `Reset ${filteredPlayers.length} DST${filteredPlayers.length === 1 ? "" : "s"} to the salary rule.`
+    );
+  }
+
+  // DST Matchup's own refresh icon -- unlike Salary value's client-side
+  // formula above, the Team Default Factor a DST should fall back to
+  // lives server-side (Settings' Team Default Factors grid), so this goes
+  // through the same "bulk apply, then reload" shape as Game Environment/
+  // Ownership's refresh icons rather than a local computation. Clears
+  // every currently-loaded DST's explicit Matchup override so it goes
+  // back to reading straight from that fallback chain.
+  async function handleResetMatchup() {
+    setMatchupResetting(true);
+    setMatchupResetMessage(null);
+    try {
+      const result = await resetMatchupToTeamFactor(season, week, platform, contest, "DST");
+      setMatchupResetMessage(
+        `Reset ${result.reset_count} DST${result.reset_count === 1 ? "" : "s"} to their Team Default Factor.`
+      );
+      load();
+    } catch (err) {
+      setMatchupResetMessage(err instanceof Error ? err.message : "Failed to reset Matchup to Team Default Factor");
+    } finally {
+      setMatchupResetting(false);
+    }
+  }
+
   const isNotFound = error !== null && error.includes("No DK salary file uploaded yet");
 
   // {game_key: GameEnvironmentEntry} for this week's Vegas Line popovers --
@@ -565,22 +627,24 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                 pattern. */}
             {gameEnvUpdateMessage && <p className="hint">{gameEnvUpdateMessage}</p>}
             {ownershipUpdateMessage && <p className="hint">{ownershipUpdateMessage}</p>}
+            {salaryValueResetMessage && <p className="hint">{salaryValueResetMessage}</p>}
+            {matchupResetMessage && <p className="hint">{matchupResetMessage}</p>}
             {visiblePlayers.length === 0 ? (
               <p className="hint">No {position} players loaded.</p>
             ) : (
               <div className="player-pool-grid-wrap">
-                <table className="player-pool-grid">
+                <table className="player-pool-grid player-rankings-grid">
                   <thead>
                     <tr>
                       <th className="player-pool-grid-sticky">Name</th>
                       <th aria-sort={sortField === "salary" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}>
                         <button
                           type="button"
-                          className="player-pool-sort-header"
+                          className="player-pool-sort-header player-pool-sort-header-stacked"
                           onClick={() => toggleSort("salary")}
                           aria-label={sortAriaLabel("salary", "Salary")}
                         >
-                          Salary
+                          <span>Salary</span>
                           <span className="player-pool-sort-icon" aria-hidden="true">
                             {sortIcon("salary")}
                           </span>
@@ -601,63 +665,104 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                       </th>
                       {fields.map((f) => (
                         <th key={f.key}>
-                          {f.key === "volume" ? (
-                            <>
-                              Vol/
-                              <br />
-                              Opp
-                            </>
-                          ) : f.key === "talent" ? (
-                            <>
-                              Talent/
-                              <br />
-                              Exp
-                            </>
-                          ) : f.key === "game_environment" ? (
-                            <>
-                              Game
-                              <br />
-                              Env
-                            </>
-                          ) : f.key === "ownership" ? (
-                            <>
-                              Ownership
-                              <br />
-                            </>
-                          ) : (
-                            f.label
-                          )}
-                          {f.key === "game_environment" && (
-                            <button
-                              type="button"
-                              className="header-refresh-icon"
-                              disabled={gameEnvUpdating}
-                              onClick={handleApplyVegasLines}
-                              aria-label={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
-                              title={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
-                            >
-                              ↻
-                            </button>
-                          )}
-                          {f.key === "game_environment" && (
-                            <HeaderInfoPopover title={f.label} lines={GAME_ENVIRONMENT_NOTES} />
-                          )}
-                          {f.key === "game_matchup" && <HeaderInfoPopover title={f.label} lines={GAME_MATCHUP_NOTES} />}
-                          {f.key === "ownership" && (
-                            <button
-                              type="button"
-                              className="header-refresh-icon"
-                              disabled={ownershipUpdating}
-                              onClick={handleCalculateOwnershipScores}
-                              aria-label={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
-                              title={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
-                            >
-                              ↻
-                            </button>
-                          )}
-                          {f.key === "ownership" && <HeaderInfoPopover title={f.label} lines={OWNERSHIP_NOTES} />}
-                          {f.key === "volume" && <HeaderInfoPopover title={f.label} lines={VOLUME_OPPORTUNITIES_NOTES} />}
-                          {f.key === "talent" && <HeaderInfoPopover title={f.label} lines={TALENT_EXPLOSIVENESS_NOTES} />}
+                          <span className="player-pool-header-label">
+                            {f.key === "volume" ? (
+                              <>
+                                Vol/
+                                <br />
+                                Opp
+                              </>
+                            ) : f.key === "talent" ? (
+                              <>
+                                Talent/
+                                <br />
+                                Exp
+                              </>
+                            ) : f.key === "game_environment" ? (
+                              <>
+                                Game
+                                <br />
+                                Env
+                              </>
+                            ) : f.key === "ownership" ? (
+                              <>
+                                Ownership
+                                <br />
+                              </>
+                            ) : (
+                              f.label
+                            )}
+                          </span>
+                          <span className="player-pool-header-icons">
+                            {f.key === "game_environment" && (
+                              <button
+                                type="button"
+                                className="header-refresh-icon"
+                                disabled={gameEnvUpdating}
+                                onClick={handleApplyVegasLines}
+                                aria-label={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
+                                title={gameEnvUpdating ? "Updating…" : "Update from Vegas Lines tab"}
+                              >
+                                ↻
+                              </button>
+                            )}
+                            {f.key === "game_environment" && (
+                              <HeaderInfoPopover title={f.label} lines={GAME_ENVIRONMENT_NOTES} />
+                            )}
+                            {f.key === "game_matchup" && position === "DST" && (
+                              <button
+                                type="button"
+                                className="header-refresh-icon"
+                                disabled={matchupResetting}
+                                onClick={handleResetMatchup}
+                                aria-label={matchupResetting ? "Resetting…" : "Reset to Team Default Factor"}
+                                title={matchupResetting ? "Resetting…" : "Reset to Team Default Factor"}
+                              >
+                                ↻
+                              </button>
+                            )}
+                            {f.key === "game_matchup" && (
+                              <HeaderInfoPopover title={f.label} lines={GAME_MATCHUP_NOTES} />
+                            )}
+                            {f.key === "ownership" && (
+                              <button
+                                type="button"
+                                className="header-refresh-icon"
+                                disabled={ownershipUpdating}
+                                onClick={handleCalculateOwnershipScores}
+                                aria-label={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
+                                title={ownershipUpdating ? "Updating…" : "Calculate from Ownership%"}
+                              >
+                                ↻
+                              </button>
+                            )}
+                            {f.key === "ownership" && (
+                              <HeaderInfoPopover
+                                title={f.label}
+                                lines={position === "DST" ? DST_OWNERSHIP_NOTES : OWNERSHIP_NOTES}
+                              />
+                            )}
+                            {f.key === "volume" && (
+                              <HeaderInfoPopover title={f.label} lines={VOLUME_OPPORTUNITIES_NOTES} />
+                            )}
+                            {f.key === "talent" && (
+                              <HeaderInfoPopover title={f.label} lines={TALENT_EXPLOSIVENESS_NOTES} />
+                            )}
+                            {f.key === "salary_value" && (
+                              <HeaderInfoPopover title={f.label} lines={SALARY_VALUE_NOTES} />
+                            )}
+                            {f.key === "salary_value" && (
+                              <button
+                                type="button"
+                                className="header-refresh-icon"
+                                onClick={handleResetSalaryValues}
+                                aria-label="Reset to salary rule"
+                                title="Reset to salary rule"
+                              >
+                                ↻
+                              </button>
+                            )}
+                          </span>
                         </th>
                       ))}
                       <th

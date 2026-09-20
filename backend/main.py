@@ -35,6 +35,7 @@ from backend.api.dk_salary import router as dk_salary_router
 from backend.api.game_environment import router as game_environment_router
 from backend.api.game_logs import router as game_logs_router
 from backend.api.game_logs_against import router as game_logs_against_router
+from backend.api.multipliers import router as multipliers_router
 from backend.api.my_player_pool import router as my_player_pool_router
 from backend.api.name_aliases import router as name_aliases_router
 from backend.api.ownership import router as ownership_router
@@ -44,8 +45,11 @@ from backend.api.player_pool import router as player_pool_router
 from backend.api.player_selection import router as player_selection_router
 from backend.api.salary_multiplier import router as salary_multiplier_router
 from backend.api.schedule import router as schedule_router
+from backend.api.team_factors import router as team_factors_router
 from backend.api.usage_bump import router as usage_bump_router
+from backend.api.usage_bump.players import router as usage_bump_players_router
 from backend.api.vegas_lines import router as vegas_lines_router
+from backend.api.weather import router as weather_router
 from backend.config import settings
 
 app = FastAPI(title="dfs-app", version="0.1.0")
@@ -59,6 +63,7 @@ app.add_middleware(
 
 app.include_router(depth_charts_router, prefix="/api")
 app.include_router(usage_bump_router, prefix="/api")
+app.include_router(usage_bump_players_router, prefix="/api")
 app.include_router(ownership_router, prefix="/api")
 app.include_router(player_pool_router, prefix="/api")
 app.include_router(game_environment_router, prefix="/api")
@@ -76,6 +81,9 @@ app.include_router(name_aliases_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(game_logs_router, prefix="/api")
 app.include_router(game_logs_against_router, prefix="/api")
+app.include_router(team_factors_router, prefix="/api")
+app.include_router(multipliers_router, prefix="/api")
+app.include_router(weather_router, prefix="/api")
 
 
 @app.get("/health")

@@ -33,11 +33,22 @@ backend/services/shared/name_match.py's name_lookup_candidates) resolves
 this: see _resolve_direct_scores' `name_aliases` param and
 compute_player_pool's own `name_aliases_json`.
 
-Game Matchup and Ownership don't have a per-player Default the way Volume/
-Talent do -- they're expected to be re-entered fresh each week -- but a
-brand new week still starts them at that same neutral 2.0 rather than
-blank/unscored. An explicit save for that week always overrides this,
-same as every other default/suggestion in this module.
+Ownership doesn't have any kind of Default -- it's expected to be
+re-entered fresh each week -- but a brand new week still starts it at
+that same neutral 2.0 rather than blank/unscored. An explicit save for
+that week always overrides this, same as every other default/suggestion
+in this module.
+
+Game Matchup is different: it has no *per-player* Default the way Volume/
+Talent do, but it does have a per-(team, position) one -- Team Default
+Factors (backend/schemas/team_factors/team_factors.py, set in Settings'
+Team Default Factors grid). A player's Matchup for a week with no
+explicit save of its own starts from *their opponent's* Team Default
+Factor at the player's own position (see _resolve_team_factor_defaults),
+falling back further to the same neutral 2.0 if that opponent/position
+pair has never been set either, or if the player's opponent isn't known
+yet (no Schedule/salary data for this week). An explicit per-week save
+always wins over this, same as every other field here.
 
 Game Environment is different again: rather than being a plain manual
 field, its *effective* value is the explicit per-player override if
@@ -66,9 +77,11 @@ from backend.repositories.game_environment.game_environment_repo import load_gam
 from backend.repositories.name_aliases.name_aliases_repo import load_name_aliases
 from backend.repositories.player_defaults.defaults_repo import load_defaults_for_season
 from backend.repositories.player_pool.entries_repo import load_entries_for_week
+from backend.repositories.team_factors.team_factors_repo import load_factors_for_season
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.schemas.player_pool.player_pool import GameOption, PlayerPoolEntry, PlayerPoolPlayer, PlayerPoolResult
+from backend.schemas.team_factors.team_factors import TeamFactorEntry
 from backend.services.game_environment.scoring import score_game_environment, team_implied_total
 from backend.services.ownership.position_blocks import game_key, game_label
 from backend.services.salary_multiplier.engine import expected_fantasy_points
@@ -97,15 +110,18 @@ _DEFAULT_SCORE_FIELDS = {"game_matchup": 2.0, "ownership": 2.0, "volume": 2.0, "
 # resolved through a different path -- see _resolve_game_environment.
 _DEFAULT_GAME_ENVIRONMENT = 2.0
 
-# Which fields actually apply to a position -- DSTs only ever use Game
-# Matchup + Salary Value (no Ownership/Volume/Talent/Game Environment
-# concept for a defense, per the rules this was built from). This gates
-# defaulting and totaling alike: a field that isn't in a position's set
-# stays None unconditionally, the same as if it were never asked about,
-# rather than picking up a stray default value that would silently
-# inflate that position's total without ever appearing in its UI (see
-# PlayerPoolView.tsx's scoreFieldsForPosition, which this mirrors).
-_DST_FIELDS = {"game_matchup", "salary_value"}
+# Which fields actually apply to a position -- DSTs use Game Matchup,
+# Ownership, and Salary Value (no Volume/Talent/Game Environment concept
+# for a defense, per the rules this was built from). Ownership uses its
+# own DST-specific breakpoints (see backend/services/ownership/scoring.py's
+# score_dst_ownership_pct) even though it shares the same `ownership`
+# field/column as offense. This gates defaulting and totaling alike: a
+# field that isn't in a position's set stays None unconditionally, the
+# same as if it were never asked about, rather than picking up a stray
+# default value that would silently inflate that position's total without
+# ever appearing in its UI (see PlayerPoolView.tsx's
+# scoreFieldsForPosition, which this mirrors).
+_DST_FIELDS = {"game_matchup", "ownership", "salary_value"}
 _OFFENSE_FIELDS = {"game_environment", "game_matchup", "ownership", "volume", "talent"}
 
 
@@ -149,8 +165,10 @@ def _resolve_direct_scores(
     position: str, saved_entry: PlayerPoolEntry | None, player_defaults: dict[str, float | None]
 ) -> dict[str, float | None]:
     """This exact week's explicitly saved value if there is one; otherwise
-    `player_defaults` (that player's Settings Default -- only populated
-    for volume/talent, see compute_player_pool); otherwise the flat 2.0 in
+    `player_defaults` (volume/talent come from that player's own Settings
+    Default, game_matchup comes from their opponent's Team Default
+    Factor at this position -- see compute_player_pool, which populates
+    both before calling this); otherwise the flat 2.0 in
     _DEFAULT_SCORE_FIELDS -- every _DIRECT_SCORE_FIELDS entry has one now,
     so a field only stays None here when it doesn't apply to `position` at
     all (see _fields_for_position)."""
@@ -167,6 +185,22 @@ def _resolve_direct_scores(
             value = _DEFAULT_SCORE_FIELDS.get(field)
         resolved[field] = value
     return resolved
+
+
+def _resolve_team_factor_default(
+    opponent: str | None, position: str, team_factors_by_key: dict[tuple[str, str], TeamFactorEntry]
+) -> float | None:
+    """The suggested Matchup value for a player at `position` facing
+    `opponent` this week -- that opponent's own Team Default Factor at
+    this position, or None if it's never been set (or `opponent` isn't
+    known yet, e.g. no Schedule data for this week). None here just means
+    _resolve_direct_scores' own generic fallback chain continues on to
+    the flat 2.0 in _DEFAULT_SCORE_FIELDS, same as a player with no
+    Player Default at all falls through for Volume/Talent."""
+    if opponent is None:
+        return None
+    entry = team_factors_by_key.get((opponent, position))
+    return entry.factor if entry is not None else None
 
 
 def _resolve_game_environment(
@@ -228,8 +262,10 @@ def compute_player_pool(
     game_env_by_key = load_game_environment_for_week(game_environment_dir, season, week)
     # Season-wide, not per-week -- a player's Default doesn't change week
     # to week the way their Player Pool entry does, so this is loaded once
-    # up front rather than per player.
+    # up front rather than per player. Same reasoning for team factors
+    # (Team Default Factors, keyed by (team, position) instead of player).
     defaults_by_player = load_defaults_for_season(nfl_data_dir, season)
+    team_factors_by_key = load_factors_for_season(nfl_data_dir, season)
     name_aliases = (
         {alias.alias: alias.canonical for alias in load_name_aliases(name_aliases_json)}
         if name_aliases_json is not None
@@ -246,6 +282,9 @@ def compute_player_pool(
 
         saved_entry = saved_entries.get(player.player)
         player_defaults = _resolve_player_defaults(player.player, defaults_by_player, name_aliases)
+        player_defaults["game_matchup"] = _resolve_team_factor_default(
+            player.opponent, player.position, team_factors_by_key
+        )
         direct_scores = _resolve_direct_scores(player.position, saved_entry, player_defaults)
         effective_env, override_env, suggested_env = _resolve_game_environment(
             player, saved_entry, game_env_by_key.get(game_id)
