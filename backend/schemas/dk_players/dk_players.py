@@ -98,9 +98,9 @@ class PossibleStatNameMismatch(BaseModel):
 class CalculateWeekPointsResult(BaseModel):
     week: int
     updated_count: int
-    # Which of QB/RB/WR/TE simply have no stat file uploaded yet for this
-    # week -- checked BEFORE name-matching, so a whole missing file shows
-    # up here once instead of every one of that position's players
+    # Which of QB/RB/WR/TE/DST simply have no stat file uploaded yet for
+    # this week -- checked BEFORE name-matching, so a whole missing file
+    # shows up here once instead of every one of that position's players
     # individually cluttering the two lists below.
     missing_stat_files: list[str]
     # Players in this week's tracker rows whose position's stat file WAS
@@ -117,8 +117,10 @@ class CalculateWeekPointsResult(BaseModel):
     #   record a stat line (inactive/injured/bye), not a spelling problem.
     #
     # Either way TD_FPTS/Non_TD_FPTS are left at whatever they were (0 on
-    # a first run) rather than guessed. DST is never included in either
-    # list -- there's no stat file for defenses in the first place.
+    # a first run) rather than guessed. DST rows go through this same
+    # matching now that FantasyData_DSTs.csv exists (see
+    # dk_players_engine.py's calculate_week_points docstring) -- a DST row
+    # can land in either list just like any other position.
     possible_stat_name_mismatches: list[PossibleStatNameMismatch]
     no_stats_recorded: list[str]
     # Same "no exact match" idea for Contest Standings -- no match means

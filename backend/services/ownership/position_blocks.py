@@ -138,6 +138,18 @@ def filter_blocks_by_salary_buckets(
     return [block for block in blocks if matches(block)]
 
 
+def filter_blocks_by_max_salary(blocks: list[PositionBlock], max_salary: int) -> list[PositionBlock]:
+    """Same reasoning as game_blocks.py's filter_game_blocks_by_max_salary,
+    duplicated here (rather than shared) for the same "small acceptable
+    duplication" reason as this module's own docstring gives for not
+    sharing with game_blocks.py elsewhere -- a Position block, like a Game
+    (Onslaught) block, is only part of a real DK lineup, and the caller
+    passes `max_salary = cap - cheapest_dst_salary_this_contest` since
+    every lineup still needs a DST on top. Inclusive (<=) -- a block
+    landing exactly on that boundary still leaves exactly enough room."""
+    return [b for b in blocks if b.total_salary <= max_salary]
+
+
 def _max_same_team_count(block: PositionBlock) -> int:
     """The largest number of this block's own players who share one team --
     1 if every player is on a different team, up to the block's own size if

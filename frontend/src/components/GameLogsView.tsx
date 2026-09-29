@@ -68,9 +68,12 @@ function groupByTeamAndPosition(rows: GameLogRow[]): TeamGroup[] {
 
 // Week, Name, Pos, Salary, Opp, Multiplier, FPTS, Non-TD FPTS, Non-TD %,
 // TD FPTS, TD %, Opp Share, Tgt Share, Touch Share, Touches, Tgts, Rec,
-// Rec Yds, Rush Att, Rush Yds, Pass Cmp, Pass Att, Pass Cmp%, Pass Yds,
-// Pass Avg, Pass TD, Pass Int, Pass Sck, Pass Rtg.
-const GAME_LOG_COLUMN_COUNT = 29;
+// Rec Yds, Rec TD, Rush Att, Rush Yds, Rush TD, Pass Cmp, Pass Att, Pass
+// Cmp%, Pass Yds, Pass Avg, Pass TD, Pass Int, Pass Sck, Pass Rtg. DST's
+// own group adds one extra Sacks column right after TD % (not counted
+// here since the spacer row's colSpan just needs to cover at least the
+// widest group).
+const GAME_LOG_COLUMN_COUNT = 32;
 
 export function GameLogsView({ season, week, platform, contest }: GameLogsViewProps) {
   const [lookbackInput, setLookbackInput] = useState("6");
@@ -301,6 +304,7 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               FPTS
                             </th>
                             <th>TD %</th>
+                            {row.position === "DST" && <th>Sacks</th>}
                             <th>
                               Opp
                               <br />
@@ -321,6 +325,11 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                             <th>Rec</th>
                             <th>Rec Yds</th>
                             <th>
+                              Rec
+                              <br />
+                              TD
+                            </th>
+                            <th>
                               Rush
                               <br />
                               Att
@@ -329,6 +338,11 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               Rush
                               <br />
                               Yds
+                            </th>
+                            <th>
+                              Rush
+                              <br />
+                              TD
                             </th>
                             <th>
                               Pass
@@ -391,6 +405,9 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                           <td className="player-pool-grid-num">{formatPct(row.non_td_fpts_pct)}</td>
                           <td className="player-pool-grid-num">{row.td_fpts.toFixed(1)}</td>
                           <td className="player-pool-grid-num">{formatPct(row.td_fpts_pct)}</td>
+                          {row.position === "DST" && (
+                            <td className="player-pool-grid-num">{formatCount(row.sacks)}</td>
+                          )}
                           <td className={`player-pool-grid-num ${shareRankClassName(oppShareRanks.get(row))}`}>
                             {formatPct(row.opp_share_pct)}
                           </td>
@@ -404,8 +421,10 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                           <td className="player-pool-grid-num">{formatCount(row.targets)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receptions)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receiving_yards)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.rec_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_att)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_yards)}</td>
+                          <td className="player-pool-grid-num">{formatCount(row.rush_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_cmp)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_att)}</td>
                           <td className="player-pool-grid-num">{formatPct(row.pass_cmp_pct)}</td>

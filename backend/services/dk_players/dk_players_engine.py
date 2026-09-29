@@ -228,13 +228,17 @@ def calculate_week_points(
     need -- see name_lookup_candidates' own docstring.
 
     `missing_stat_positions` (from the API layer, which knows definitively
-    which of the 4 stat files actually exist -- see backend/api/
+    which of the 5 stat files actually exist -- see backend/api/
     dk_players/calculate_week.py) keeps a whole missing file from
     cluttering the two stat-side lists with every one of that position's
     players individually; those players simply aren't checked against
     td_points_by_player at all, and the missing position shows up once in
-    the result's own missing_stat_files instead. DST is never checked
-    either way -- there's no stat file for defenses in this data model."""
+    the result's own missing_stat_files instead. DST is checked the same
+    way as every other position now that FantasyData_DSTs.csv exists --
+    a DST row's own name is already the bare team nickname (e.g.
+    "Chargers"), same as the scraped stat file's NAME column, so no
+    special-casing is needed here beyond the ordinary name-alias lookup
+    every other position already goes through."""
     contest_lookup = _aggregate_contest_data(contest_rows)
     missing_positions = set(missing_stat_positions or [])
     stat_file_names = td_points_by_player.keys()
@@ -251,7 +255,7 @@ def calculate_week_points(
             continue
 
         candidates = name_lookup_candidates(row.name, name_aliases)
-        stat_checkable = row.position != "DST" and row.position not in missing_positions
+        stat_checkable = row.position not in missing_positions
 
         td_points = None
         if stat_checkable:

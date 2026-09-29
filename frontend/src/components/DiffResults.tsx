@@ -1,7 +1,7 @@
 import { matchesDepth } from "../depthFilter";
 import { positionsForFilter } from "../positionFilters";
 import { formatSnapshotLabel, yearFromId } from "../snapshotId";
-import { statusMatchesFilter } from "../statusCodes";
+import { statusColorClassName, statusMatchesFilter } from "../statusCodes";
 import type { Change, ChangeValue, DiffResult } from "../types";
 import { isPlayerChangeValue } from "../types";
 
@@ -10,14 +10,45 @@ interface DiffResultsProps {
   positionFilter: string; // "" = no filter, show everything
   statusFilter: Set<string>; // empty = no filter, show everything
   depthFilter: Set<string>; // always active -- empty means show nothing, not "show everything"
+  // "TEAM|Player Name" keys of every Star Players-flagged (team, player) --
+  // same keying as DepthChartsView.tsx's own local starKey, read-only here
+  // (Star Players is edited from the Depth Charts tab, not this one).
+  starredKeys: Set<string>;
 }
 
-function formatValue(value: ChangeValue): string {
-  if (value === null) return "—";
+// Same (team, player) keying as DepthChartsView.tsx's own starKey and the
+// backend's StarPlayerEntry -- duplicated locally rather than shared since
+// neither of those is exported (see backend/schemas/star_players/
+// star_players.py's own docstring for why team+player is the right key).
+function starKey(team: string, player: string): string {
+  return `${team}|${player}`;
+}
+
+// Same red/gold rules as statusColorClassName (Depth Charts' own convention:
+// Q gold, D/O/IR/IR-R/PUP/SUS/NFI/CEL/EX/COV red) but healthy (status null)
+// gets green here instead of statusColorClassName's "no color" -- this tab
+// shows both healthy and injured players side by side in the same list, so
+// "healthy" needs its own explicit color to read as a status at a glance
+// rather than looking like plain, unstyled text.
+function compareStatusColorClassName(status: string | null): string {
+  if (status === null) return "status-color-green";
+  return statusColorClassName(status) ?? "";
+}
+
+// The "(rank N)" suffix is deliberately left out of the colored span --
+// only the status word itself (or "healthy") takes the color, per an
+// explicit "leave (rank N) [in its] current color" request.
+function ChangeValueDisplay({ value }: { value: ChangeValue }) {
+  if (value === null) return <>—</>;
   if (isPlayerChangeValue(value)) {
-    return `${value.status ?? "healthy"} (rank ${value.rank})`;
+    return (
+      <>
+        <span className={compareStatusColorClassName(value.status)}>{value.status ?? "healthy"}</span> (rank{" "}
+        {value.rank})
+      </>
+    );
   }
-  return value;
+  return <>{value}</>;
 }
 
 // Groups by team_abbrev, then by position within each team. Team-level
@@ -39,7 +70,7 @@ function groupBy<T>(items: T[], keyOf: (item: T) => string): [string, T[]][] {
   return [...map.entries()];
 }
 
-export function DiffResults({ diff, positionFilter, statusFilter, depthFilter }: DiffResultsProps) {
+export function DiffResults({ diff, positionFilter, statusFilter, depthFilter, starredKeys }: DiffResultsProps) {
   if (!diff) {
     return <p className="hint">No comparison run yet.</p>;
   }
@@ -115,10 +146,19 @@ export function DiffResults({ diff, positionFilter, statusFilter, depthFilter }:
                 <ul>
                   {positionChanges.map((change, i) => (
                     <li key={i}>
-                      <span className="player-name">{change.player ?? change.field}</span>
+                      <span className="player-name">
+                        {change.player &&
+                          change.team_abbrev &&
+                          starredKeys.has(starKey(change.team_abbrev, change.player)) && (
+                            <span className="diff-star" aria-hidden="true">
+                              ★{" "}
+                            </span>
+                          )}
+                        {change.player ?? change.field}
+                      </span>
                       <span className="change-types">{change.change_types.join(", ")}</span>
                       <span className="change-values">
-                        {formatValue(change.previous)} → {formatValue(change.current)}
+                        <ChangeValueDisplay value={change.previous} /> → <ChangeValueDisplay value={change.current} />
                       </span>
                     </li>
                   ))}

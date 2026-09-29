@@ -91,6 +91,24 @@ def save_ownership_scores(nfl_data_dir: Path, season: int, week: int, platform: 
     locked_read_modify_write(path, lambda: _load_raw(nfl_data_dir, season, week, platform), modify)
 
 
+def save_weather_scores(nfl_data_dir: Path, season: int, week: int, platform: str, scores: dict[str, float]) -> None:
+    """Bulk-applies fresh Weather scores (see backend/services/weather/
+    scoring.py's score_weather_color, used by the Player Rankings DST
+    Weather refresh icon -- backend/api/player_pool/
+    calculate_weather_scores.py) to potentially many DST rows in a single
+    locked read-modify-write, same shape as save_ownership_scores above --
+    only ever touches the `weather` key, leaving every other already-saved
+    field for a player exactly as it was."""
+    path = _path(nfl_data_dir, season, week, platform)
+
+    def modify(data: dict) -> None:
+        for player, score in scores.items():
+            existing = data.get(player, {})
+            data[player] = {**existing, "weather": score}
+
+    locked_read_modify_write(path, lambda: _load_raw(nfl_data_dir, season, week, platform), modify)
+
+
 def clear_game_matchup_overrides(
     nfl_data_dir: Path, season: int, week: int, platform: str, players: set[str] | None = None
 ) -> list[str]:

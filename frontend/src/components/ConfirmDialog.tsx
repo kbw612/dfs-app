@@ -5,8 +5,17 @@
 // modal-dialog/modal-header/modal-close classes MonthCalendar.tsx's date
 // picker popover already established, so this doesn't introduce a second
 // modal visual language.
+//
+// message is a ReactNode (not just a string) so a caller with structured
+// content -- e.g. WeeklyStatsUpload's per-position Add/Update summary --
+// can pass its own JSX (a CSS grid, in that case, so the values line up
+// regardless of label width) instead of being limited to one line of
+// plain text. Rendered inside a div, not a p, so it's safe for a caller
+// to nest block-level content.
+import type { ReactNode } from "react";
+
 interface ConfirmDialogProps {
-  message: string;
+  message: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
@@ -29,7 +38,7 @@ export function ConfirmDialog({
             ×
           </button>
         </div>
-        <p className="confirm-dialog-message">{message}</p>
+        <div className="confirm-dialog-message">{message}</div>
         <div className="confirm-dialog-actions">
           <button type="button" className="confirm-dialog-cancel" onClick={onCancel}>
             {cancelLabel}

@@ -1,9 +1,11 @@
 from backend.schemas.ownership.ownership import GameBlock, OwnershipPlayer
 from backend.services.ownership.game_blocks import (
     GAME_BLOCK_POSITIONS,
+    GAME_BLOCK_QB_POSITION,
     MAX_GAME_BLOCKS_SAFETY_CAP,
     compute_game_blocks,
     filter_by_bringback_size,
+    filter_game_blocks_by_max_salary,
     filter_game_blocks_by_salary_buckets,
 )
 
@@ -161,6 +163,98 @@ def test_compute_game_blocks_skipping_one_game_does_not_affect_others():
     assert {p.player for b in blocks for p in b.players} == {"C1", "C2"}
 
 
+def test_compute_game_blocks_default_excludes_qb_even_when_present():
+    # include_qb defaults to False -- a QB in the pool shouldn't sneak into
+    # blocks or change anything about existing behavior.
+    players = [
+        make_player("QB1", "QB", "HOU", "ARI", 8000),
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks, skipped = compute_game_blocks(players, min_size=2, max_size=2)
+    assert skipped == []
+    assert len(blocks) == 1
+    assert {p.player for p in blocks[0].players} == {"RB1", "RB2"}
+
+
+def test_compute_game_blocks_include_qb_adds_qb_as_extra_slot():
+    # QB doesn't count toward min_size/max_size -- a size-2 RB/WR combo
+    # plus the QB should end up as a 3-player block.
+    players = [
+        make_player("QB1", "QB", "HOU", "ARI", 8000),
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks, skipped = compute_game_blocks(players, min_size=2, max_size=2, include_qb=True)
+    assert skipped == []
+    assert len(blocks) == 1
+    block = blocks[0]
+    assert len(block.players) == 3
+    assert {p.player for p in block.players} == {"QB1", "RB1", "RB2"}
+    assert block.total_salary == 8000 + 5000 + 4000
+
+
+def test_compute_game_blocks_include_qb_generates_one_block_per_qb_candidate():
+    # Both teams have an eligible QB -- every RB/WR/TE combo should appear
+    # once per QB, not just once total.
+    players = [
+        make_player("QB1", "QB", "HOU", "ARI", 8000),
+        make_player("QB2", "QB", "ARI", "HOU", 7000),
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks, skipped = compute_game_blocks(players, min_size=2, max_size=2, include_qb=True)
+    assert skipped == []
+    assert len(blocks) == 2
+    qb_names_used = {qb.player for b in blocks for qb in b.players if qb.position == "QB"}
+    assert qb_names_used == {"QB1", "QB2"}
+
+
+def test_compute_game_blocks_include_qb_skips_games_with_no_eligible_qb():
+    # No QB at all in the pool for this game -- with include_qb on, this
+    # game can't produce any block (every block now requires one), but
+    # that's not a "skipped" (safety-cap) game -- same class as the
+    # <2-teams case.
+    players = [
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks, skipped = compute_game_blocks(players, min_size=2, max_size=2, include_qb=True)
+    assert blocks == []
+    assert skipped == []
+
+
+def test_compute_game_blocks_include_qb_only_uses_qbs_from_the_same_game():
+    # A QB from an unrelated game shouldn't leak into this game's blocks.
+    players = [
+        make_player("QB1", "QB", "HOU", "ARI", 8000),
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+        make_player("QB_other", "QB", "SF", "LAR", 7500),
+    ]
+    blocks, _skipped = compute_game_blocks(players, min_size=2, max_size=2, include_qb=True)
+    assert len(blocks) == 1
+    assert {p.player for p in blocks[0].players} == {"QB1", "RB1", "RB2"}
+
+
+def test_compute_game_blocks_include_qb_lists_qb_first_regardless_of_salary():
+    # QB1's salary (8000) is already the highest here, so also cover the
+    # case where a QB is cheaper than the RB/WR/TE players -- it should
+    # still be listed first.
+    players = [
+        make_player("QB1", "QB", "HOU", "ARI", 3000),
+        make_player("RB1", "RB", "HOU", "ARI", 5000),
+        make_player("RB2", "RB", "ARI", "HOU", 4000),
+    ]
+    blocks, _skipped = compute_game_blocks(players, min_size=2, max_size=2, include_qb=True)
+    assert len(blocks) == 1
+    assert blocks[0].players[0].player == "QB1"
+
+
+def test_game_block_qb_position_constant():
+    assert GAME_BLOCK_QB_POSITION == "QB"
+
+
 def test_max_game_blocks_safety_cap_is_higher_than_position_blocks_cap():
     # This module's pool mixes 2-3 positions across both teams, so a
     # legitimately-filtered request routinely produces far more
@@ -191,6 +285,17 @@ def test_filter_by_bringback_size_keeps_only_matching_sizes():
     blocks = [_block(1000, 1), _block(2000, 2), _block(3000, 3)]
     filtered = filter_by_bringback_size(blocks, [1, 3])
     assert [b.total_salary for b in filtered] == [1000, 3000]
+
+
+def test_filter_game_blocks_by_max_salary_keeps_at_or_under():
+    blocks = [_block(46000), _block(48000), _block(48001)]
+    filtered = filter_game_blocks_by_max_salary(blocks, 48000)
+    assert [b.total_salary for b in filtered] == [46000, 48000]
+
+
+def test_filter_game_blocks_by_max_salary_empty_when_none_qualify():
+    blocks = [_block(49000), _block(50000)]
+    assert filter_game_blocks_by_max_salary(blocks, 48000) == []
 
 
 def test_filter_game_blocks_by_salary_buckets_no_buckets_returns_all():

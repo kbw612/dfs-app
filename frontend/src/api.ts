@@ -11,11 +11,17 @@ import type {
   DkPlayersResult,
   DkPlayersWeekStatus,
   DkSalaryImportResult,
+  DstTrendsResult,
   FileInfo,
   GameBlocksResult,
   GameEnvironmentEntry,
   GameLogsAgainstResult,
   GameLogsResult,
+  GamePreviewResult,
+  InjuryReportResult,
+  LineupScenarioAnalysis,
+  LineupScenarioDefinition,
+  LineupScenarioUploadResult,
   MatchupResetResult,
   MultipliersResult,
   MyPlayerPoolEntryInput,
@@ -28,6 +34,7 @@ import type {
   OwnershipProjectionsImportResult,
   OwnershipProjectionsResult,
   OwnershipScoresApplyResult,
+  OwnershipSummaryResult,
   PlatformSettings,
   PlayerDefaultEntryInput,
   PlayerPoolEntryInput,
@@ -37,15 +44,19 @@ import type {
   PositionBlocksResult,
   SalaryMultiplierEntryInput,
   SalaryMultiplierResult,
+  ScheduleGamesResult,
   ScheduleImportResult,
   ScrapeResult,
   SnapshotSummary,
+  StarPlayerEntryInput,
+  StarPlayersResult,
   TeamFactorEntryInput,
   UsageBumpPlayersResult,
   UsageBumpsResult,
   VegasLinesApplyResult,
   VegasLinesScrapeResult,
   VegasLinesSnapshot,
+  WeatherScoresApplyResult,
   WeatherScrapeResult,
   WeatherSnapshot,
   WeeklyStatsFileInfoResult,
@@ -93,6 +104,21 @@ async function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
 async function apiPut<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new ApiError(await parseErrorDetail(response));
+  }
+  return (await response.json()) as T;
+}
+
+// Same JSON-body shape as apiPut above, just a POST -- for endpoints like
+// Lineup Scenarios' /evaluate that create/compute something from a body
+// rather than replacing a saved resource wholesale.
+async function apiPostJson<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
@@ -262,6 +288,11 @@ export interface GameBlocksParams {
   // PositionBlocksParams above -- see that interface's own comment.
   useSettingsPool?: boolean;
   useMyPlayerPool?: boolean;
+  // Adds one QB from either team in the game as an extra slot on top of
+  // each RB/WR/TE combination -- see backend/services/ownership/
+  // game_blocks.py's compute_game_blocks docstring. Defaults to true
+  // (Onslaught's own toggle starts checked).
+  includeQb?: boolean;
 }
 
 export function fetchGameBlocks(params: GameBlocksParams): Promise<GameBlocksResult> {
@@ -272,6 +303,7 @@ export function fetchGameBlocks(params: GameBlocksParams): Promise<GameBlocksRes
     contest: params.contest,
     apply_selection_filter: String(params.useSettingsPool ?? true),
     apply_my_player_pool_filter: String(params.useMyPlayerPool ?? false),
+    include_qb: String(params.includeQb ?? true),
   });
   if (params.gamesOnly) query.set("games_only", "true");
   if (params.maxSize !== undefined) query.set("max_size", String(params.maxSize));
@@ -524,6 +556,41 @@ export function fetchGameLogsAgainst(
 // tracker/lookback state -- same "last week's own box score plus trailing
 // Multiplier history" shape as the backend engine returns, just passed
 // through untouched; the tab does its own filtering/sorting client-side.
+export function fetchDstTrends(season: number, week: number, windowWeeks: number): Promise<DstTrendsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    window_weeks: String(windowWeeks),
+  });
+  return apiGet<DstTrendsResult>(`/api/dst-trends?${params.toString()}`);
+}
+
+// Game Preview -- see backend/api/game_preview/game_preview.py. Unlike
+// Multipliers/DST Trends, this reviews `week` itself (the upcoming game),
+// not `week - 1` -- see that endpoint's own docstring. `windowWeeks`
+// scopes the DST/Off Trends matchup piece only (the one part of this tab
+// that does look backward); `platform` scopes the DK Players tracker and
+// Ownership projections files Phase B's own player tags read from, same
+// "DraftKings" default as every other platform-scoped endpoint;
+// `contest` narrows the game list to that contest's own DK salary slate,
+// same convention as Game Logs/Game Logs Against.
+export function fetchGamePreview(
+  season: number,
+  week: number,
+  windowWeeks: number,
+  platform: string,
+  contest: string
+): Promise<GamePreviewResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    window_weeks: String(windowWeeks),
+    platform,
+    contest,
+  });
+  return apiGet<GamePreviewResult>(`/api/game-preview?${params.toString()}`);
+}
+
 export function fetchMultipliers(
   season: number,
   week: number,
@@ -583,6 +650,19 @@ export function calculateOwnershipScores(
   return apiPost<OwnershipScoresApplyResult>(`/api/player-pool/calculate-ownership-scores?${params.toString()}`);
 }
 
+// Player Rankings' DST-only Weather refresh icon -- see backend/api/
+// player_pool/calculate_weather_scores.py. Same "latest applied wins" bulk
+// overwrite as calculateOwnershipScores above.
+export function calculateWeatherScores(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+): Promise<WeatherScoresApplyResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiPost<WeatherScoresApplyResult>(`/api/player-pool/calculate-weather-scores?${params.toString()}`);
+}
+
 // Player Rankings' DST-only Matchup refresh icon -- see backend/api/
 // player_pool/reset_matchup.py. Clears this week's explicit Matchup
 // override for every player at `position` so it falls back to the
@@ -637,6 +717,28 @@ export function fetchTeamFactors(season: number): Promise<{ factors: TeamFactorE
 
 export function saveTeamFactorEntry(entry: TeamFactorEntryInput): Promise<TeamFactorEntryInput> {
   return apiPut<TeamFactorEntryInput>("/api/team-factors/entry", entry);
+}
+
+// Depth Charts tab's star icon -- see backend/api/star_players/. Never
+// 404s (an empty list is a normal starting state, not a "retrieve first"
+// precondition). setStarPlayer echoes the full updated list so the
+// frontend can sync local state from the server rather than trusting its
+// own optimistic update matched.
+export function fetchStarPlayers(): Promise<StarPlayersResult> {
+  return apiGet<StarPlayersResult>("/api/star-players/latest");
+}
+
+export function setStarPlayer(entry: StarPlayerEntryInput): Promise<StarPlayersResult> {
+  return apiPut<StarPlayersResult>("/api/star-players/entry", entry);
+}
+
+// Injury Report -- see backend/api/injury_report/latest.py. `platform`
+// isn't threaded through here (the endpoint defaults it to "DraftKings" --
+// this app is DK-only in practice, same simplification DK Players already
+// made); season/week/contest mirror Game Logs' own fetchGameLogs.
+export function fetchInjuryReport(season: number, week: number, contest: string): Promise<InjuryReportResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), contest });
+  return apiGet<InjuryReportResult>(`/api/injury-report/latest?${params.toString()}`);
 }
 
 // Settings' Player Selection grid -- every QB/RB/WR/TE from this week's
@@ -750,6 +852,20 @@ export function fetchOwnershipProjections(season: number, week: number, platform
   return apiGet<OwnershipProjectionsResult>(`/api/ownership/projections?${params.toString()}`);
 }
 
+// Backend-computed Team/Game ownership rollups for the Ownership Summary
+// tab -- see backend/api/ownership/summary.py's own docstring. `contest`
+// (unlike fetchOwnershipProjections above) narrows which Contest
+// Standings/DK salary file back the Actual/home-away figures.
+export function fetchOwnershipSummary(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string
+): Promise<OwnershipSummaryResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiGet<OwnershipSummaryResult>(`/api/ownership/summary?${params.toString()}`);
+}
+
 // Filename plus both the initial and current upload timestamps -- see
 // backend/api/ownership/projections_file_info.py. Not reused by
 // FileUploadStatus (DK Salary's own file info has no "initial" concept),
@@ -794,4 +910,58 @@ export function scrapeMainSlateOwnership(
 ): Promise<OwnershipMainSlateScrapeResult> {
   const params = new URLSearchParams({ season: String(season), week: String(week), platform });
   return apiPost<OwnershipMainSlateScrapeResult>(`/api/ownership/scrape-main-slate?${params.toString()}`);
+}
+
+// Lineup Scenarios tab -- see backend/api/schedule/games.py,
+// backend/api/lineup_scenarios/upload_csv.py and .../evaluate.py.
+
+// This week's games (from the Schedule file, narrowed to the current
+// contest's own slate) -- backs the scenario builder's away/home
+// checkboxes.
+export function fetchScheduleGames(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string
+): Promise<ScheduleGamesResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiGet<ScheduleGamesResult>(`/api/schedule/games?${params.toString()}`);
+}
+
+// Uploads a person's own already-built lineups export (from an external
+// optimizer) -- see lineup_upload_parser.py for the expected column
+// shape (a roster-position header row, then one row per lineup).
+export function uploadLineupScenarioCsv(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  file: File
+): Promise<LineupScenarioUploadResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiPostForm<LineupScenarioUploadResult>(`/api/lineup-scenarios/upload?${params.toString()}`, formData);
+}
+
+// Scores every caller-built scenario against every uploaded lineup --
+// see lineup_scenario_engine.py's evaluate_scenarios for the exact
+// satisfaction rule (every one of a scenario's flagged teams has to
+// clear minStackSize).
+export function evaluateLineupScenarios(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  scenarios: LineupScenarioDefinition[],
+  minStackSize: number
+): Promise<LineupScenarioAnalysis> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    contest,
+    min_stack_size: String(minStackSize),
+  });
+  return apiPostJson<LineupScenarioAnalysis>(`/api/lineup-scenarios/evaluate?${params.toString()}`, { scenarios });
 }

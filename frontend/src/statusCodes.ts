@@ -69,3 +69,21 @@ export function statusColorClassName(status: string | null): string | undefined 
   if (status === "D" || outCodes.includes(status)) return "status-color-red";
   return undefined;
 }
+
+// Background-shading counterpart to statusColorClassName -- same rule the
+// Injury Report tab uses to shade a whole row (see InjuryReportView.tsx's
+// injuryStatusRowClassName / .injury-report-row-out/-questionable), reused
+// here for DepthChartsView.tsx where there's no whole row to shade
+// (several players sit inline in one position's own <li>), just the one
+// player's own name. "Out" and Doubtful shade red regardless of star
+// status. Questionable is different, matching Injury Report exactly: the
+// yellow only shows up for a STARRED Questionable player -- a non-starred
+// Questionable player gets no background at all. Undefined for a healthy
+// player (status null).
+export function statusBackgroundClassName(status: string | null, starred: boolean): string | undefined {
+  if (status === null) return undefined;
+  if (status === "Q") return starred ? "status-bg-questionable" : undefined;
+  const outCodes = STATUS_FILTER_GROUPS.find((g) => g.key === "O")!.codes;
+  if (status === "D" || outCodes.includes(status)) return "status-bg-out";
+  return undefined;
+}

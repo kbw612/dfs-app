@@ -5,6 +5,7 @@ from backend.services.ownership.position_blocks import (
     ALLOWED_BLOCK_SIZES,
     SALARY_CAPS,
     compute_position_blocks,
+    filter_blocks_by_max_salary,
     filter_blocks_by_salary_buckets,
     filter_blocks_by_same_team_size,
     game_key,
@@ -216,6 +217,21 @@ def test_filter_blocks_by_salary_buckets_multiple_buckets_are_unioned():
 def _team_block(*teams: str) -> PositionBlock:
     players = [make_player(f"P{i}", "RB", team, "OPP", 5000) for i, team in enumerate(teams)]
     return PositionBlock(players=players, total_salary=sum(p.salary for p in players))
+
+
+def _salary_block(total_salary: int) -> PositionBlock:
+    return PositionBlock(players=[], total_salary=total_salary)
+
+
+def test_filter_blocks_by_max_salary_keeps_at_or_under():
+    blocks = [_salary_block(46000), _salary_block(48000), _salary_block(48001)]
+    filtered = filter_blocks_by_max_salary(blocks, 48000)
+    assert [b.total_salary for b in filtered] == [46000, 48000]
+
+
+def test_filter_blocks_by_max_salary_empty_when_none_qualify():
+    blocks = [_salary_block(49000), _salary_block(50000)]
+    assert filter_blocks_by_max_salary(blocks, 48000) == []
 
 
 def test_filter_blocks_by_same_team_size_no_sizes_returns_all():

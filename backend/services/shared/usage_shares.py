@@ -162,3 +162,30 @@ def compute_usage_share_updates(
         if position_updates:
             updates[position] = position_updates
     return updates
+
+
+_SHARE_PCT_FIELDS = ("target_share_pct", "touch_share_pct", "opp_share_pct")
+
+
+def compute_share_deltas(
+    current: dict | None, prior: dict | None
+) -> dict[str, float | None]:
+    """Compute week-over-week deltas for the three share-pct fields.
+
+    Mirrors the current-vs-(week-1) comparison already used by
+    game_preview_player_tags.py's _share_trend_tags(): for each of
+    target_share_pct/touch_share_pct/opp_share_pct, returns
+    current - prior as a raw (unrounded) float, or None when either
+    side is missing the field or isn't numeric (e.g. no prior-week
+    stat line at all, such as a player's first game or a bye-week
+    gap making week-1 unavailable).
+    """
+    deltas: dict[str, float | None] = {}
+    for field in _SHARE_PCT_FIELDS:
+        current_val = current.get(field) if current else None
+        prior_val = prior.get(field) if prior else None
+        if isinstance(current_val, (int, float)) and isinstance(prior_val, (int, float)):
+            deltas[f"{field.removesuffix('_pct')}_delta"] = current_val - prior_val
+        else:
+            deltas[f"{field.removesuffix('_pct')}_delta"] = None
+    return deltas

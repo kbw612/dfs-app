@@ -9,6 +9,7 @@ from backend.repositories.player_pool.entries_repo import (
     load_entry,
     save_entry,
     save_ownership_scores,
+    save_weather_scores,
 )
 from backend.schemas.player_pool.player_pool import PlayerPoolEntry
 
@@ -131,6 +132,40 @@ def test_save_ownership_scores_does_not_touch_players_not_in_the_scores_dict(tmp
     # Chase wasn't in this refresh's scores dict (e.g. skipped -- no
     # ownership_pct to score off of) -- their prior save stays untouched.
     assert load_entry(tmp_path, 2025, 9, "DraftKings", "Chase").ownership == 2.0
+
+
+def test_save_weather_scores_creates_entries_for_unsaved_players(tmp_path: Path):
+    save_weather_scores(tmp_path, 2025, 9, "DraftKings", {"Chargers": 3.0, "Cardinals": 2.0})
+
+    week_9 = load_entries_for_week(tmp_path, 2025, 9, "DraftKings")
+    assert week_9["Chargers"].weather == 3.0
+    assert week_9["Cardinals"].weather == 2.0
+
+
+def test_save_weather_scores_overwrites_only_weather_field(tmp_path: Path):
+    # A bulk Weather refresh shouldn't clobber whatever Game Matchup/
+    # Ownership/Salary Value someone already saved this week for that DST --
+    # only the `weather` key should change.
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Chargers", ownership=3.0, game_matchup=2.5))
+
+    save_weather_scores(tmp_path, 2025, 9, "DraftKings", {"Chargers": 1.0})
+
+    loaded = load_entry(tmp_path, 2025, 9, "DraftKings", "Chargers")
+    assert loaded.weather == 1.0
+    assert loaded.ownership == 3.0
+    assert loaded.game_matchup == 2.5
+
+
+def test_save_weather_scores_does_not_touch_players_not_in_the_scores_dict(tmp_path: Path):
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Chargers", weather=2.0))
+    save_entry(tmp_path, PlayerPoolEntry(season=2025, week=9, player="Cardinals", weather=2.0))
+
+    save_weather_scores(tmp_path, 2025, 9, "DraftKings", {"Chargers": 3.0})
+
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Chargers").weather == 3.0
+    # Cardinals wasn't in this refresh's scores dict (e.g. skipped -- no
+    # notable weather this week) -- their prior save stays untouched.
+    assert load_entry(tmp_path, 2025, 9, "DraftKings", "Cardinals").weather == 2.0
 
 
 def test_clear_game_matchup_overrides_removes_the_field_only(tmp_path: Path):

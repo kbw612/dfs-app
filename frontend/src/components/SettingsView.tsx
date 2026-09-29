@@ -560,17 +560,7 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
       </section>
 
       <section className="ownership-section settings-panel">
-        <h2>Name aliases</h2>
-        <p className="hint">
-          Fixes cross-file name mismatches for the DK Players tab -- e.g. the Salary File says "James Cook III" but
-          FantasyData/Contest Standings say "James Cook". Add an alias here and "Update Week N Points" will match
-          them up automatically.
-        </p>
-        <NameAliasesPanel />
-      </section>
-
-      <section className="ownership-section settings-panel">
-        <h2>Player pool</h2>
+        <h2>Week {week} Player pool</h2>
         <p className="hint">
           Narrow down which QB/RB/WR/TE players from this week's salary file show up in Player Rankings and Salary
           Blocks -- uncheck anyone you don't want to see there. DST isn't affected; every DST always shows up.
@@ -582,6 +572,16 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
           contest={contest}
           refreshToken={dkSalaryRefresh}
         />
+      </section>
+
+      <section className="ownership-section settings-panel">
+        <h2>Name aliases</h2>
+        <p className="hint">
+          Fixes cross-file name mismatches for the DK Players tab -- e.g. the Salary File says "James Cook III" but
+          FantasyData/Contest Standings say "James Cook". Add an alias here and "Update Week N Points" will match
+          them up automatically.
+        </p>
+        <NameAliasesPanel />
       </section>
 
       <section className="ownership-section settings-panel">

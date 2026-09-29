@@ -34,6 +34,20 @@ class TrailingMultiplier(BaseModel):
     # same "no data" convention as every other optional numeric field in
     # this app, rendered as "-" rather than a misleading 0.
     multiplier: float | None
+    # Same formula as `multiplier` but against non_td_fpts instead of
+    # fpts -- lets the frontend's Breakout Watch panel track a player's
+    # volume-driven (TD-variance-excluded) value trend across weeks
+    # without needing this row's own salary to recompute it client-side.
+    # None under the same conditions as `multiplier` (no tracker row that
+    # week, or a 0 salary).
+    non_td_multiplier: float | None
+    # This week's own TD_FPTS -- None only when there's no tracker row for
+    # this week at all (same "no data" convention as multiplier/
+    # non_td_multiplier above). Lets the frontend's Breakout Watch panel
+    # apply its "a week with a touchdown doesn't count as high" rule to
+    # trailing weeks too, not just the base week (see MultiplierRow.td_fpts
+    # for the base week's own equivalent field).
+    td_fpts: float | None
 
 
 class MultiplierRow(BaseModel):
@@ -51,6 +65,11 @@ class MultiplierRow(BaseModel):
     opponent: str | None
     game_location: Literal["Home", "Away", "BYE"] | None
     multiplier: float | None
+    # Same "fpts/(salary/1000)" formula as `multiplier`, but against
+    # non_td_fpts -- the base week's own value-per-dollar with touchdown
+    # variance stripped out (see TrailingMultiplier.non_td_multiplier's
+    # own docstring for why this exists). None only when salary is 0.
+    non_td_multiplier: float | None
     fpts: float
     non_td_fpts: float
     non_td_fpts_pct: float | None

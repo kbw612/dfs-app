@@ -6,8 +6,8 @@ per team in the current week's slate. See backend/services/game_logs/
 game_logs_against_engine.py for how every field here is derived -- this
 module is just the response shapes.
 
-Touches/Targets/Receptions/Receiving Yards/Rush Att/Rush Yards, Target
-Share %/Touch Share %, and QB's own passing line are all included too,
+Touches/Targets/Receptions/Receiving Yards/Rec TD/Rush Att/Rush Yards/Rush
+TD, Target Share %/Touch Share %, and QB's own passing line are all included too,
 mirroring GameLogRow's own fields of the same name -- all read straight
 off the same FantasyData weekly stats files Game Logs reads, so this tab
 needs them too, not just the DK Players tracker and Schedule file. The
@@ -56,8 +56,10 @@ class GameLogAgainstRow(BaseModel):
     targets: int | None
     receptions: int | None
     receiving_yards: int | None
+    rec_td: int | None
     rush_att: int | None
     rush_yards: int | None
+    rush_td: int | None
     # Same fields, read the same way (straight off the FantasyData file's
     # own stat line), same "not applicable"/"data missing" None
     # conventions, as GameLogRow's own target_share_pct/touch_share_pct/
@@ -74,6 +76,9 @@ class GameLogAgainstRow(BaseModel):
     pass_int: int | None
     pass_sck: int | None
     pass_rtg: float | None
+    # DST's own sacks recorded -- same field/convention as GameLogRow's own
+    # `sacks` (see that schema's docstring for why it's not pass_sck).
+    sacks: int | None
 
 
 class GameLogsAgainstResult(BaseModel):

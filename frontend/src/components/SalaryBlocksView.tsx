@@ -81,6 +81,14 @@ const PLATFORM_CAPS: Record<string, number> = {
   DraftKings: DEFAULT_CAP,
 };
 
+// DK Classic's total roster size (1 QB, 2 RB, 3 WR, 1 TE, 1 FLEX, 1 DST --
+// see backend/services/contest_results/optimal_lineup.py's own _BASE_COUNTS/
+// _FLEX_SCENARIOS for that same 9-slot structure). Used only to work out
+// how many roster spots are left to fill (and therefore how much salary is
+// left "per player") once an Onslaught block's own players are rostered --
+// not tied to platform, since FanDuel isn't a real upload format yet.
+const DK_CLASSIC_ROSTER_SIZE = 9;
+
 // Mirrors backend's SALARY_BUCKETS -- percent-of-cap ranges, [min, max).
 // null max means "and up". Dollar labels are computed from the selected
 // platform's cap (see salaryBucketLabel) rather than hardcoded, since the
@@ -154,6 +162,14 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
   const [bringbackSizes, setBringbackSizes] = useState<Set<string>>(new Set());
   // Onslaught-only "team" (majority-side) filter -- see PRIMARY_SIZES.
   const [primarySizes, setPrimarySizes] = useState<Set<string>>(new Set());
+  // Adds one QB from either team in the game as an extra slot on top of
+  // each Onslaught block (see backend/services/ownership/game_blocks.py's
+  // compute_game_blocks docstring) -- has no effect on Single position
+  // blocks, but the toggle itself is shown regardless of block type (see
+  // the "QB" chip-filter below) so switching block type doesn't hide the
+  // control. Defaults on for Onslaught, off for Single position -- see
+  // handleBlockTypeChange, which resets this whenever block type changes.
+  const [includeQb, setIncludeQb] = useState(true);
   const [teamFilter, setTeamFilter] = useState<Set<string>>(new Set());
   const [gameFilterLabels, setGameFilterLabels] = useState<Set<string>>(new Set());
   const [salaryBucketLabels, setSalaryBucketLabels] = useState<Set<string>>(new Set());
@@ -187,6 +203,15 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
   // stale team/game list from a different week never lingers -- see the
   // effect below.
   const [gamesList, setGamesList] = useState<GameOption[]>([]);
+
+  // Resets Include QB's default whenever block type changes -- on for
+  // Onslaught, off for Single position (see includeQb's own state comment
+  // above). The toggle itself stays visible either way; this only decides
+  // what it defaults back to on a fresh switch, not whether it's shown.
+  const handleBlockTypeChange = (next: BlockType) => {
+    setBlockType(next);
+    setIncludeQb(next === "onslaught");
+  };
 
   const isGameBlockType = blockType !== "single";
   // Onslaught has no team filter (a full game-block always wants both
@@ -320,6 +345,7 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
           gamesOnly,
           useSettingsPool,
           useMyPlayerPool,
+          includeQb,
         }).then((result) => {
           setGameData(result);
           setPositionData(null);
@@ -374,6 +400,7 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
     sameTeamSizes,
     primarySizes,
     bringbackSizes,
+    includeQb,
     teamFilter,
     gameFilterLabels,
     platform,
@@ -397,11 +424,25 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
                 type="button"
                 className={`chip${blockType === t.id ? " selected" : ""}`}
                 aria-pressed={blockType === t.id}
-                onClick={() => setBlockType(t.id)}
+                onClick={() => handleBlockTypeChange(t.id)}
               >
                 {t.label}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="chip-filter">
+          <span className="filter-label">QB</span>
+          <div className="chip-row">
+            <button
+              type="button"
+              className={`chip${includeQb ? " selected" : ""}`}
+              aria-pressed={includeQb}
+              onClick={() => setIncludeQb((prev) => !prev)}
+            >
+              Include QB
+            </button>
           </div>
         </div>
 
@@ -476,6 +517,17 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
         )}
 
         {isGameBlockType && <p className="hint">2-7 RB/WR/TE players from one game, drawn from both teams.</p>}
+
+        {(() => {
+          const maxBlockSalary = isGameBlockType ? gameData?.max_onslaught_salary : positionData?.max_block_salary;
+          return (
+            maxBlockSalary != null && (
+              <p className="hint">
+                Capped at {formatSalary(maxBlockSalary)} to leave room for the slate's cheapest DST.
+              </p>
+            )
+          );
+        })()}
 
         {blockType === "onslaught" && (
           <ChipMultiSelect label="Team size" options={PRIMARY_SIZES.map(String)} selected={primarySizes} onChange={setPrimarySizes} />
@@ -613,6 +665,21 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
                           <span className="block-expected-fpts"> ({formatExpectedFpts(block.total_expected_fpts)} FPTS)</span>
                         )}
                       </span>
+                      {gameBlock &&
+                        (() => {
+                          const remainingSalary = cap - block.total_salary;
+                          // At least 1 -- guards a (currently impossible,
+                          // since Onslaught tops out at 7 RB/WR/TE + 1 QB =
+                          // 8) block that somehow filled every roster spot,
+                          // rather than dividing by zero.
+                          const remainingSlots = Math.max(DK_CLASSIC_ROSTER_SIZE - block.players.length, 1);
+                          const perPlayer = Math.round(remainingSalary / remainingSlots);
+                          return (
+                            <span className="block-remaining-salary">
+                              Remaining Salary: {formatSalary(remainingSalary)} / {formatSalary(perPlayer)} per player
+                            </span>
+                          );
+                        })()}
                       {gameBlock && (
                         <span className="block-team-split">
                           {gameBlock.primary_team} {gameBlock.primary_count} + {gameBlock.bringback_team}{" "}

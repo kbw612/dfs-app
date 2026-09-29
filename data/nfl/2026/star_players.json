@@ -1,0 +1,728 @@
+{
+  "players": [
+    {
+      "team": "ARI",
+      "player": "Budda Baker"
+    },
+    {
+      "team": "ARI",
+      "player": "Isaac Seumalo"
+    },
+    {
+      "team": "ARI",
+      "player": "Josh Sweat"
+    },
+    {
+      "team": "ARI",
+      "player": "Paris Johnson"
+    },
+    {
+      "team": "ATL",
+      "player": "A.J. Terrell"
+    },
+    {
+      "team": "ATL",
+      "player": "Chris Lindstrom"
+    },
+    {
+      "team": "ATL",
+      "player": "Jake Matthews"
+    },
+    {
+      "team": "ATL",
+      "player": "Jessie Bates"
+    },
+    {
+      "team": "ATL",
+      "player": "Xavier Watts"
+    },
+    {
+      "team": "BAL",
+      "player": "Jaylinn Hawkins"
+    },
+    {
+      "team": "BAL",
+      "player": "Kyle Hamilton"
+    },
+    {
+      "team": "BAL",
+      "player": "Malaki Starks"
+    },
+    {
+      "team": "BAL",
+      "player": "Nnamdi Madubuike"
+    },
+    {
+      "team": "BAL",
+      "player": "Roger Rosengarten"
+    },
+    {
+      "team": "BAL",
+      "player": "Ronnie Stanley"
+    },
+    {
+      "team": "BAL",
+      "player": "Roquan Smith"
+    },
+    {
+      "team": "BAL",
+      "player": "Trey Hendrickson"
+    },
+    {
+      "team": "BUF",
+      "player": "Connor McGovern"
+    },
+    {
+      "team": "BUF",
+      "player": "Dion Dawkins"
+    },
+    {
+      "team": "BUF",
+      "player": "Ed Oliver"
+    },
+    {
+      "team": "BUF",
+      "player": "Greg Rousseau"
+    },
+    {
+      "team": "BUF",
+      "player": "O'Cyrus Torrence"
+    },
+    {
+      "team": "BUF",
+      "player": "Spencer Brown"
+    },
+    {
+      "team": "CAR",
+      "player": "Damien Lewis"
+    },
+    {
+      "team": "CAR",
+      "player": "Derrick Brown"
+    },
+    {
+      "team": "CAR",
+      "player": "Devin Lloyd"
+    },
+    {
+      "team": "CAR",
+      "player": "Jaelan Phillips"
+    },
+    {
+      "team": "CAR",
+      "player": "Jaycee Horn"
+    },
+    {
+      "team": "CAR",
+      "player": "Robert Hunt"
+    },
+    {
+      "team": "CAR",
+      "player": "Taylor Moton"
+    },
+    {
+      "team": "CHI",
+      "player": "Coby Bryant"
+    },
+    {
+      "team": "CHI",
+      "player": "Darnell Wright"
+    },
+    {
+      "team": "CHI",
+      "player": "Devin Bush"
+    },
+    {
+      "team": "CHI",
+      "player": "Jaylon Johnson"
+    },
+    {
+      "team": "CHI",
+      "player": "Joe Thuney"
+    },
+    {
+      "team": "CHI",
+      "player": "Jonah Jackson"
+    },
+    {
+      "team": "CHI",
+      "player": "Montez Sweat"
+    },
+    {
+      "team": "CIN",
+      "player": "Amarius Mims"
+    },
+    {
+      "team": "CIN",
+      "player": "Dexter Lawrence"
+    },
+    {
+      "team": "CIN",
+      "player": "Dylan Fairchild"
+    },
+    {
+      "team": "CIN",
+      "player": "Ted Karras"
+    },
+    {
+      "team": "CLE",
+      "player": "Carson Schwesinger"
+    },
+    {
+      "team": "CLE",
+      "player": "Denzel Ward"
+    },
+    {
+      "team": "CLE",
+      "player": "Elgton Jenkins"
+    },
+    {
+      "team": "CLE",
+      "player": "Grant Delpit"
+    },
+    {
+      "team": "CLE",
+      "player": "Jared Verse"
+    },
+    {
+      "team": "DAL",
+      "player": "Cooper Beebe"
+    },
+    {
+      "team": "DAL",
+      "player": "Dee Winters"
+    },
+    {
+      "team": "DAL",
+      "player": "Kenny Clark"
+    },
+    {
+      "team": "DAL",
+      "player": "Quinnen Williams"
+    },
+    {
+      "team": "DAL",
+      "player": "Tyler Booker"
+    },
+    {
+      "team": "DAL",
+      "player": "Tyler Smith"
+    },
+    {
+      "team": "DEN",
+      "player": "Ben Powers"
+    },
+    {
+      "team": "DEN",
+      "player": "Garett Bolles"
+    },
+    {
+      "team": "DEN",
+      "player": "Jonathon Cooper"
+    },
+    {
+      "team": "DEN",
+      "player": "Luke Wattenberg"
+    },
+    {
+      "team": "DEN",
+      "player": "Nik Bonitto"
+    },
+    {
+      "team": "DEN",
+      "player": "Patrick Surtain"
+    },
+    {
+      "team": "DEN",
+      "player": "Quinn Meinerz"
+    },
+    {
+      "team": "DEN",
+      "player": "Talanoa Hufanga"
+    },
+    {
+      "team": "DEN",
+      "player": "Zach Allen"
+    },
+    {
+      "team": "DET",
+      "player": "Aidan Hutchinson"
+    },
+    {
+      "team": "DET",
+      "player": "Brian Branch"
+    },
+    {
+      "team": "DET",
+      "player": "Jack Campbell"
+    },
+    {
+      "team": "DET",
+      "player": "Kerby Joseph"
+    },
+    {
+      "team": "DET",
+      "player": "Penei Sewell"
+    },
+    {
+      "team": "DET",
+      "player": "Tate Ratledge"
+    },
+    {
+      "team": "GB",
+      "player": "Edgerrin Cooper"
+    },
+    {
+      "team": "GB",
+      "player": "Micah Parsons"
+    },
+    {
+      "team": "GB",
+      "player": "Xavier McKinney"
+    },
+    {
+      "team": "GB",
+      "player": "Zach Bako-Bewele"
+    },
+    {
+      "team": "HOU",
+      "player": "Azeez Al-Shaair"
+    },
+    {
+      "team": "HOU",
+      "player": "Braden Smith"
+    },
+    {
+      "team": "HOU",
+      "player": "Calen Bullock"
+    },
+    {
+      "team": "HOU",
+      "player": "Danielle Hunter"
+    },
+    {
+      "team": "HOU",
+      "player": "Derek Stingley"
+    },
+    {
+      "team": "HOU",
+      "player": "Jalen Pitre"
+    },
+    {
+      "team": "HOU",
+      "player": "Kamari Lassiter"
+    },
+    {
+      "team": "HOU",
+      "player": "Trent Brown"
+    },
+    {
+      "team": "HOU",
+      "player": "Will Anderson"
+    },
+    {
+      "team": "IND",
+      "player": "Bernhard Raimann"
+    },
+    {
+      "team": "IND",
+      "player": "Camryn Bynum"
+    },
+    {
+      "team": "IND",
+      "player": "DeForest Buckner"
+    },
+    {
+      "team": "IND",
+      "player": "Quenton Nelson"
+    },
+    {
+      "team": "IND",
+      "player": "Sauce Gardner"
+    },
+    {
+      "team": "IND",
+      "player": "Tanor Bortolini"
+    },
+    {
+      "team": "JAX",
+      "player": "Anton Harrison"
+    },
+    {
+      "team": "JAX",
+      "player": "Foyesade Oluokun"
+    },
+    {
+      "team": "JAX",
+      "player": "Josh Hines-Allen"
+    },
+    {
+      "team": "KC",
+      "player": "Chris Jones"
+    },
+    {
+      "team": "KC",
+      "player": "Creed Humphrey"
+    },
+    {
+      "team": "KC",
+      "player": "Nick Bolton"
+    },
+    {
+      "team": "KC",
+      "player": "Trey Smith"
+    },
+    {
+      "team": "LAC",
+      "player": "Daiyan Henley"
+    },
+    {
+      "team": "LAC",
+      "player": "Derwin James"
+    },
+    {
+      "team": "LAC",
+      "player": "Joe Alt"
+    },
+    {
+      "team": "LAC",
+      "player": "Khalil Mack"
+    },
+    {
+      "team": "LAC",
+      "player": "Rashawn Slater"
+    },
+    {
+      "team": "LAC",
+      "player": "Tuli Tuipulotu"
+    },
+    {
+      "team": "LAR",
+      "player": "Byron Young"
+    },
+    {
+      "team": "LAR",
+      "player": "Coleman Shelton"
+    },
+    {
+      "team": "LAR",
+      "player": "Kevin Dotson"
+    },
+    {
+      "team": "LAR",
+      "player": "Kobie Turner"
+    },
+    {
+      "team": "LAR",
+      "player": "Myles Garrett"
+    },
+    {
+      "team": "LAR",
+      "player": "Nate Landman"
+    },
+    {
+      "team": "LAR",
+      "player": "Poona Ford"
+    },
+    {
+      "team": "LAR",
+      "player": "Quentin Lake"
+    },
+    {
+      "team": "LAR",
+      "player": "Steve Avila"
+    },
+    {
+      "team": "LV",
+      "player": "Kolton Miller"
+    },
+    {
+      "team": "LV",
+      "player": "Maxx Crosby"
+    },
+    {
+      "team": "LV",
+      "player": "Nakobe Dean"
+    },
+    {
+      "team": "LV",
+      "player": "Tyler Linderbaum"
+    },
+    {
+      "team": "MIA",
+      "player": "Aaron Brewer"
+    },
+    {
+      "team": "MIA",
+      "player": "Jordyn Brooks"
+    },
+    {
+      "team": "MIA",
+      "player": "Patrick Paul"
+    },
+    {
+      "team": "MIA",
+      "player": "Zach Sieler"
+    },
+    {
+      "team": "MIN",
+      "player": "Blake Cashman"
+    },
+    {
+      "team": "MIN",
+      "player": "Brian O'Neill"
+    },
+    {
+      "team": "MIN",
+      "player": "Christian Darrisaw"
+    },
+    {
+      "team": "NE",
+      "player": "Alijah Vera-Tucker"
+    },
+    {
+      "team": "NE",
+      "player": "Christian Gonzalez"
+    },
+    {
+      "team": "NE",
+      "player": "Kevin Byard"
+    },
+    {
+      "team": "NE",
+      "player": "Marcus Jones"
+    },
+    {
+      "team": "NE",
+      "player": "Milton Williams"
+    },
+    {
+      "team": "NE",
+      "player": "Robert Spillane"
+    },
+    {
+      "team": "NO",
+      "player": "Cesar Ruiz"
+    },
+    {
+      "team": "NO",
+      "player": "David Edwards"
+    },
+    {
+      "team": "NO",
+      "player": "Erik McCoy"
+    },
+    {
+      "team": "NO",
+      "player": "Kaden Elliss"
+    },
+    {
+      "team": "NYG",
+      "player": "Abdul Carter"
+    },
+    {
+      "team": "NYG",
+      "player": "Andrew Thomas"
+    },
+    {
+      "team": "NYG",
+      "player": "Brian Burns"
+    },
+    {
+      "team": "NYG",
+      "player": "Jon Runyan"
+    },
+    {
+      "team": "NYJ",
+      "player": "Armand Membou"
+    },
+    {
+      "team": "NYJ",
+      "player": "Minkah Fitzpatrick"
+    },
+    {
+      "team": "NYJ",
+      "player": "Olu Fashanu"
+    },
+    {
+      "team": "PHI",
+      "player": "Cam Jurgens"
+    },
+    {
+      "team": "PHI",
+      "player": "Cooper DeJean"
+    },
+    {
+      "team": "PHI",
+      "player": "Jalen Carter"
+    },
+    {
+      "team": "PHI",
+      "player": "Jonathan Greenard"
+    },
+    {
+      "team": "PHI",
+      "player": "Jordan Davis"
+    },
+    {
+      "team": "PHI",
+      "player": "Jordan Mailata"
+    },
+    {
+      "team": "PHI",
+      "player": "Landon Dickerson"
+    },
+    {
+      "team": "PHI",
+      "player": "Lane Johnson"
+    },
+    {
+      "team": "PHI",
+      "player": "Quinyon Mitchell"
+    },
+    {
+      "team": "PHI",
+      "player": "Zack Baun"
+    },
+    {
+      "team": "PIT",
+      "player": "Alex Highsmith"
+    },
+    {
+      "team": "PIT",
+      "player": "Cameron Heyward"
+    },
+    {
+      "team": "PIT",
+      "player": "Jalen Ramsey"
+    },
+    {
+      "team": "PIT",
+      "player": "T.J. Watt"
+    },
+    {
+      "team": "PIT",
+      "player": "Troy Fautanu"
+    },
+    {
+      "team": "PIT",
+      "player": "Zach Frazier"
+    },
+    {
+      "team": "SEA",
+      "player": "Abraham Lucas"
+    },
+    {
+      "team": "SEA",
+      "player": "Byron Murphy"
+    },
+    {
+      "team": "SEA",
+      "player": "Charles Cross"
+    },
+    {
+      "team": "SEA",
+      "player": "Devon Witherspoon"
+    },
+    {
+      "team": "SEA",
+      "player": "Ernest Jones"
+    },
+    {
+      "team": "SEA",
+      "player": "Grey Zabel"
+    },
+    {
+      "team": "SEA",
+      "player": "Julian Love"
+    },
+    {
+      "team": "SEA",
+      "player": "Leonard Williams"
+    },
+    {
+      "team": "SEA",
+      "player": "Nick Emmanwori"
+    },
+    {
+      "team": "SF",
+      "player": "Dominick Puni"
+    },
+    {
+      "team": "SF",
+      "player": "Dre Greenlaw"
+    },
+    {
+      "team": "SF",
+      "player": "Fred Warner"
+    },
+    {
+      "team": "SF",
+      "player": "Nick Bosa"
+    },
+    {
+      "team": "SF",
+      "player": "Trent Williams"
+    },
+    {
+      "team": "TB",
+      "player": "Alex Anzalone"
+    },
+    {
+      "team": "TB",
+      "player": "Antoine Winfield"
+    },
+    {
+      "team": "TB",
+      "player": "Cody Mauch"
+    },
+    {
+      "team": "TB",
+      "player": "Graham Barton"
+    },
+    {
+      "team": "TB",
+      "player": "Luke Goedeke"
+    },
+    {
+      "team": "TB",
+      "player": "Tristan Wirfs"
+    },
+    {
+      "team": "TB",
+      "player": "Vita Vea"
+    },
+    {
+      "team": "TB",
+      "player": "Yaya Diaby"
+    },
+    {
+      "team": "TEN",
+      "player": "Amani Hooker"
+    },
+    {
+      "team": "TEN",
+      "player": "Cedric Gray"
+    },
+    {
+      "team": "TEN",
+      "player": "Jeffery Simmons"
+    },
+    {
+      "team": "TEN",
+      "player": "John Franklin-Myers"
+    },
+    {
+      "team": "TEN",
+      "player": "Peter Skoronski"
+    },
+    {
+      "team": "WAS",
+      "player": "Laremy Tunsil"
+    },
+    {
+      "team": "WAS",
+      "player": "Sam Cosmi"
+    }
+  ]
+}

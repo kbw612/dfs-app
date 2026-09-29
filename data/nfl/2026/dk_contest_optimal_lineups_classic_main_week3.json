@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Vikings",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 256.8,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Sam Darnold",
+          "position": "QB",
+          "salary": 5400,
+          "fpts": 32.66
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jeremiyah Love",
+          "position": "RB",
+          "salary": 5500,
+          "fpts": 21.9
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 2900,
+          "fpts": 16.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 256.71999999999997,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Sam Darnold",
+          "position": "QB",
+          "salary": 5400,
+          "fpts": 32.66
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Chargers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49400,
+      "total_fpts": 256.42,
+      "salary_leftover": 600
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Sam Darnold",
+          "position": "QB",
+          "salary": 5400,
+          "fpts": 32.66
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4000,
+          "fpts": 24.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Chargers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 256.21999999999997,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 2900,
+          "fpts": 16.0
+        }
+      ],
+      "total_salary": 49600,
+      "total_fpts": 255.8,
+      "salary_leftover": 400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "George Kittle",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Chargers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 50000,
+      "total_fpts": 255.7,
+      "salary_leftover": 0
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 5700,
+          "fpts": 23.6
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4000,
+          "fpts": 24.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 2900,
+          "fpts": 16.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 255.6,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jeremiyah Love",
+          "position": "RB",
+          "salary": 5500,
+          "fpts": 21.9
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Vikings",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49600,
+      "total_fpts": 255.1,
+      "salary_leftover": 400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Geno Smith",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 30.04
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jeremiyah Love",
+          "position": "RB",
+          "salary": 5500,
+          "fpts": 21.9
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4000,
+          "fpts": 24.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Vikings",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 254.9,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Sam Darnold",
+          "position": "QB",
+          "salary": 5400,
+          "fpts": 32.66
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 8800,
+          "fpts": 41.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jeremiyah Love",
+          "position": "RB",
+          "salary": 5500,
+          "fpts": 21.9
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8600,
+          "fpts": 38.36
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "TE",
+          "player": "Juwan Johnson",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kenyon Sadiq",
+          "position": "TE",
+          "salary": 3500,
+          "fpts": 26.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Chargers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49200,
+      "total_fpts": 254.72,
+      "salary_leftover": 800
+    }
+  ]
+}

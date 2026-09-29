@@ -11,8 +11,10 @@ this stays its own top-level resource.
 from fastapi import APIRouter
 
 from backend.api.schedule.file_info import router as file_info_router
+from backend.api.schedule.games import router as games_router
 from backend.api.schedule.import_csv import router as import_csv_router
 
 router = APIRouter(prefix="/schedule")
 router.include_router(import_csv_router)
 router.include_router(file_info_router)
+router.include_router(games_router)

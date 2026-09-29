@@ -21,6 +21,7 @@ def test_filename_has_no_week_in_it(tmp_path: Path):
     assert weekly_stats_csv_path(tmp_path, 2026, "RB") == tmp_path / "2026" / "FantasyData_RBs.csv"
     assert weekly_stats_csv_path(tmp_path, 2026, "WR") == tmp_path / "2026" / "FantasyData_WRs.csv"
     assert weekly_stats_csv_path(tmp_path, 2026, "TE") == tmp_path / "2026" / "FantasyData_TEs.csv"
+    assert weekly_stats_csv_path(tmp_path, 2026, "DST") == tmp_path / "2026" / "FantasyData_DSTs.csv"
 
 
 def test_load_returns_none_when_nothing_saved_yet(tmp_path: Path):

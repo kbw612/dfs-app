@@ -143,9 +143,11 @@ def test_build_game_logs_against_rows_usage_stats_for_rb_include_touches():
             ("Brock Purdy", 15): {
                 "rush_att": 12,
                 "rush_yards": 60,
+                "rush_td": 1,
                 "targets": 2,
                 "receptions": 1,
                 "receiving_yards": 3,
+                "rec_td": 0,
                 "team": "SF",
             }
         }
@@ -156,9 +158,11 @@ def test_build_game_logs_against_rows_usage_stats_for_rb_include_touches():
     row = rows[0]
     assert row.rush_att == 12
     assert row.rush_yards == 60
+    assert row.rush_td == 1
     assert row.targets == 2
     assert row.receptions == 1
     assert row.receiving_yards == 3
+    assert row.rec_td == 0
     assert row.touches == 13  # 12 rush_att + 1 reception
 
 
@@ -170,16 +174,18 @@ def test_build_game_logs_against_rows_usage_stats_none_for_qb_without_receiving_
     tracker_rows = [
         _row("Deshaun Watson", "QB", "CLE", 13, 5200, 14.0, 8.0, 6.0),
     ]
-    stat_lines = {"QB": {("Deshaun Watson", 13): {"rush_att": 5, "rush_yards": 29, "team": "CLE"}}}
+    stat_lines = {"QB": {("Deshaun Watson", 13): {"rush_att": 5, "rush_yards": 29, "rush_td": 1, "team": "CLE"}}}
     rows = build_game_logs_against_rows(
         tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
     )
     row = rows[0]
     assert row.rush_att == 5
     assert row.rush_yards == 29
+    assert row.rush_td == 1
     assert row.targets is None
     assert row.receptions is None
     assert row.receiving_yards is None
+    assert row.rec_td is None
     assert row.touches == 5  # rush_att + 0 receptions (missing key defaults to 0)
 
 
@@ -194,8 +200,10 @@ def test_build_game_logs_against_rows_usage_stats_none_without_stat_lines():
     assert row.targets is None
     assert row.receptions is None
     assert row.receiving_yards is None
+    assert row.rec_td is None
     assert row.rush_att is None
     assert row.rush_yards is None
+    assert row.rush_td is None
 
 
 # -- target_share_pct / touch_share_pct / opp_share_pct / passing line --------
@@ -287,6 +295,19 @@ def test_build_game_logs_against_rows_qb_includes_passing_line():
     assert row.pass_int == 0
     assert row.pass_sck == 2
     assert row.pass_rtg == 144.4
+
+
+def test_build_game_logs_against_rows_dst_includes_sacks():
+    schedule_rows = parse_schedule_csv(SCHEDULE_CSV)
+    tracker_rows = [
+        _row("Browns", "DST", "CLE", 13, 2400, 12.0, 12.0, 0.0, roster_position="DST"),
+    ]
+    stat_lines = {"DST": {("Browns", 13): {"sacks": 3, "team": "CLE"}}}
+    rows = build_game_logs_against_rows(
+        tracker_rows, schedule_rows, team="TEN", week=16, lookback_weeks=6, stat_lines_by_position=stat_lines
+    )
+    row = rows[0]
+    assert row.sacks == 3
 
 
 def test_build_game_logs_against_rows_resolves_name_via_alias_when_no_native_match():

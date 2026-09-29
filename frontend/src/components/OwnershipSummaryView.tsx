@@ -1,6 +1,12 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { fetchContestResultRows, fetchOwnershipProjections, fetchPlayerPool, fetchVegasLines } from "../api";
-import type { OwnershipProjectionsPlayer, PlayerPoolPlayer, VegasLinesSnapshot } from "../types";
+import { fetchContestResultRows, fetchOwnershipProjections, fetchOwnershipSummary, fetchPlayerPool, fetchVegasLines } from "../api";
+import type {
+  GameOwnershipRollup,
+  OwnershipProjectionsPlayer,
+  PlayerPoolPlayer,
+  TeamOwnershipRollup,
+  VegasLinesSnapshot,
+} from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { formatOwnershipPct, formatSalary, opponentLabel } from "./playerDisplay";
 import { gameEnvironmentTier, tierClassName } from "./vegasLinesTiers";
@@ -36,84 +42,6 @@ type SortDirection = "desc" | "asc";
 // side-channel data (Vegas Lines, the salary file).
 type SortField = "initial" | "current" | "actual" | "diff" | "actualDiff";
 
-// Same alphabetically-sorted "TEAM1-TEAM2"/"TEAM1 vs TEAM2" convention as
-// backend/services/ownership/position_blocks.py's game_key/game_label and
-// VegasLinesView's own game grouping -- stable regardless of which side of
-// the matchup a given row starts from.
-function gameKey(team: string, opponent: string): string {
-  return [team, opponent].sort().join("-");
-}
-
-function gameLabel(team: string, opponent: string): string {
-  return [team, opponent].sort().join(" vs ");
-}
-
-interface TeamOwnership {
-  team: string;
-  initialTotalOwnership: number;
-  totalOwnership: number;
-  // null when the week's Contest Standings haven't been uploaded at all
-  // (see computeTeamOwnership's own docstring) -- renders "-", not 0%, so
-  // "unknown" and "really did land at 0%" stay visually distinct.
-  actualTotalOwnership: number | null;
-}
-
-interface GameOwnership {
-  key: string;
-  label: string;
-  awayTeam: string | null;
-  homeTeam: string | null;
-  initialTotalOwnership: number;
-  totalOwnership: number;
-  actualTotalOwnership: number | null;
-  // Every player in the game (any position, including DST) sorted by
-  // ownership% descending -- shown when the row is expanded. Distinct
-  // from totalOwnership, which excludes DST (see this function's own
-  // docstring below) -- the detail list is a plain roster browse, not
-  // part of that rollup calculation.
-  players: OwnershipProjectionsPlayer[];
-}
-
-// Combined ownership% across every rostered player at a team/game --
-// DST is deliberately excluded from both rollups (an explicit choice, not
-// an oversight -- a defense's own ownership% isn't part of "how chalky is
-// this team/game" the way it's used here), and a player with no
-// ownership_pct yet (Ownership hasn't been retrieved this week) simply
-// contributes 0 rather than being skipped, so a team/game with partial
-// data still shows *some* total instead of silently vanishing from the
-// list. initialTotalOwnership sums initial_ownership_pct the same way --
-// a player added since the initial upload contributes 0 to it, same
-// convention. actualTotalOwnership sums actualByPlayer (the week's Contest
-// Standings %Drafted, see actualOwnershipByPlayer below) the same way --
-// EXCEPT it comes back null instead of a real number whenever
-// actualByPlayer is empty (no Contest Standings uploaded for this week at
-// all), so the Actual/Actual-Diff columns render "-" for "we don't know
-// yet" rather than a misleading 0%. Once Contest Standings exist, a
-// team/game that genuinely has 0% actual ownership across its players
-// still returns a real 0, not null -- only "no data uploaded" hides the
-// column, not "the real total happens to be zero."
-function computeTeamOwnership(
-  players: OwnershipProjectionsPlayer[],
-  actualByPlayer: Map<string, number>
-): TeamOwnership[] {
-  const hasContestData = actualByPlayer.size > 0;
-  const totals = new Map<string, { initial: number; current: number; actual: number }>();
-  for (const p of players) {
-    if (p.position === "DST") continue;
-    if (!totals.has(p.team)) totals.set(p.team, { initial: 0, current: 0, actual: 0 });
-    const entry = totals.get(p.team)!;
-    entry.initial += p.initial_ownership_pct ?? 0;
-    entry.current += p.ownership_pct ?? 0;
-    entry.actual += actualByPlayer.get(p.player) ?? 0;
-  }
-  return [...totals.entries()].map(([team, { initial, current, actual }]) => ({
-    team,
-    initialTotalOwnership: initial,
-    totalOwnership: current,
-    actualTotalOwnership: hasContestData ? actual : null,
-  }));
-}
-
 // The ownership projections file itself never carries a "vs"/"@" signal
 // (its Opponent column is a bare team abbreviation, on purpose -- see
 // backend/services/ownership/csv_loader.py's parsing), so parse_opponent()
@@ -140,53 +68,9 @@ function resolvedIsHome(team: string, homeByTeam: Map<string, boolean>): boolean
   return homeByTeam.get(team) ?? null;
 }
 
-function computeGameOwnership(
-  players: OwnershipProjectionsPlayer[],
-  homeByTeam: Map<string, boolean>,
-  actualByPlayer: Map<string, number>
-): GameOwnership[] {
-  const hasContestData = actualByPlayer.size > 0;
-  const byKey = new Map<string, GameOwnership>();
-  for (const p of players) {
-    const key = gameKey(p.team, p.opponent);
-    let entry = byKey.get(key);
-    if (!entry) {
-      entry = {
-        key,
-        label: gameLabel(p.team, p.opponent),
-        awayTeam: null,
-        homeTeam: null,
-        initialTotalOwnership: 0,
-        totalOwnership: 0,
-        actualTotalOwnership: 0,
-        players: [],
-      };
-      byKey.set(key, entry);
-    }
-    entry.players.push(p);
-    if (p.position !== "DST") {
-      entry.initialTotalOwnership += p.initial_ownership_pct ?? 0;
-      entry.totalOwnership += p.ownership_pct ?? 0;
-      entry.actualTotalOwnership = (entry.actualTotalOwnership ?? 0) + (actualByPlayer.get(p.player) ?? 0);
-    }
-    const isHome = resolvedIsHome(p.team, homeByTeam);
-    if (isHome === true) entry.homeTeam = p.team;
-    if (isHome === false) entry.awayTeam = p.team;
-  }
-  for (const entry of byKey.values()) {
-    entry.players.sort((a, b) => (b.ownership_pct ?? -1) - (a.ownership_pct ?? -1));
-    // Same "no Contest Standings uploaded at all" null-out as
-    // computeTeamOwnership -- applied after accumulation so a real 0 total
-    // (Contest Standings exist, this game's players just summed to zero)
-    // is left alone.
-    if (!hasContestData) entry.actualTotalOwnership = null;
-  }
-  return [...byKey.values()];
-}
-
 // null (no Contest Standings uploaded for this week at all -- see
-// computeTeamOwnership/computeGameOwnership) renders "-", same convention
-// as every other "unknown" ownership figure on this tab.
+// backend/services/ownership/ownership_summary.py) renders "-", same
+// convention as every other "unknown" ownership figure on this tab.
 function formatTotalOwnership(value: number | null): string {
   return value === null ? "-" : `${value.toFixed(2)}%`;
 }
@@ -243,20 +127,21 @@ function playerSortValue(p: OwnershipProjectionsPlayer, field: SortField, actual
 
 // Same idea for the Team/Game rollups -- Initial/Current/Diff are always
 // real numbers (they start at 0 and only ever add to it), but
-// actualTotalOwnership (and therefore actualDiff) comes back null whenever
-// no Contest Standings are uploaded yet (see computeTeamOwnership's own
-// docstring) -- compareNullable (both call sites below) already sorts a
-// null to the bottom regardless of direction, same as playerSortValue's.
+// actual_total_ownership_pct (and therefore actualDiff) comes back null
+// whenever no Contest Standings are uploaded yet (see backend/services/
+// ownership/ownership_summary.py's own docstring) -- compareNullable (both
+// call sites below) already sorts a null to the bottom regardless of
+// direction, same as playerSortValue's.
 function rollupSortValue(
-  row: { initialTotalOwnership: number; totalOwnership: number; actualTotalOwnership: number | null },
+  row: { initial_total_ownership_pct: number; total_ownership_pct: number; actual_total_ownership_pct: number | null },
   field: SortField
 ): number | null {
-  if (field === "initial") return row.initialTotalOwnership;
-  if (field === "current") return row.totalOwnership;
-  if (field === "actual") return row.actualTotalOwnership;
-  if (field === "diff") return row.totalOwnership - row.initialTotalOwnership;
-  if (row.actualTotalOwnership === null) return null;
-  return row.actualTotalOwnership - row.totalOwnership; // actualDiff
+  if (field === "initial") return row.initial_total_ownership_pct;
+  if (field === "current") return row.total_ownership_pct;
+  if (field === "actual") return row.actual_total_ownership_pct;
+  if (field === "diff") return row.total_ownership_pct - row.initial_total_ownership_pct;
+  if (row.actual_total_ownership_pct === null) return null;
+  return row.actual_total_ownership_pct - row.total_ownership_pct; // actualDiff
 }
 
 // Shared comparator for every sortable list on this tab. A null (a
@@ -519,24 +404,32 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
       .catch(() => setActualOwnershipByPlayer(new Map()));
   }, [season, week, platform, contest]);
 
+  // Team/Game rollups are now computed server-side (see backend/api/
+  // ownership/summary.py) rather than client-side from `players` -- best-
+  // effort, same graceful-degradation convention as the other side-channel
+  // fetches above: a failure (or nothing uploaded yet) just leaves both
+  // lists empty rather than erroring the whole tab, since the Players
+  // table above them still works off its own fetchOwnershipProjections
+  // call regardless.
+  const [teamOwnership, setTeamOwnership] = useState<TeamOwnershipRollup[]>([]);
+  const [gameOwnership, setGameOwnership] = useState<GameOwnershipRollup[]>([]);
+
+  useEffect(() => {
+    fetchOwnershipSummary(season, week, platform, contest)
+      .then((result) => {
+        setTeamOwnership(result.teams);
+        setGameOwnership(result.games);
+      })
+      .catch(() => {
+        setTeamOwnership([]);
+        setGameOwnership([]);
+      });
+  }, [season, week, platform, contest]);
+
   const teamTiers = useMemo(() => buildTeamTiers(vegasLines), [vegasLines]);
   const homeByTeam = useMemo(() => buildHomeByTeam(salaryPlayers), [salaryPlayers]);
 
   const isNotFound = fetchError !== null && fetchError.includes("No ownership projections file uploaded yet");
-
-  // Team/Game rollups are always computed across the full, unfiltered
-  // player list -- the Position filter only narrows the player table
-  // above them, per an explicit design decision (a team/game's total
-  // shouldn't silently shrink just because you're currently looking at
-  // one position's rows).
-  const teamOwnership = useMemo(
-    () => computeTeamOwnership(players ?? [], actualOwnershipByPlayer),
-    [players, actualOwnershipByPlayer]
-  );
-  const gameOwnership = useMemo(
-    () => computeGameOwnership(players ?? [], homeByTeam, actualOwnershipByPlayer),
-    [players, homeByTeam, actualOwnershipByPlayer]
-  );
 
   const sortedTeamOwnership = useMemo(
     () =>
@@ -720,18 +613,18 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
                       {sortedTeamOwnership.map((row) => (
                         <tr key={row.team}>
                           <td className={tierClassName(teamTiers.get(row.team))}>{row.team}</td>
-                          <td className="player-pool-grid-num">{formatTotalOwnership(row.initialTotalOwnership)}</td>
-                          <td className="player-pool-grid-num">{formatTotalOwnership(row.totalOwnership)}</td>
+                          <td className="player-pool-grid-num">{formatTotalOwnership(row.initial_total_ownership_pct)}</td>
+                          <td className="player-pool-grid-num">{formatTotalOwnership(row.total_ownership_pct)}</td>
                           <td
-                            className={`player-pool-grid-num ${diffClassName(row.initialTotalOwnership, row.totalOwnership) ?? ""}`}
+                            className={`player-pool-grid-num ${diffClassName(row.initial_total_ownership_pct, row.total_ownership_pct) ?? ""}`}
                           >
-                            {formatOwnershipDelta(row.initialTotalOwnership, row.totalOwnership)}
+                            {formatOwnershipDelta(row.initial_total_ownership_pct, row.total_ownership_pct)}
                           </td>
-                          <td className="player-pool-grid-num">{formatTotalOwnership(row.actualTotalOwnership)}</td>
+                          <td className="player-pool-grid-num">{formatTotalOwnership(row.actual_total_ownership_pct)}</td>
                           <td
-                            className={`player-pool-grid-num ${diffClassName(row.totalOwnership, row.actualTotalOwnership) ?? ""}`}
+                            className={`player-pool-grid-num ${diffClassName(row.total_ownership_pct, row.actual_total_ownership_pct) ?? ""}`}
                           >
-                            {formatOwnershipDelta(row.totalOwnership, row.actualTotalOwnership)}
+                            {formatOwnershipDelta(row.total_ownership_pct, row.actual_total_ownership_pct)}
                           </td>
                         </tr>
                       ))}
@@ -781,12 +674,13 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
                       {sortedGameOwnership.map((row) => {
                         const open = expandedGames.has(row.key);
                         // row.key is the same sorted "TEAM1-TEAM2" string
-                        // row.label was built from (see gameKey/gameLabel
-                        // above), so splitting it back apart gives the
-                        // exact two team codes the label displays, in the
-                        // same order -- lets each half of "TEAM1 vs TEAM2"
-                        // get its own tier color while " vs " itself stays
-                        // plain text.
+                        // row.label was built from server-side (see
+                        // backend/services/ownership/ownership_summary.py's
+                        // own _game_key/_game_label), so splitting it back
+                        // apart gives the exact two team codes the label
+                        // displays, in the same order -- lets each half of
+                        // "TEAM1 vs TEAM2" get its own tier color while
+                        // " vs " itself stays plain text.
                         const [teamA, teamB] = row.key.split("-");
                         return (
                           <Fragment key={row.key}>
@@ -807,24 +701,24 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
                                 <span className={tierClassName(teamTiers.get(teamA))}>{teamA}</span> vs{" "}
                                 <span className={tierClassName(teamTiers.get(teamB))}>{teamB}</span>
                               </td>
-                              <td className={row.awayTeam ? tierClassName(teamTiers.get(row.awayTeam)) : undefined}>
-                                {row.awayTeam ?? "-"}
+                              <td className={row.away_team ? tierClassName(teamTiers.get(row.away_team)) : undefined}>
+                                {row.away_team ?? "-"}
                               </td>
-                              <td className={row.homeTeam ? tierClassName(teamTiers.get(row.homeTeam)) : undefined}>
-                                {row.homeTeam ?? "-"}
+                              <td className={row.home_team ? tierClassName(teamTiers.get(row.home_team)) : undefined}>
+                                {row.home_team ?? "-"}
                               </td>
-                              <td className="player-pool-grid-num">{formatTotalOwnership(row.initialTotalOwnership)}</td>
-                              <td className="player-pool-grid-num">{formatTotalOwnership(row.totalOwnership)}</td>
+                              <td className="player-pool-grid-num">{formatTotalOwnership(row.initial_total_ownership_pct)}</td>
+                              <td className="player-pool-grid-num">{formatTotalOwnership(row.total_ownership_pct)}</td>
                               <td
-                                className={`player-pool-grid-num ${diffClassName(row.initialTotalOwnership, row.totalOwnership) ?? ""}`}
+                                className={`player-pool-grid-num ${diffClassName(row.initial_total_ownership_pct, row.total_ownership_pct) ?? ""}`}
                               >
-                                {formatOwnershipDelta(row.initialTotalOwnership, row.totalOwnership)}
+                                {formatOwnershipDelta(row.initial_total_ownership_pct, row.total_ownership_pct)}
                               </td>
-                              <td className="player-pool-grid-num">{formatTotalOwnership(row.actualTotalOwnership)}</td>
+                              <td className="player-pool-grid-num">{formatTotalOwnership(row.actual_total_ownership_pct)}</td>
                               <td
-                                className={`player-pool-grid-num ${diffClassName(row.totalOwnership, row.actualTotalOwnership) ?? ""}`}
+                                className={`player-pool-grid-num ${diffClassName(row.total_ownership_pct, row.actual_total_ownership_pct) ?? ""}`}
                               >
-                                {formatOwnershipDelta(row.totalOwnership, row.actualTotalOwnership)}
+                                {formatOwnershipDelta(row.total_ownership_pct, row.actual_total_ownership_pct)}
                               </td>
                               <td className="ownership-summary-game-arrow">{open ? "▴" : "▾"}</td>
                             </tr>

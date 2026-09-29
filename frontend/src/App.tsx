@@ -6,8 +6,10 @@ import { CompareView } from "./components/CompareView";
 import { ConfirmDialog } from "./components/ConfirmDialog";
 import { ContestResultsView } from "./components/ContestResultsView";
 import { DkPlayersView } from "./components/DkPlayersView";
+import { DstTrendsView } from "./components/DstTrendsView";
 import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
 import { GameLogsView } from "./components/GameLogsView";
+import { GamePreviewView } from "./components/GamePreviewView";
 import { HeaderSettingsPopover } from "./components/HeaderSettingsPopover";
 import { MultipliersView } from "./components/MultipliersView";
 import { MyPlayerPoolView } from "./components/MyPlayerPoolView";
@@ -19,6 +21,8 @@ import { SettingsView } from "./components/SettingsView";
 import { UsageBumpPlayersView } from "./components/UsageBumpPlayersView";
 import { UsageBumpView } from "./components/UsageBumpView";
 import { DepthChartsView } from "./components/DepthChartsView";
+import { InjuryReportView } from "./components/InjuryReportView";
+import { LineupScenariosView } from "./components/LineupScenariosView";
 import { VegasLinesView } from "./components/VegasLinesView";
 import { WeatherView } from "./components/WeatherView";
 import { BUILD_TIME, FRONTEND_VERSION } from "./version";
@@ -27,6 +31,7 @@ type View =
   | "settings"
   | "compare"
   | "depthCharts"
+  | "injuryReport"
   | "bump"
   | "ownership"
   | "ownershipSummary"
@@ -41,7 +46,10 @@ type View =
   | "gameLogs"
   | "gameLogsAgainst"
   | "multipliers"
-  | "usageBumpPlayers";
+  | "dstTrends"
+  | "gamePreview"
+  | "usageBumpPlayers"
+  | "lineupScenarios";
 
 // How long to wait after the last edit before persisting season/week to
 // the backend (see backend/api/current_week) -- avoids a PUT on every
@@ -242,6 +250,22 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "lineupScenarios" ? " selected" : ""}`}
+          aria-pressed={view === "lineupScenarios"}
+          onClick={() => requestViewChange("lineupScenarios")}
+        >
+          Lineup Scenarios
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "gamePreview" ? " selected" : ""}`}
+          aria-pressed={view === "gamePreview"}
+          onClick={() => requestViewChange("gamePreview")}
+        >
+          Game Previews
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "gameLogs" ? " selected" : ""}`}
           aria-pressed={view === "gameLogs"}
           onClick={() => requestViewChange("gameLogs")}
@@ -266,6 +290,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "dstTrends" ? " selected" : ""}`}
+          aria-pressed={view === "dstTrends"}
+          onClick={() => requestViewChange("dstTrends")}
+        >
+          DST/Off Trends
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "compare" ? " selected" : ""}`}
           aria-pressed={view === "compare"}
           onClick={() => requestViewChange("compare")}
@@ -279,6 +311,14 @@ function App() {
           onClick={() => requestViewChange("depthCharts")}
         >
           Depth Charts
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "injuryReport" ? " selected" : ""}`}
+          aria-pressed={view === "injuryReport"}
+          onClick={() => requestViewChange("injuryReport")}
+        >
+          Injury Report
         </button>
         <button
           type="button"
@@ -369,6 +409,12 @@ function App() {
         <ContestResultsView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
+      {view === "lineupScenarios" && (
+        <LineupScenariosView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "gamePreview" && (
+        <GamePreviewView season={season} week={week} platform={platform} contest={contest} />
+      )}
       {view === "gameLogs" && <GameLogsView season={season} week={week} platform={platform} contest={contest} />}
       {view === "gameLogsAgainst" && (
         <GameLogsAgainstView season={season} week={week} platform={platform} contest={contest} />
@@ -376,11 +422,15 @@ function App() {
       {view === "multipliers" && (
         <MultipliersView season={season} week={week} platform={platform} contest={contest} />
       )}
+      {view === "dstTrends" && <DstTrendsView season={season} week={week} />}
       {view === "compare" && (
         <CompareView refreshSignal={refreshSignal} onScraped={() => setRefreshSignal((n) => n + 1)} />
       )}
       {view === "depthCharts" && (
         <DepthChartsView refreshSignal={refreshSignal} onScraped={() => setRefreshSignal((n) => n + 1)} />
+      )}
+      {view === "injuryReport" && (
+        <InjuryReportView season={season} week={week} contest={contest} refreshSignal={refreshSignal} />
       )}
       {view === "vegasLines" && <VegasLinesView season={season} week={week} />}
       {view === "weather" && <WeatherView season={season} week={week} />}

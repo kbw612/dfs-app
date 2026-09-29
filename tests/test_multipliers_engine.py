@@ -43,6 +43,12 @@ def test_build_multiplier_rows_uses_base_weeks_own_line():
     assert row.multiplier == 30.8 / (7700 / 1000)
 
 
+def test_build_multiplier_rows_base_non_td_multiplier():
+    tracker_rows = [_row("Josh Allen", "QB", "TEN", 13, 7700, 30.8, 15.4, 15.4)]
+    rows, _base_week = build_multiplier_rows(tracker_rows, [], week=14, trailing_weeks=5)
+    assert rows[0].non_td_multiplier == 15.4 / (7700 / 1000)
+
+
 def test_build_multiplier_rows_skips_player_with_no_base_week_row():
     # Only has a week 12 row -- never appeared in week 13's tracker at all
     # (released/inactive that week), so there's no base-week line to show.
@@ -140,6 +146,28 @@ def test_build_multiplier_rows_trailing_multiplier_computed_when_row_exists():
     assert trailing_by_week[8] is None
 
 
+def test_build_multiplier_rows_trailing_non_td_multiplier_computed_when_row_exists():
+    tracker_rows = [
+        _row("Josh Allen", "QB", "TEN", 13, 7700, 30.8, 15.4, 15.4),
+        _row("Josh Allen", "QB", "TEN", 12, 7500, 22.5, 11.25, 11.25),
+    ]
+    rows, _base_week = build_multiplier_rows(tracker_rows, [], week=14, trailing_weeks=5)
+    trailing_by_week = {t.week: t.non_td_multiplier for t in rows[0].trailing}
+    assert trailing_by_week[12] == 11.25 / (7500 / 1000)
+    assert trailing_by_week[11] is None
+
+
+def test_build_multiplier_rows_trailing_td_fpts_present_when_row_exists():
+    tracker_rows = [
+        _row("Josh Allen", "QB", "TEN", 13, 7700, 30.8, 15.4, 15.4),
+        _row("Josh Allen", "QB", "TEN", 12, 7500, 22.5, 11.25, 11.25),
+    ]
+    rows, _base_week = build_multiplier_rows(tracker_rows, [], week=14, trailing_weeks=5)
+    td_fpts_by_week = {t.week: t.td_fpts for t in rows[0].trailing}
+    assert td_fpts_by_week[12] == 11.25
+    assert td_fpts_by_week[11] is None
+
+
 def test_build_multiplier_rows_trailing_multiplier_none_when_salary_zero():
     tracker_rows = [
         _row("Josh Allen", "QB", "TEN", 13, 7700, 30.8, 15.4, 15.4),
@@ -148,6 +176,8 @@ def test_build_multiplier_rows_trailing_multiplier_none_when_salary_zero():
     rows, _base_week = build_multiplier_rows(tracker_rows, [], week=14, trailing_weeks=5)
     trailing_by_week = {t.week: t.multiplier for t in rows[0].trailing}
     assert trailing_by_week[12] is None
+    non_td_by_week = {t.week: t.non_td_multiplier for t in rows[0].trailing}
+    assert non_td_by_week[12] is None
 
 
 def test_build_multiplier_rows_respects_configurable_trailing_weeks_count():

@@ -5,12 +5,14 @@ from backend.repositories.name_aliases.name_aliases_repo import save_name_aliase
 from backend.repositories.player_defaults.defaults_repo import save_default
 from backend.repositories.player_pool.entries_repo import save_entry
 from backend.repositories.team_factors.team_factors_repo import save_factor
+from backend.repositories.weather.weather_repo import save_weather
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
 from backend.schemas.name_aliases.name_aliases import NameAlias
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.schemas.player_defaults.player_defaults import PlayerDefaultEntry
 from backend.schemas.player_pool.player_pool import PlayerPoolEntry
 from backend.schemas.team_factors.team_factors import TeamFactorEntry
+from backend.schemas.weather.weather import WeatherGame, WeatherSnapshot
 from backend.services.player_pool.engine import compute_player_pool, entry_total
 
 
@@ -410,12 +412,13 @@ def test_compute_player_pool_dst_has_no_game_environment(tmp_path: Path):
     assert row.game_environment_suggested is None
     assert row.volume is None
     assert row.talent is None
-    # game_matchup, ownership, and salary_value all default to 2.0 for
-    # DST -- the three fields DST uses.
+    # game_matchup, ownership, salary_value, and weather all default to
+    # 2.0 for DST -- the four fields DST uses.
     assert row.game_matchup == 2.0
     assert row.ownership == 2.0
     assert row.salary_value == 2.0
-    assert row.total == 6.0
+    assert row.weather == 2.0
+    assert row.total == 8.0
 
 
 def test_compute_player_pool_dst_ignores_saved_player_default(tmp_path: Path):
@@ -536,3 +539,75 @@ def test_compute_player_pool_dst_game_matchup_resolves_from_team_factor(tmp_path
 
     result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
     assert result.players[0].game_matchup == 1.5
+
+
+def make_weather_snapshot(season: int, week: int, **game_overrides) -> WeatherSnapshot:
+    fields = dict(
+        away_name="Los Angeles Chargers",
+        home_name="Arizona Cardinals",
+        away_team="LAC",
+        home_team="ARI",
+        game_key="ARI-LAC",
+        kickoff_label="1:00 PM ET",
+        color="red",
+        note="Heavy rain expected.",
+    )
+    fields.update(game_overrides)
+    return WeatherSnapshot(season=season, week=week, scraped_at="2026-09-25T00:00:00Z", games=[WeatherGame(**fields)])
+
+
+def test_compute_player_pool_dst_weather_resolves_from_red_game(tmp_path: Path):
+    # A DST whose own game has a red Weather note should default to 3.0,
+    # not the flat 2.0 neutral -- see score_weather_color.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_weather(nfl_dir, make_weather_snapshot(2025, 9, color="red"))
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].weather == 3.0
+
+
+def test_compute_player_pool_dst_weather_falls_back_to_neutral_without_notable_weather(tmp_path: Path):
+    # No Weather snapshot saved at all this week -- falls through to the
+    # flat 2.0 neutral, same as Game Matchup with no Team Default Factor.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].weather == 2.0
+
+
+def test_compute_player_pool_dst_weather_neutral_when_game_not_flagged(tmp_path: Path):
+    # A Weather snapshot exists for the week, but this particular game
+    # isn't in it (nobody flagged it as notable) -- still the flat 2.0,
+    # not an error and not accidentally matching some other game's color.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_weather(nfl_dir, make_weather_snapshot(2025, 9, away_team="KC", home_team="DEN", game_key="DEN-KC"))
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].weather == 2.0
+
+
+def test_compute_player_pool_dst_weather_explicit_override_wins(tmp_path: Path):
+    # This week's own explicit Weather save still wins over the game's own
+    # color-based suggestion, same override precedence as every other
+    # direct score field.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_weather(nfl_dir, make_weather_snapshot(2025, 9, color="red"))
+    save_entry(nfl_dir, PlayerPoolEntry(season=2025, week=9, player="Chargers", weather=1.5))
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].weather == 1.5
+
+
+def test_compute_player_pool_offense_has_no_weather(tmp_path: Path):
+    # Weather is DST-only -- an offensive player's row should never get a
+    # weather value at all, even with a red Weather note on their game.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_weather(nfl_dir, make_weather_snapshot(2025, 9, away_team="LAC", home_team="ARI", game_key="ARI-LAC"))
+    players = [make_player("Kyler Murray", "QB", "ARI", "LAC", 6800)]
+
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].weather is None

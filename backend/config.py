@@ -38,6 +38,17 @@ class Settings(BaseSettings):
     usage_bump_position_settings_json: Path = Path("./data/nfl/2026/settings/usage_bump_position_settings.json")
     player_out_settings_json: Path = Path("./config/player-out-settings.json")
 
+    # Star Players (Depth Charts tab's star icon -- backend/api/
+    # star_players/) -- a hand-curated, season-wide list of (team, player)
+    # pairs the user has flagged as a difference-maker at any position
+    # (offensive line, defensive line, linebacker, etc. included, not just
+    # skill positions that already have their own Player Pool scoring).
+    # Same "no season param anywhere yet, literal hardcoded 2026 path"
+    # convention as usage_bump_players_json above, for the same reason:
+    # the Depth Charts tab itself has no season selector either, since it
+    # always just shows the latest scraped snapshot.
+    star_players_json: Path = Path("./data/nfl/2026/star_players.json")
+
     # Ownership/leverage engine (backend/services/ownership/engine.py).
     # ownership_source_username/password authenticate against
     # oneweekseason.com -- deliberately no default (None until set via env

@@ -1,7 +1,7 @@
 """
 Scrapes FantasyData.com's public "Fantasy Football Leaders" page
 (https://fantasydata.com/nfl/fantasy-football-leaders) for one week's
-QB/RB/WR/TE game-log stats -- the same 4 files Settings' Weekly Stats
+QB/RB/WR/TE/DST game-log stats -- the same 5 files Settings' Weekly Stats
 panel otherwise expects as a manual CSV upload (see
 backend/repositories/dk_players/weekly_stats_repo.py). No login is
 required: the leaders table is fully server-rendered and readable
@@ -14,7 +14,7 @@ accrued stats so far (e.g. 6 QBs after only 2 games had been played in
 Week 1 2026), not that the rest are hidden.
 
 URL shape: ?scope=game&sp={season}_REG&week_from={week}&week_to={week}
-&position={qb|rb|wr|te}&scoring=fpts_ppr&pivot=0&order_by=fpts_ppr
+&position={qb|rb|wr|te|dst}&scoring=fpts_ppr&pivot=0&order_by=fpts_ppr
 &sort_dir=desc -- `week_from`/`week_to` both set to the same week limits
 the table to that single week's game log (one row per player, matching
 the manual-upload files' own one-row-per-player-per-week shape).
@@ -30,6 +30,27 @@ checked against real files in data/nfl/2025/weekly_stats_*_week15.csv),
 so parse_weekly_stats_html's output is byte-for-byte compatible with
 parse_weekly_stats_csv (weekly_stats_loader.py) and with a manual upload
 of the same week. WR and TE share an identical column set on the site.
+
+DST is structurally different from the other four: its table has no
+"player"/"pos"/"rank" columns at all (a defense's row is identified by
+TEAM alone), so parse_weekly_stats_html synthesizes RK (row position),
+NAME (converted to DK's own bare-nickname DST naming, e.g. "Chargers",
+via resolve_team_nickname), and POS ("DST" literal) rather than reading
+them off any data-id -- see _DST_HEADER_MAP's own comment for why it
+doesn't reuse _COMMON_HEADER_MAP the way every other position does.
+
+DST's own "team" data-id cell is ALSO structurally different from every
+other position's: QB/RB/WR/TE render their TEAM cell as a plain
+abbreviation ("BUF"), but DST's own TEAM cell renders the team's full
+name as link text ("Cincinnati Bengals", linking to that team's schedule
+page) -- confirmed empirically, not documented anywhere on the site. So
+the DST branch below runs that cell's text through
+load_team_abbrev_map(settings.team_info_csv)'s {full_name: abbrev} map
+first, to recover the real abbreviation for both the TEAM output column
+and the NAME-via-resolve_team_nickname lookup -- resolve_team_nickname
+expects an abbreviation, not a full name, so skipping this step is what
+silently produced garbage NAME/TEAM values (the literal full-name string)
+the first time this was scraped.
 """
 
 from __future__ import annotations
@@ -42,6 +63,8 @@ from bs4 import BeautifulSoup
 
 from backend.config import settings
 from backend.repositories.dk_players.weekly_stats_repo import Position
+from backend.services.depth_charts.enrich import load_team_abbrev_map
+from backend.services.shared.team_names import resolve_team_nickname
 
 _LEADERS_URL = "https://fantasydata.com/nfl/fantasy-football-leaders"
 
@@ -122,11 +145,46 @@ _WR_TE_HEADER_MAP: dict[str, str] = {
     "fpts_ppr": "FPTS",
 }
 
+# DST's leaders table has no "player"/"pos" columns at all -- a defense's
+# page-of-record row is keyed by TEAM alone, with no per-player rank/name.
+# So this map (unlike the other four) intentionally does NOT reuse
+# _COMMON_HEADER_MAP -- "team" is the only column shared with it, and
+# "rank"/"player"/"pos" are synthesized in parse_weekly_stats_html itself
+# (RK from row position, NAME from TEAM via resolve_team_nickname, POS
+# hardcoded to "DST") rather than read off any data-id.
+#
+# DEF_SCK/DEF_INT (not "SCK"/"INT") deliberately, even though the site's
+# own headers/the user's requested field names are "SCK"/"INT" -- QB's own
+# file already has a "SCK" column (sacks *taken* by the QB) and an "INT"
+# column (passes *thrown* intercepted), and weekly_stats_loader.py's
+# column-presence-based parsing (`if column in row`) runs the same generic
+# column maps over every position's file. Reusing "SCK"/"INT" for DST's
+# very different "sacks/interceptions *recorded*" stats would silently
+# collide with QB's columns of the same name. The frontend is free to
+# still label these "SCK"/"INT" -- this is a storage-layer disambiguation
+# only, invisible to the API/UI.
+_DST_HEADER_MAP: dict[str, str] = {
+    "team": "TEAM",
+    "game.week": "WK",
+    "opp": "OPP",
+    "tkl_loss": "LOSS",
+    "def_sck": "DEF_SCK",
+    "qb_hits": "QB_HITS",
+    "def_int": "DEF_INT",
+    "fum_recovered": "FR",
+    "safeties": "SFTY",
+    "def_td": "DEF_TD",
+    "return_td": "RET_TD",
+    "opp_pts": "OPP_PTS",
+    "fpts_ppr": "FPTS",
+}
+
 _HEADER_MAP_BY_POSITION: dict[Position, dict[str, str]] = {
     "QB": _QB_HEADER_MAP,
     "RB": _RB_HEADER_MAP,
     "WR": _WR_TE_HEADER_MAP,
     "TE": _WR_TE_HEADER_MAP,
+    "DST": _DST_HEADER_MAP,
 }
 
 # Output column order per position -- must match the real manual-upload
@@ -160,7 +218,21 @@ _COLUMN_ORDER_BY_POSITION: dict[Position, list[str]] = {
         "rush_att", "rush_yds", "rush_yds_per_att", "rush_td",
         "fum", "fum_lost", "fpts_ppr",
     ],
+    # No "rank"/"player"/"pos" data-ids here -- see _DST_HEADER_MAP's comment.
+    "DST": [
+        "team", "game.week", "opp", "tkl_loss", "def_sck", "qb_hits",
+        "def_int", "fum_recovered", "safeties", "def_td", "return_td",
+        "opp_pts", "fpts_ppr",
+    ],
 }
+
+# The real, saved-file-compatible header order for DST -- RK/NAME/POS are
+# synthesized (see _DST_HEADER_MAP's comment), everything else follows
+# _COLUMN_ORDER_BY_POSITION["DST"] via _DST_HEADER_MAP.
+_DST_OUTPUT_HEADER: list[str] = [
+    "RK", "NAME", "TEAM", "POS", "WK", "OPP", "LOSS", "DEF_SCK", "QB_HITS",
+    "DEF_INT", "FR", "SFTY", "DEF_TD", "RET_TD", "OPP_PTS", "FPTS",
+]
 
 
 class WeeklyStatsScrapeError(Exception):
@@ -200,11 +272,16 @@ def parse_weekly_stats_html(html: str, position: Position) -> str:
             "Couldn't find the stats table on the page -- site structure may have changed"
         )
 
+    # DST's page has a single thead row (no PASSING/RUSHING/RECEIVING-style
+    # group-label row above it, since DST has no stat-category groupings) --
+    # QB/RB/WR/TE have two. The real per-column data-id header is always the
+    # LAST thead row regardless of how many rows precede it, so grab that
+    # rather than hardcoding an index that only holds for the 2-row case.
     header_rows = table.select("thead tr")
-    if len(header_rows) < 2:
-        raise WeeklyStatsScrapeError("Stats table header didn't have the expected two rows")
+    if len(header_rows) < 1:
+        raise WeeklyStatsScrapeError("Stats table header didn't have any rows")
 
-    data_ids = [th.get("data-id") for th in header_rows[1].select("th")]
+    data_ids = [th.get("data-id") for th in header_rows[-1].select("th")]
     column_order = _COLUMN_ORDER_BY_POSITION[position]
     header_map = _HEADER_MAP_BY_POSITION[position]
 
@@ -218,6 +295,43 @@ def parse_weekly_stats_html(html: str, position: Position) -> str:
     body_rows = table.select("tbody tr")
     buffer = io.StringIO()
     writer = csv.writer(buffer)
+
+    if position == "DST":
+        # RK/NAME/POS aren't real columns on this page -- RK is just this
+        # row's position in the (already FPTS-sorted) table, NAME is
+        # derived from TEAM so it matches the DK Players tracker's own
+        # bare-nickname DST naming (see resolve_team_nickname's docstring),
+        # and POS is always "DST". An unresolved TEAM value falls back to
+        # itself rather than failing the whole scrape -- same tolerant-row
+        # philosophy as vegas_lines/scraper.py.
+        #
+        # DST's own "team" cell text is the team's FULL name ("Cincinnati
+        # Bengals"), not an abbreviation like every other position's TEAM
+        # cell -- see this module's own docstring. team_abbrev_by_full_name
+        # recovers the real abbreviation before resolve_team_nickname (which
+        # expects an abbreviation) ever sees it.
+        team_abbrev_by_full_name = load_team_abbrev_map(settings.team_info_csv)
+        writer.writerow(_DST_OUTPUT_HEADER)
+        for rank, row in enumerate(body_rows, start=1):
+            cells = row.select("td")
+
+            def cell(data_id: str) -> str:
+                i = index_by_id[data_id]
+                return cells[i].get_text(strip=True) if i < len(cells) else ""
+
+            team_full_name = cell("team")
+            team_abbrev = team_abbrev_by_full_name.get(team_full_name, team_full_name)
+            name = resolve_team_nickname(team_abbrev) or team_abbrev
+            writer.writerow(
+                [
+                    rank, name, team_abbrev, "DST", cell("game.week"), cell("opp"),
+                    cell("tkl_loss"), cell("def_sck"), cell("qb_hits"), cell("def_int"),
+                    cell("fum_recovered"), cell("safeties"), cell("def_td"),
+                    cell("return_td"), cell("opp_pts"), cell("fpts_ppr"),
+                ]
+            )
+        return buffer.getvalue()
+
     writer.writerow([header_map[data_id] for data_id in column_order])
     for row in body_rows:
         cells = row.select("td")

@@ -34,9 +34,15 @@ Salary Blocks still read the older scrape/import-csv-driven
 OwnershipSnapshot for their own ownership_pct enrichment (see
 backend/services/player_pool/enrichment.py) -- integrating those onto this
 newer upload is still future work. latest.py (Ownership Pivots) and
-projections.py (Ownership Summary) both read this newer upload instead --
-see their own docstrings for why each tab wants this file's player list
-rather than the older snapshot's.
+projections.py (Ownership Summary's own Players table) both read this
+newer upload instead -- see their own docstrings for why each tab wants
+this file's player list rather than the older snapshot's.
+
+summary.py (Ownership Summary's own Team/Game rollup panels) reads the
+same newer upload, plus Contest Standings and the DK salary file, and
+returns the rollups already computed server-side -- see that module's own
+docstring and backend/services/ownership/ownership_summary.py for why this
+moved out of the frontend.
 """
 
 from fastapi import APIRouter
@@ -52,6 +58,7 @@ from backend.api.ownership.projections_file_info import router as projections_fi
 from backend.api.ownership.scrape import router as scrape_router
 from backend.api.ownership.scrape_main_slate import router as scrape_main_slate_router
 from backend.api.ownership.snapshots import router as snapshots_router
+from backend.api.ownership.summary import router as summary_router
 from backend.api.ownership.upload_projections_csv import router as upload_projections_csv_router
 
 router = APIRouter(prefix="/ownership")
@@ -67,3 +74,4 @@ router.include_router(scrape_main_slate_router)
 router.include_router(projections_file_router)
 router.include_router(projections_file_info_router)
 router.include_router(projections_router)
+router.include_router(summary_router)

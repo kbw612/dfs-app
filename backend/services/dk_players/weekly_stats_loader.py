@@ -1,16 +1,18 @@
 """
-Parses FantasyData stat exports (QB, RB, WR, or TE -- see
+Parses FantasyData stat exports (QB, RB, WR, TE, or DST -- see
 backend/repositories/dk_players/weekly_stats_repo.py) two ways:
 
 1. parse_weekly_stats_csv/merge_td_points -- one week's {player_name:
    td_points} map, feeding DK Players' calculate_week_points().
 
-2. load_weekly_stat_lines -- every week's raw usage stats (team/targets/
-   receptions/receiving_yards/rush_att/rush_yards, plus QB's own passing
-   line -- pass_cmp/pass_att/pass_cmp_pct/pass_yds/pass_avg/pass_td/
-   pass_int/pass_sck/pass_rtg) at once, keyed by (player, week), feeding
-   the Game Logs tab's Touch/TGTS/REC/REC_YDS/RUSH_ATT/RUSH_YDS/Pass
-   columns -- unlike (1), Game Logs needs a whole season's history in one
+2. load_weekly_stat_lines -- every week's raw usage stats (team/opponent/
+   targets/receptions/receiving_yards/rush_att/rush_yards, plus QB's own
+   passing line -- pass_cmp/pass_att/pass_cmp_pct/pass_yds/pass_avg/
+   pass_td/pass_int/pass_sck/pass_rtg -- and DST's own sacks/def_int/
+   fumble_recoveries) at once, keyed by (player, week), feeding the Game
+   Logs tab's Touch/TGTS/REC/REC_YDS/RUSH_ATT/RUSH_YDS/Pass columns and
+   backend/services/dst_trends/dst_trends_engine.py's forcing/allowing
+   leaderboards -- unlike (1), these need a whole season's history in one
    pass, not just the single most-recent week.
 
    TGTSHARE/TOUCHSHARE/OPPSHARE (target_share_pct/touch_share_pct/
@@ -42,12 +44,16 @@ import csv
 import io
 from typing import Literal
 
-Position = Literal["QB", "RB", "WR", "TE"]
+Position = Literal["QB", "RB", "WR", "TE", "DST"]
 
 # DK standard scoring's own points-per-touchdown -- passing TDs are worth
 # 4, every other touchdown (rushing or receiving, regardless of position)
-# is worth 6. Matches the person's own prior Colab script exactly.
-_TD_POINT_VALUES = {"PASSING_TD": 4, "RUSHING_TD": 6, "RECEIVING_TD": 6}
+# is worth 6. Matches the person's own prior Colab script exactly. DEF_TD/
+# RET_TD (DST's own defensive/return touchdowns) are worth 6 each too, same
+# as any non-passing TD -- only DST's file carries those two columns, so
+# they simply don't apply via the same "column not in row -> skipped"
+# mechanism parse_weekly_stats_csv already uses for every other position.
+_TD_POINT_VALUES = {"PASSING_TD": 4, "RUSHING_TD": 6, "RECEIVING_TD": 6, "DEF_TD": 6, "RET_TD": 6}
 
 
 def _parse_int(value: str | None) -> int:
@@ -115,14 +121,18 @@ def merge_td_points(stats_csvs: dict[Position, str], week: int) -> dict[str, flo
 # stat-line key Game Logs reads it back out by -- QB's file has no
 # RECEIVING_* columns at all (see weekly_stats_scraper.py's own header
 # maps), so a QB's stat line simply won't have "targets"/"receptions"/
-# "receiving_yards" keys, letting callers tell "not applicable to this
-# position" apart from "really was 0" (see load_weekly_stat_lines below).
+# "receiving_yards"/"rec_td" keys, letting callers tell "not applicable to
+# this position" apart from "really was 0" (see load_weekly_stat_lines
+# below). rush_td IS present for QB (a QB's file also carries RUSHING_TD,
+# same as RB/WR/TE) -- only rec_td is receiving-only-position-specific.
 _USAGE_STAT_COLUMNS = {
     "targets": "RECEIVING_TGTS",
     "receptions": "RECEIVING_REC",
     "receiving_yards": "RECEIVING_YDS",
+    "rec_td": "RECEIVING_TD",
     "rush_att": "RUSHING_ATT",
     "rush_yards": "RUSHING_YDS",
+    "rush_td": "RUSHING_TD",
 }
 
 # QB's own passing line -- only the QB file carries these columns at all
@@ -144,6 +154,19 @@ _PASSING_STAT_FLOAT_COLUMNS = {
     "pass_avg": "PASSING_AVG",
     "pass_rtg": "RATING",
 }
+
+# Only DST's file carries DEF_SCK/DEF_INT/FR columns (weekly_stats_scraper.py's
+# _DST_HEADER_MAP renames FantasyData's def_sck/def_int to DEF_SCK/DEF_INT
+# specifically to avoid colliding with QB's own unrelated "SCK"/"INT"
+# columns -- see that map's comment) -- same "missing column -> key simply
+# omitted" convention as every other position-specific column above, so
+# every non-DST player's stat line naturally has none of these three keys.
+# def_int/fumble_recoveries feed backend/services/dst_trends/
+# dst_trends_engine.py's own "takeaways" leaderboard (def_int + fumble_
+# recoveries = total takeaways forced that week) -- added alongside the
+# pre-existing "sacks" rather than merged into one combined key, since the
+# two leaderboards (sacks vs. takeaways) are reported separately.
+_DST_STAT_COLUMNS = {"sacks": "DEF_SCK", "def_int": "DEF_INT", "fumble_recoveries": "FR"}
 
 
 def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int | float | str]]:
@@ -179,6 +202,9 @@ def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int
         stat_line.update(
             {key: _parse_float(row[column]) for key, column in _PASSING_STAT_FLOAT_COLUMNS.items() if column in row}
         )
+        stat_line.update(
+            {key: _parse_int(row[column]) for key, column in _DST_STAT_COLUMNS.items() if column in row}
+        )
         # See this module's own docstring -- these three are only present
         # once "Calc Week Points" has written them via
         # write_usage_share_columns; an older/not-yet-computed file simply
@@ -190,5 +216,13 @@ def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int
         if "OPP_SHARE" in row:
             stat_line["opp_share_pct"] = _parse_optional_float(row["OPP_SHARE"])
         stat_line["team"] = row.get("TEAM", "").strip()
+        # Every FantasyData file (all 5 positions) carries an OPP column,
+        # same as TEAM -- parsed unconditionally here (not just for DST)
+        # for the same reason TEAM is: cheap to always have, and
+        # dst_trends_engine.py specifically needs a DST row's own OPP to
+        # attribute that week's sacks/takeaways to the opposing OFFENSE
+        # (the "allowing" side of its two leaderboards), not just the
+        # defense's own team (the "forcing" side).
+        stat_line["opponent"] = row.get("OPP", "").strip()
         lines[(name, week)] = stat_line
     return lines

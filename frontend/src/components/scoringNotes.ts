@@ -65,3 +65,17 @@ export const SALARY_VALUE_NOTES: string[] = [
   "Anything in between = 2 points",
   "The reset (↻) icon next to this header resets every DST's value back to this rule -- overwrites whatever's currently saved for each one this week.",
 ];
+
+// DST-only -- rough weather (rain/wind/snow) tends to suppress the passing
+// game and favor defenses/special teams, so a red or orange Weather note on
+// a DST's own game is treated as a reason to like that DST more this week.
+// See backend/services/weather/scoring.py's score_weather_color -- same
+// "refresh icon recomputes and overwrites every row from live data" pattern
+// as Ownership's own refresh icon (backend/api/player_pool/
+// calculate_weather_scores.py).
+export const WEATHER_NOTES: string[] = [
+  "Red or orange weather note on this DST's own game = 3 points",
+  "Anything else (including no notable weather at all this week) = 2 points",
+  "Pulled from the Weather tab's own snapshot for this game -- a game nobody flagged that week just stays at the neutral 2.",
+  "The refresh (↻) icon next to this header recomputes every DST's value from the Weather tab's current data -- overwrites whatever's currently saved for each one this week.",
+];

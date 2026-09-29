@@ -1,5 +1,5 @@
 """
-GET /game-blocks?season=&week=&team=&game=&platform=&salary_bucket=&bringback_size=
+GET /game-blocks?season=&week=&team=&game=&platform=&salary_bucket=&bringback_size=&include_qb=
 (mounted at /api/ownership/game-blocks -- see backend/api/ownership/
 __init__.py). Backs Salary Blocks' Onslaught section -- unlike
 /position-blocks (single-position combinations), this generates RB/WR/TE
@@ -59,6 +59,27 @@ render a chip row. `games` itself already reflects the full slate
 regardless of `team`/`game` (it's built from `eligible_players`, before
 either filter is applied -- see below), so this cheap path is always
 enough to populate that list.
+
+`include_qb` (default True -- Onslaught's own UI offers this as a toggle,
+defaulted on) adds one QB from either team in the game as an extra slot on
+top of each RB/WR/TE combination (see game_blocks.py's compute_game_blocks
+docstring for the exact rule). QB rows are gathered separately from
+`eligible_players` (which stays RB/WR/TE-only, same as before, since it
+also drives the "Filter by game" chip list) and merged into the pool
+passed to compute_game_blocks only when this is on.
+
+Every returned block's own total_salary is also always capped at
+`cap - cheapest_dst_salary_this_contest` (see game_blocks.py's
+filter_game_blocks_by_max_salary) -- a block that spends more than that
+could never actually be finished into a real DK lineup, since every
+lineup still needs a DST on top, and the contest's own cheapest DST sets
+the floor for how much that has to cost. `cheapest_dst_salary` comes from
+this contest's own DK salary file (`salary_snapshot`, loaded further down)
+-- the raw, unfiltered slate, not narrowed by Player Selection/My Player
+Pool, since "the cheapest DST on the contest" means literally that. Not a
+toggle -- always applied. A contest with no DST rows at all in its salary
+file (shouldn't happen in practice) skips this cap entirely rather than
+filtering out every block.
 """
 
 from __future__ import annotations
@@ -81,10 +102,12 @@ from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pc
 from backend.services.my_player_pool.engine import in_my_player_pool
 from backend.services.ownership.game_blocks import (
     GAME_BLOCK_POSITIONS,
+    GAME_BLOCK_QB_POSITION,
     MIN_GAME_BLOCK_SIZE,
     compute_game_blocks,
     filter_by_bringback_size,
     filter_by_primary_size,
+    filter_game_blocks_by_max_salary,
     filter_game_blocks_by_salary_buckets,
 )
 from backend.services.ownership.game_blocks import MAX_GAME_BLOCK_SIZE as DEFAULT_MAX_GAME_BLOCK_SIZE
@@ -107,6 +130,13 @@ class GameBlocksResult(BaseModel):
     # enumerate under MAX_GAME_BLOCKS_SAFETY_CAP -- see game_blocks.py's
     # compute_game_blocks(). Empty in the common case.
     skipped_games: list[GameOption]
+    # cap - cheapest_dst_salary_this_contest -- every block in `blocks`
+    # already has total_salary <= this (see this module's own docstring
+    # and filter_game_blocks_by_max_salary), surfaced here purely so the
+    # frontend can explain the cap in its own hint text rather than
+    # silently returning fewer blocks. None only when this contest's own
+    # salary file has no DST rows at all (the cap isn't applied then).
+    max_onslaught_salary: int | None = None
 
 
 @router.get("/game-blocks", response_model=GameBlocksResult)
@@ -124,6 +154,7 @@ def game_blocks_endpoint(
     games_only: bool = False,
     apply_selection_filter: bool = True,
     apply_my_player_pool_filter: bool = False,
+    include_qb: bool = True,
 ) -> GameBlocksResult:
     cap = SALARY_CAPS.get(platform)
     if cap is None:
@@ -147,6 +178,16 @@ def game_blocks_endpoint(
             detail=f"No DK salary file uploaded yet for season {season} week {week} -- upload this week's DK salary export first.",
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
+
+    # The contest's own cheapest DST, straight off the raw salary file --
+    # not narrowed by Player Selection/My Player Pool (see this module's
+    # own docstring: "the cheapest DST on the contest" means literally
+    # every DST in the slate, regardless of either pool filter below).
+    # None only when this contest's salary file somehow has no DST rows at
+    # all, in which case the cap is skipped entirely rather than zeroing
+    # out every block.
+    dst_salaries = [p.salary for p in salary_snapshot.players if p.position == "DST"]
+    max_onslaught_salary = cap - min(dst_salaries) if dst_salaries else None
 
     ownership_snapshot_path = find_latest_ownership_snapshot(settings.ownership_snapshots_dir, season=season, week=week)
     ownership_players = load_ownership_snapshot(ownership_snapshot_path).players if ownership_snapshot_path else None
@@ -180,17 +221,22 @@ def game_blocks_endpoint(
     games = sorted(game_options_by_key.values(), key=lambda g: g.label)
 
     if games_only:
-        return GameBlocksResult(blocks=[], games=games, skipped_games=[])
+        return GameBlocksResult(blocks=[], games=games, skipped_games=[], max_onslaught_salary=max_onslaught_salary)
 
     pool = eligible_players
+    qb_pool = [p for p in players if p.position == GAME_BLOCK_QB_POSITION]
     if team:
         team_set = set(team)
         pool = [p for p in pool if p.team in team_set]
+        qb_pool = [p for p in qb_pool if p.team in team_set]
     if game:
         selected_game_keys = {frozenset(g.split("-")) for g in game}
         pool = [p for p in pool if game_key(p) in selected_game_keys]
+        qb_pool = [p for p in qb_pool if game_key(p) in selected_game_keys]
 
-    blocks, skipped_game_keys = compute_game_blocks(pool, max_size=max_size)
+    blocks, skipped_game_keys = compute_game_blocks(pool + qb_pool, max_size=max_size, include_qb=include_qb)
+    if max_onslaught_salary is not None:
+        blocks = filter_game_blocks_by_max_salary(blocks, max_onslaught_salary)
     try:
         blocks = filter_game_blocks_by_salary_buckets(blocks, salary_bucket, cap)
         blocks = filter_by_primary_size(blocks, primary_size)
@@ -203,4 +249,6 @@ def game_blocks_endpoint(
         for key in skipped_game_keys
     ]
 
-    return GameBlocksResult(blocks=blocks, games=games, skipped_games=skipped_games)
+    return GameBlocksResult(
+        blocks=blocks, games=games, skipped_games=skipped_games, max_onslaught_salary=max_onslaught_salary
+    )

@@ -1,0 +1,57 @@
+{
+  "season": 2026,
+  "week": 3,
+  "scraped_at": "2026-09-26T08:14:23-04:00",
+  "games": [
+    {
+      "away_name": "Carolina Panthers",
+      "home_name": "Cleveland Browns",
+      "away_team": "CAR",
+      "home_team": "CLE",
+      "game_key": "CAR-CLE",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Sustained winds 10-15mph, gusts around 20mph. It's worth a note, but I don't think it has any real impact on the game."
+    },
+    {
+      "away_name": "Cincinnati Bengals",
+      "home_name": "Pittsburgh Steelers",
+      "away_team": "CIN",
+      "home_team": "PIT",
+      "game_key": "CIN-PIT",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Dry. Winds around 10-15mph sustained with 20mph gusts. This isn't \"ideal\", but it's not enough to make fantasy swaps. Slim to no impacts, don't overthink it."
+    },
+    {
+      "away_name": "Tennessee Titans",
+      "home_name": "New York Giants",
+      "away_team": "TEN",
+      "home_team": "NYG",
+      "game_key": "NYG-TEN",
+      "kickoff_label": "1:00 PM ET",
+      "color": "orange",
+      "note": "While the forecast here isn't set in stone, I would say the impact has been trending up with recent model runs. A Nor'easter is set to impact the Mid-Atlantic and Northeast, bringing a fairly widespread swath of wind and rain. For this game specifically, I think rain is highly likely, potentially a steady rain all game long. Wind speeds have also been trending up, and could come in at roughly 15-20mph sustained, with gusts over 30mph. That combo of wind and rain certainly has the ability to impact offense and special teams. I'll keep a watch on things here and update the forecast daily."
+    },
+    {
+      "away_name": "Seattle Seahawks",
+      "home_name": "Washington Commanders",
+      "away_team": "SEA",
+      "home_team": "WAS",
+      "game_key": "SEA-WAS",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "The Nor'easter has been trending a bit farther south, which means we are more likely to see some impacts in DC (Landover, MD to be more specific). Rain is increasingly likely, with sustained winds around 15mph and gusts 25-30? Current thinking is that it's not quite as impactful as the NYG game, but it's looking increasingly likely to be wet and breezy."
+    },
+    {
+      "away_name": "Baltimore Ravens",
+      "home_name": "Dallas Cowboys",
+      "away_team": "BAL",
+      "home_team": "DAL",
+      "game_key": "BAL-DAL",
+      "kickoff_label": "4:25 PM ET",
+      "color": "green",
+      "note": "Admittedly not exactly in my forecast wheelhouse in Rio De Janeiro, but I think the weather here likely turns out fine. There's a slim (10-20%) chance of a shower, with winds around 10mph. I don't have a live radar or high-res forecast models to look at here, but I'll keep up as best I can with the limited resources available."
+    }
+  ]
+}

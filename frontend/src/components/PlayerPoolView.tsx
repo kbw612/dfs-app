@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   applyVegasLines,
   calculateOwnershipScores,
+  calculateWeatherScores,
   fetchMyPlayerPool,
   fetchPlayerPool,
   resetMatchupToTeamFactor,
@@ -19,6 +20,7 @@ import {
   SALARY_VALUE_NOTES,
   TALENT_EXPLOSIVENESS_NOTES,
   VOLUME_OPPORTUNITIES_NOTES,
+  WEATHER_NOTES,
 } from "./scoringNotes";
 
 // Same "alphabetically-sorted TEAM1-TEAM2" convention as
@@ -46,7 +48,14 @@ function vegasLineNotes(entry: GameEnvironmentEntry | undefined): string[] {
   return [`${entry.away_team} (${away}) at ${entry.home_team} (${home})`, `Over/Under ${ou}`];
 }
 
-type ScoreFieldKey = "game_environment" | "game_matchup" | "ownership" | "volume" | "talent" | "salary_value";
+type ScoreFieldKey =
+  | "game_environment"
+  | "game_matchup"
+  | "ownership"
+  | "volume"
+  | "talent"
+  | "salary_value"
+  | "weather";
 
 interface ScoreFieldConfig {
   key: ScoreFieldKey;
@@ -73,6 +82,7 @@ const DST_SCORE_FIELDS: ScoreFieldConfig[] = [
   { key: "game_matchup", label: "Matchup" },
   { key: "ownership", label: "Ownership" },
   { key: "salary_value", label: "Salary value" },
+  { key: "weather", label: "Weather" },
 ];
 
 function scoreFieldsForPosition(position: string): ScoreFieldConfig[] {
@@ -178,6 +188,7 @@ function buildEditValues(row: PlayerPoolPlayer): EditValues {
     volume: scoreToInputValue(row.volume),
     talent: scoreToInputValue(row.talent),
     salary_value: scoreToInputValue(row.salary_value),
+    weather: scoreToInputValue(row.weather),
   };
 }
 
@@ -210,6 +221,8 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
   const [gameEnvUpdateMessage, setGameEnvScrapeMessage] = useState<string | null>(null);
   const [ownershipUpdating, setOwnershipUpdating] = useState(false);
   const [ownershipUpdateMessage, setOwnershipUpdateMessage] = useState<string | null>(null);
+  const [weatherUpdating, setWeatherUpdating] = useState(false);
+  const [weatherUpdateMessage, setWeatherUpdateMessage] = useState<string | null>(null);
   const [salaryValueResetMessage, setSalaryValueResetMessage] = useState<string | null>(null);
   const [matchupResetting, setMatchupResetting] = useState(false);
   const [matchupResetMessage, setMatchupResetMessage] = useState<string | null>(null);
@@ -337,6 +350,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
         game_matchup: inputValueToScore(values.game_matchup),
         ownership: inputValueToScore(values.ownership),
         salary_value: inputValueToScore(values.salary_value),
+        weather: inputValueToScore(values.weather),
         volume: inputValueToScore(values.volume),
         talent: inputValueToScore(values.talent),
       });
@@ -508,6 +522,28 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
     }
   }
 
+  // Same shape as handleCalculateOwnershipScores -- bulk-computes and saves
+  // every DST's Weather score from its own game's current Weather note (see
+  // backend/api/player_pool/calculate_weather_scores.py), then reloads so
+  // the grid picks up the freshly-saved values.
+  async function handleCalculateWeatherScores() {
+    setWeatherUpdating(true);
+    setWeatherUpdateMessage(null);
+    try {
+      const result = await calculateWeatherScores(season, week, platform, contest);
+      setWeatherUpdateMessage(
+        result.skipped_count > 0
+          ? `Updated ${result.applied_count} DSTs (${result.skipped_count} skipped -- no notable weather this week).`
+          : `Updated ${result.applied_count} DSTs.`
+      );
+      load();
+    } catch (err) {
+      setWeatherUpdateMessage(err instanceof Error ? err.message : "Failed to calculate Weather scores");
+    } finally {
+      setWeatherUpdating(false);
+    }
+  }
+
   // Bulk-resets every currently-loaded DST's Salary value to
   // suggestedSalaryValue(row.salary) -- same "one click, every row"
   // convention as handleApplyVegasLines/handleCalculateOwnershipScores
@@ -627,6 +663,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                 pattern. */}
             {gameEnvUpdateMessage && <p className="hint">{gameEnvUpdateMessage}</p>}
             {ownershipUpdateMessage && <p className="hint">{ownershipUpdateMessage}</p>}
+            {weatherUpdateMessage && <p className="hint">{weatherUpdateMessage}</p>}
             {salaryValueResetMessage && <p className="hint">{salaryValueResetMessage}</p>}
             {matchupResetMessage && <p className="hint">{matchupResetMessage}</p>}
             {visiblePlayers.length === 0 ? (
@@ -687,6 +724,11 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                             ) : f.key === "ownership" ? (
                               <>
                                 Ownership
+                                <br />
+                              </>
+                            ) : f.key === "weather" ? (
+                              <>
+                                Weather
                                 <br />
                               </>
                             ) : (
@@ -762,6 +804,19 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                                 ↻
                               </button>
                             )}
+                            {f.key === "weather" && (
+                              <button
+                                type="button"
+                                className="header-refresh-icon"
+                                disabled={weatherUpdating}
+                                onClick={handleCalculateWeatherScores}
+                                aria-label={weatherUpdating ? "Updating…" : "Calculate from Weather tab"}
+                                title={weatherUpdating ? "Updating…" : "Calculate from Weather tab"}
+                              >
+                                ↻
+                              </button>
+                            )}
+                            {f.key === "weather" && <HeaderInfoPopover title={f.label} lines={WEATHER_NOTES} />}
                           </span>
                         </th>
                       ))}

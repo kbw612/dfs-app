@@ -1,12 +1,13 @@
 """
-Game Logs -- for every player currently rostered at QB/RB/WR/TE (per the
-DK Players tracker's most recent snapshot week), their own recent-weeks
+Game Logs -- for every player currently rostered at QB/RB/WR/TE/DST (per
+the DK Players tracker's most recent snapshot week), their own recent-weeks
 scoring history, enriched with schedule (Opponent/GameLoc), usage
-(Touches/Targets/Receptions/Receiving Yards/Rush Att/Rush Yards, Target
-Share %/Touch Share %), and -- QB only -- their own passing line (Cmp/
-Att/Cmp%/Yds/Avg/TD/Int/Sck/Rtg) data. See backend/services/game_logs/
-game_logs_engine.py for how every field here is derived -- this module is
-just the response shapes.
+(Touches/Targets/Receptions/Receiving Yards/Rec TD/Rush Att/Rush Yards/
+Rush TD, Target Share %/Touch Share %), -- QB only -- their own passing
+line (Cmp/Att/Cmp%/Yds/Avg/TD/Int/Sck/Rtg), and -- DST only -- their own
+sacks (recorded, not taken -- see this module's own `sacks` field) data.
+See backend/services/game_logs/game_logs_engine.py for how every field
+here is derived -- this module is just the response shapes.
 """
 
 from __future__ import annotations
@@ -36,17 +37,20 @@ class GameLogRow(BaseModel):
     non_td_fpts_pct: float | None
     td_fpts: float
     td_fpts_pct: float | None
-    # These five are None (not 0) for a position whose FantasyData file
-    # simply doesn't carry that stat -- QB has no targets/receptions/
-    # receiving_yards column at all (see weekly_stats_loader.py's
+    # These are None (not 0) for a position whose FantasyData file simply
+    # doesn't carry that stat -- QB has no targets/receptions/
+    # receiving_yards/rec_td columns at all (see weekly_stats_loader.py's
     # _USAGE_STAT_COLUMNS) -- rather than a real 0 for "attempted but
-    # caught nothing."
+    # caught nothing." rush_td IS present for QB (its file carries
+    # RUSHING_TD too, same as RB/WR/TE) -- only rec_td is receiving-only.
     touches: int | None
     targets: int | None
     receptions: int | None
     receiving_yards: int | None
+    rec_td: int | None
     rush_att: int | None
     rush_yards: int | None
+    rush_td: int | None
     # Read straight off the FantasyData file's own TGT_SHARE/TOUCH_SHARE/
     # OPP_SHARE columns, same as touches/targets/etc. above -- written once
     # per week by the "Calc Week Points" action (see backend/services/shared/
@@ -72,6 +76,13 @@ class GameLogRow(BaseModel):
     pass_int: int | None
     pass_sck: int | None
     pass_rtg: float | None
+    # DST's own sacks *recorded* -- always None for every other position
+    # (same "not applicable" convention as pass_cmp/etc. above for non-QBs).
+    # Deliberately its own field rather than reusing pass_sck: that field is
+    # sacks *taken* by a QB, a different stat with the opposite meaning --
+    # see weekly_stats_scraper.py's _DST_HEADER_MAP comment for why the two
+    # are even stored under different CSV column names.
+    sacks: int | None
 
 
 class GameOption(BaseModel):

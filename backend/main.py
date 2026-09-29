@@ -33,8 +33,12 @@ from backend.api.depth_charts import router as depth_charts_router
 from backend.api.dk_players import router as dk_players_router
 from backend.api.dk_salary import router as dk_salary_router
 from backend.api.game_environment import router as game_environment_router
+from backend.api.dst_trends import router as dst_trends_router
+from backend.api.game_preview import router as game_preview_router
 from backend.api.game_logs import router as game_logs_router
 from backend.api.game_logs_against import router as game_logs_against_router
+from backend.api.injury_report import router as injury_report_router
+from backend.api.lineup_scenarios import router as lineup_scenarios_router
 from backend.api.multipliers import router as multipliers_router
 from backend.api.my_player_pool import router as my_player_pool_router
 from backend.api.name_aliases import router as name_aliases_router
@@ -45,6 +49,7 @@ from backend.api.player_pool import router as player_pool_router
 from backend.api.player_selection import router as player_selection_router
 from backend.api.salary_multiplier import router as salary_multiplier_router
 from backend.api.schedule import router as schedule_router
+from backend.api.star_players import router as star_players_router
 from backend.api.team_factors import router as team_factors_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.api.usage_bump.players import router as usage_bump_players_router
@@ -83,7 +88,12 @@ app.include_router(game_logs_router, prefix="/api")
 app.include_router(game_logs_against_router, prefix="/api")
 app.include_router(team_factors_router, prefix="/api")
 app.include_router(multipliers_router, prefix="/api")
+app.include_router(dst_trends_router, prefix="/api")
+app.include_router(game_preview_router, prefix="/api")
 app.include_router(weather_router, prefix="/api")
+app.include_router(star_players_router, prefix="/api")
+app.include_router(injury_report_router, prefix="/api")
+app.include_router(lineup_scenarios_router, prefix="/api")
 
 
 @app.get("/health")

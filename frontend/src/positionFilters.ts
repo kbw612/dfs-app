@@ -54,8 +54,9 @@ export function positionsForFilter(label: string): Set<string> | null {
 }
 
 // Union of positionsForFilter() across several selected preset labels --
-// used by the Usage Bump Players page, whose position filter is
-// multi-select (unlike the single-select one on the Compare page).
+// used by the Injury Report tab, whose Position Group and Position filters
+// are both multi-select chip rows (unlike the single-select dropdown on the
+// Compare and Depth Charts pages).
 export function positionsForFilters(labels: Iterable<string>): Set<string> {
   const result = new Set<string>();
   for (const label of labels) {

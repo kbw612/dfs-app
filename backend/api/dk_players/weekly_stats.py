@@ -1,14 +1,14 @@
 """
 POST /weekly-stats/scrape?season=&week=, and
 GET /weekly-stats/file-info?season=&week= (mounted at
-/api/dk-players/weekly-stats/...). The 4 per-position FantasyData stat
-files (QB/RB/WR/TE) that feed calculate-week-points -- see
+/api/dk-players/weekly-stats/...). The 5 per-position FantasyData stat
+files (QB/RB/WR/TE/DST) that feed calculate-week-points -- see
 backend/repositories/dk_players/weekly_stats_repo.py for the season-long,
 one-file-per-position storage model. Scrape is the only way these files
 get populated (see backend/services/dk_players/weekly_stats_scraper.py,
 no login required) -- there used to also be a manual CSV-upload endpoint
 here as a backup, removed since the person always uses Scrape. file-info
-reports all 4 positions' status at once so Settings can show a single
+reports all 5 positions' status at once so Settings can show a single
 combined panel, and is also what the frontend calls before a scrape to
 decide whether to show an overwrite-confirmation prompt (a position's
 season file can already exist from an earlier week, so "already has this
@@ -34,7 +34,7 @@ from backend.services.dk_players.weekly_stats_scraper import WeeklyStatsScrapeEr
 
 router = APIRouter()
 
-_POSITIONS: list[Position] = ["QB", "RB", "WR", "TE"]
+_POSITIONS: list[Position] = ["QB", "RB", "WR", "TE", "DST"]
 
 
 class WeeklyStatsFileStatus(BaseModel):
@@ -94,10 +94,10 @@ class WeeklyStatsScrapeResult(BaseModel):
 
 @router.post("/weekly-stats/scrape", response_model=WeeklyStatsScrapeResult)
 def scrape_weekly_stats_endpoint(season: int, week: int) -> WeeklyStatsScrapeResult:
-    """Scrapes all 4 positions from FantasyData and merges each one that
+    """Scrapes all 5 positions from FantasyData and merges each one that
     succeeds into that position's season file -- a failure on one
     position (network error, site markup changed, etc.) is recorded in
-    that position's `error` field rather than aborting the other 3.
+    that position's `error` field rather than aborting the other 4.
     Always overwrites `week`'s own rows if they already exist (leaving
     every other week's rows alone) -- the frontend is responsible for
     confirming that with the user first (via GET /weekly-stats/file-info's

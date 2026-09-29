@@ -38,6 +38,17 @@ game's roster shouldn't block seeing every other game's blocks or even
 populate the game-filter chips at all -- narrowing by team or game is how
 you'd bring that one game back under the cap, not a prerequisite for
 using this endpoint at all.
+
+`include_qb` (default False here; the API layer's own default is True --
+see backend/api/ownership/game_blocks.py) adds exactly one QB from either
+team in the game on top of each RB/WR/TE combination -- an extra slot, not
+counted against `min_size`/`max_size`. When more than one QB is eligible
+for a game (one per team), a separate block is generated per QB candidate,
+same "every combination, not just one pick" philosophy as the RB/WR/TE
+side. A game with zero eligible QBs simply produces no blocks at all while
+`include_qb` is on (not a `skipped_games` case -- same class as a game
+whose eligible pool never resolved to both teams, see the <2-teams check
+below).
 """
 
 from __future__ import annotations
@@ -52,6 +63,12 @@ MIN_GAME_BLOCK_SIZE = 2
 MAX_GAME_BLOCK_SIZE = 5
 
 GAME_BLOCK_POSITIONS = {"RB", "WR", "TE"}
+
+# The one position `include_qb` adds on top of GAME_BLOCK_POSITIONS -- kept
+# as its own constant (not folded into GAME_BLOCK_POSITIONS) since a QB is
+# always exactly one extra slot per block, never part of the RB/WR/TE
+# combination sizing (see this module's docstring).
+GAME_BLOCK_QB_POSITION = "QB"
 
 # Deliberately much higher than position_blocks.py's MAX_BLOCKS_SAFETY_CAP
 # (2,000) -- that cap was tuned for a single position's players at one
@@ -92,7 +109,12 @@ def _to_game_block(combo: tuple[OwnershipPlayer, ...]) -> GameBlock:
     else:
         primary_team, primary_count, bringback_team, bringback_count = team_b, count_b, team_a, count_a
 
-    players = sorted(combo, key=lambda p: p.salary, reverse=True)
+    # QB (when include_qb added one) always shown first, regardless of
+    # salary -- it's a distinct "extra slot" on top of the RB/WR/TE combo
+    # (see this module's docstring), so it reads better pinned to the top
+    # rather than sorted in wherever its salary happens to land. Everyone
+    # else keeps the existing highest-salary-first order.
+    players = sorted(combo, key=lambda p: (p.position != GAME_BLOCK_QB_POSITION, -p.salary))
     return GameBlock(
         players=players,
         total_salary=sum(p.salary for p in players),
@@ -108,12 +130,18 @@ def compute_game_blocks(
     players: list[OwnershipPlayer],
     min_size: int = MIN_GAME_BLOCK_SIZE,
     max_size: int = MAX_GAME_BLOCK_SIZE,
+    include_qb: bool = False,
 ) -> tuple[list[GameBlock], list[frozenset[str]]]:
     """(blocks, skipped_games). `players` should already be filtered to
     whatever team/game the caller wants (this module doesn't apply any of
     its own team/game filtering beyond bucketing by game) -- this only
     decides how to group the RB/WR/TE pool into both-teams-represented
     combinations.
+
+    `include_qb` (see this module's docstring) adds one QB from either
+    team in the game as an extra slot on top of each RB/WR/TE combination
+    -- `players` should include QB rows too when this is True (they're
+    otherwise ignored, same as DST already is).
 
     skipped_games is every game whose own combination count exceeded
     MAX_GAME_BLOCKS_SAFETY_CAP -- that one game is left out of `blocks`
@@ -125,6 +153,12 @@ def compute_game_blocks(
     games: dict[frozenset[str], list[OwnershipPlayer]] = {}
     for p in eligible:
         games.setdefault(game_key(p), []).append(p)
+
+    qbs_by_game: dict[frozenset[str], list[OwnershipPlayer]] = {}
+    if include_qb:
+        for p in players:
+            if p.position == GAME_BLOCK_QB_POSITION:
+                qbs_by_game.setdefault(game_key(p), []).append(p)
 
     blocks: list[GameBlock] = []
     skipped_games: list[frozenset[str]] = []
@@ -141,8 +175,17 @@ def compute_game_blocks(
         if len(team_counts) < 2:
             continue
 
+        # With include_qb on, a game with no eligible QB at all can't
+        # produce a single block (every block now requires one) -- same
+        # "no blocks, not a safety-cap skip" treatment as the <2-teams
+        # case just above, not `skipped_games`.
+        game_qbs = qbs_by_game.get(key, [])
+        if include_qb and not game_qbs:
+            continue
+
         sizes = [k for k in range(min_size, max_size + 1) if k <= len(game_players)]
-        total_combos = sum(_both_teams_combo_count(team_counts, k) for k in sizes)
+        qb_multiplier = len(game_qbs) if include_qb else 1
+        total_combos = sum(_both_teams_combo_count(team_counts, k) for k in sizes) * qb_multiplier
         if total_combos > MAX_GAME_BLOCKS_SAFETY_CAP:
             skipped_games.append(key)
             continue
@@ -151,7 +194,11 @@ def compute_game_blocks(
             for combo in combinations(game_players, k):
                 if len({p.team for p in combo}) < 2:
                     continue
-                blocks.append(_to_game_block(combo))
+                if include_qb:
+                    for qb in game_qbs:
+                        blocks.append(_to_game_block(combo + (qb,)))
+                else:
+                    blocks.append(_to_game_block(combo))
 
     blocks.sort(key=lambda b: b.total_salary, reverse=True)
     return blocks, skipped_games
@@ -176,6 +223,18 @@ def filter_by_primary_size(blocks: list[GameBlock], sizes: list[int]) -> list[Ga
         return blocks
     size_set = set(sizes)
     return [b for b in blocks if b.primary_count in size_set]
+
+
+def filter_game_blocks_by_max_salary(blocks: list[GameBlock], max_salary: int) -> list[GameBlock]:
+    """Keeps only blocks whose own combined salary leaves at least enough
+    room under the cap for the rest of a real lineup -- specifically, the
+    caller passes `max_salary = cap - cheapest_dst_salary_on_the_slate`
+    (see backend/api/ownership/game_blocks.py), since every Onslaught
+    block still needs a DST added on top of it to become a real lineup, and
+    there's no point surfacing a block that can never actually fit one.
+    Inclusive (<=) -- a block landing exactly on that boundary still leaves
+    exactly enough room."""
+    return [b for b in blocks if b.total_salary <= max_salary]
 
 
 def filter_game_blocks_by_salary_buckets(blocks: list[GameBlock], bucket_ids: list[str], cap: int) -> list[GameBlock]:

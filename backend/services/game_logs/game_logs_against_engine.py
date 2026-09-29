@@ -130,8 +130,10 @@ def build_game_logs_against_rows(
                     targets=stat_line.get("targets"),
                     receptions=stat_line.get("receptions"),
                     receiving_yards=stat_line.get("receiving_yards"),
+                    rec_td=stat_line.get("rec_td"),
                     rush_att=stat_line.get("rush_att"),
                     rush_yards=stat_line.get("rush_yards"),
+                    rush_td=stat_line.get("rush_td"),
                     target_share_pct=stat_line.get("target_share_pct"),
                     touch_share_pct=stat_line.get("touch_share_pct"),
                     opp_share_pct=stat_line.get("opp_share_pct"),
@@ -144,6 +146,7 @@ def build_game_logs_against_rows(
                     pass_int=stat_line.get("pass_int"),
                     pass_sck=stat_line.get("pass_sck"),
                     pass_rtg=stat_line.get("pass_rtg"),
+                    sacks=stat_line.get("sacks"),
                 )
             )
     return rows

@@ -87,6 +87,7 @@ from backend.services.my_player_pool.engine import in_my_player_pool
 from backend.services.ownership.position_blocks import (
     SALARY_CAPS,
     compute_position_blocks,
+    filter_blocks_by_max_salary,
     filter_blocks_by_salary_buckets,
     filter_blocks_by_same_team_size,
     game_key,
@@ -107,6 +108,13 @@ class GameOption(BaseModel):
 class PositionBlocksResult(BaseModel):
     blocks: list[PositionBlock]
     games: list[GameOption]
+    # cap - cheapest_dst_salary_this_contest -- every block in `blocks`
+    # already has total_salary <= this (see position_blocks.py's
+    # filter_blocks_by_max_salary), same rule as Onslaught blocks (see
+    # backend/api/ownership/game_blocks.py) -- a Position block still needs
+    # a DST (and the rest of a real lineup) added on top. None only when
+    # this contest's own salary file has no DST rows at all.
+    max_block_salary: int | None = None
 
 
 @router.get("/position-blocks", response_model=PositionBlocksResult)
@@ -148,6 +156,14 @@ def position_blocks_endpoint(
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
 
+    # Same "cheapest DST on the contest" rule as Onslaught blocks (see
+    # backend/api/ownership/game_blocks.py's own docstring/comment) --
+    # straight off the raw salary file, not narrowed by Player Selection/
+    # My Player Pool. None only when this contest's salary file has no DST
+    # rows at all, in which case the cap is skipped entirely.
+    dst_salaries = [p.salary for p in salary_snapshot.players if p.position == "DST"]
+    max_block_salary = cap - min(dst_salaries) if dst_salaries else None
+
     ownership_snapshot_path = find_latest_ownership_snapshot(settings.ownership_snapshots_dir, season=season, week=week)
     ownership_players = load_ownership_snapshot(ownership_snapshot_path).players if ownership_snapshot_path else None
     players = enrich_with_ownership_pct(salary_snapshot.players, ownership_players)
@@ -182,9 +198,11 @@ def position_blocks_endpoint(
 
     try:
         blocks = compute_position_blocks(pool, block_size, same_game_only)
+        if max_block_salary is not None:
+            blocks = filter_blocks_by_max_salary(blocks, max_block_salary)
         blocks = filter_blocks_by_salary_buckets(blocks, salary_bucket, cap)
         blocks = filter_blocks_by_same_team_size(blocks, same_team_size)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return PositionBlocksResult(blocks=blocks, games=games)
+    return PositionBlocksResult(blocks=blocks, games=games, max_block_salary=max_block_salary)

@@ -2,7 +2,7 @@
 GET /game-logs?season=&week=&platform=&lookback_weeks= (mounted at
 /api/game-logs -- see backend/api/game_logs/__init__.py). Backs the Game
 Logs tab -- see backend/services/game_logs/game_logs_engine.py for the
-full computation. Returns every QB/RB/WR/TE currently rostered (per the
+full computation. Returns every QB/RB/WR/TE/DST currently rostered (per the
 DK Players tracker) league-wide, not scoped to a single team/game --
 same convention as every other tab's Position filter (My Player Pool,
 Ownership Summary, ...), where the frontend's own Team/Game chip filters

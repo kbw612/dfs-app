@@ -11,14 +11,14 @@ as add_week.py's own docstring (DK Players tracks every player on the
 week's full slate, and "All Games" is the only contest guaranteed to cover
 all of them), regardless of whatever contest happens to be selected in
 Settings. 404 if it isn't uploaded yet, since FPTS/%Drafted have no other
-source. The 4 FantasyData stat files (QB/RB/WR/TE, populated by Scrape --
-see backend/repositories/dk_players/weekly_stats_repo.py) are read
+source. The 5 FantasyData stat files (QB/RB/WR/TE/DST, populated by Scrape
+-- see backend/repositories/dk_players/weekly_stats_repo.py) are read
 individually and any that are simply missing just contribute no TD data
 (that position's players show up in the result's missing_stat_files
 instead of failing the whole request).
 
 This same request also computes TGTSHARE/TOUCHSHARE/OPPSHARE from those
-same 4 files (backend/services/shared/usage_shares.py) and writes them
+same 5 files (backend/services/shared/usage_shares.py) and writes them
 back onto the files themselves as TGT_SHARE/TOUCH_SHARE/OPP_SHARE columns
 (weekly_stats_repo's write_usage_share_columns) -- reusing `stats_csvs`,
 which this endpoint already has to load for TD_FPTS. This is independent
@@ -48,7 +48,7 @@ from backend.services.shared.usage_shares import compute_usage_share_updates
 
 router = APIRouter()
 
-_POSITIONS = ["QB", "RB", "WR", "TE"]
+_POSITIONS = ["QB", "RB", "WR", "TE", "DST"]
 
 # DK Players always draws from the "All Games" contest's files -- see this
 # module's docstring for why.

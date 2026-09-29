@@ -7,7 +7,11 @@ before setting this week's lineup, not to preview the upcoming week),
 plus that same player's own Multiplier from each of the `trailing_weeks`
 weeks before the base week (5 by default) -- a compact way to eyeball a
 player's recent multiplier trend without opening Game Logs for every one
-of them individually.
+of them individually. Also computes a `non_td_multiplier` alongside every
+`multiplier` (base row and each trailing week) -- the same fpts/salary
+formula but run against non_td_fpts instead, so the frontend's Breakout
+Watch panel can track a player's TD-variance-stripped value trend without
+needing to recompute it from salary/non_td_fpts client-side.
 
 Mirrors game_logs_engine.py's own conventions closely (same
 "tracker + Schedule + contest_teams" inputs, same multiplier()/
@@ -94,6 +98,10 @@ def build_multiplier_rows(
                 TrailingMultiplier(
                     week=trailing_week,
                     multiplier=_multiplier(trailing_row.fpts, trailing_row.salary) if trailing_row else None,
+                    non_td_multiplier=(
+                        _multiplier(trailing_row.non_td_fpts, trailing_row.salary) if trailing_row else None
+                    ),
+                    td_fpts=trailing_row.td_fpts if trailing_row else None,
                 )
             )
 
@@ -107,6 +115,7 @@ def build_multiplier_rows(
                 opponent=opponent,
                 game_location=game_location,  # type: ignore[arg-type]
                 multiplier=_multiplier(base.fpts, base.salary),
+                non_td_multiplier=_multiplier(base.non_td_fpts, base.salary),
                 fpts=base.fpts,
                 non_td_fpts=base.non_td_fpts,
                 non_td_fpts_pct=_pct(base.non_td_fpts, base.fpts),

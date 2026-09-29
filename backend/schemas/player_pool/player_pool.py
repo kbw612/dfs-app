@@ -88,6 +88,14 @@ class PlayerPoolEntry(BaseModel):
     # apply to DST too, just with its own breakpoints -- see
     # backend/services/ownership/scoring.py's score_dst_ownership_pct.)
     salary_value: _Score = _score_field()
+    # DST-only, same "expected re-entered fresh, no carry-forward" shape as
+    # game_matchup/ownership/salary_value above -- None here means "not
+    # explicitly saved this week," resolved at read time to whatever that
+    # DST's own game's Weather note suggests, or a neutral 2.0 with no
+    # notable weather at all (see backend/services/weather/scoring.py's
+    # score_weather_color and services/player_pool/engine.py's
+    # _resolve_direct_scores).
+    weather: _Score = _score_field()
     # None here means "no explicit save for this exact week" -- falls back
     # to the player's Player Default, then to a neutral 2.0, purely at read
     # time (see this module's docstring and services/player_pool/
@@ -151,6 +159,12 @@ class PlayerPoolPlayer(BaseModel):
     volume: _Score = None
     talent: _Score = None
     salary_value: _Score = None
+    # DST-only -- the effective value counted in `total` (an explicit
+    # override if saved, otherwise score_weather_color()'s own suggestion
+    # from that DST's game's Weather note, which itself defaults to a
+    # neutral 2.0 with no notable weather). See PlayerPoolEntry.weather's
+    # own docstring.
+    weather: _Score = None
 
     # Player Rankings' "Expected FPTS" column -- multiplier * salary / 1000
     # (see backend/services/salary_multiplier/engine.py), using whichever

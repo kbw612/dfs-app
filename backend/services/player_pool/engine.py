@@ -78,30 +78,40 @@ from backend.repositories.name_aliases.name_aliases_repo import load_name_aliase
 from backend.repositories.player_defaults.defaults_repo import load_defaults_for_season
 from backend.repositories.player_pool.entries_repo import load_entries_for_week
 from backend.repositories.team_factors.team_factors_repo import load_factors_for_season
+from backend.repositories.weather.weather_repo import load_weather
 from backend.schemas.game_environment.game_environment import GameEnvironmentEntry
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.schemas.player_pool.player_pool import GameOption, PlayerPoolEntry, PlayerPoolPlayer, PlayerPoolResult
 from backend.schemas.team_factors.team_factors import TeamFactorEntry
+from backend.schemas.weather.weather import WeatherGame
 from backend.services.game_environment.scoring import score_game_environment, team_implied_total
 from backend.services.ownership.position_blocks import game_key, game_label
 from backend.services.salary_multiplier.engine import expected_fantasy_points
 from backend.services.shared.name_match import name_lookup_candidates
+from backend.services.weather.scoring import score_weather_color
 
 # Every score field Player Pool saves directly, except game_environment
 # (handled separately -- see _resolve_game_environment) since it blends an
 # override with a formula-derived suggestion rather than just starting
 # blank or defaulting.
-_DIRECT_SCORE_FIELDS = ["game_matchup", "ownership", "salary_value", "volume", "talent"]
+_DIRECT_SCORE_FIELDS = ["game_matchup", "ownership", "salary_value", "weather", "volume", "talent"]
 
 # Fields that start a new week at a neutral 2.0 (the midpoint of the
 # 1.0-3.0 scale) instead of blank, until explicitly scored that week --
 # for Volume/Talent this is the last-resort fallback, checked only after
 # that player's own Player Default (see _resolve_direct_scores); for Game
-# Matchup/Ownership/Salary Value it's the only fallback, since they have
-# no per-player Default concept. Every _DIRECT_SCORE_FIELDS entry defaults
-# this way now (Salary Value used to be a deliberate exception, staying
-# blank until explicitly scored -- that's no longer the case).
-_DEFAULT_SCORE_FIELDS = {"game_matchup": 2.0, "ownership": 2.0, "volume": 2.0, "talent": 2.0, "salary_value": 2.0}
+# Matchup/Ownership/Salary Value/Weather it's the only fallback, since they
+# have no per-player Default concept. Every _DIRECT_SCORE_FIELDS entry
+# defaults this way now (Salary Value used to be a deliberate exception,
+# staying blank until explicitly scored -- that's no longer the case).
+_DEFAULT_SCORE_FIELDS = {
+    "game_matchup": 2.0,
+    "ownership": 2.0,
+    "volume": 2.0,
+    "talent": 2.0,
+    "salary_value": 2.0,
+    "weather": 2.0,
+}
 # Same neutral 2.0 midpoint as the fields above -- Game Environment used
 # to live on its own 0.0-1.0 scale (0.5 default) but now shares the
 # 1.0-3.0 scale every other field uses (see backend/services/
@@ -111,17 +121,19 @@ _DEFAULT_SCORE_FIELDS = {"game_matchup": 2.0, "ownership": 2.0, "volume": 2.0, "
 _DEFAULT_GAME_ENVIRONMENT = 2.0
 
 # Which fields actually apply to a position -- DSTs use Game Matchup,
-# Ownership, and Salary Value (no Volume/Talent/Game Environment concept
-# for a defense, per the rules this was built from). Ownership uses its
-# own DST-specific breakpoints (see backend/services/ownership/scoring.py's
-# score_dst_ownership_pct) even though it shares the same `ownership`
-# field/column as offense. This gates defaulting and totaling alike: a
-# field that isn't in a position's set stays None unconditionally, the
-# same as if it were never asked about, rather than picking up a stray
+# Ownership, Salary Value, and Weather (no Volume/Talent/Game Environment
+# concept for a defense, per the rules this was built from; Weather is
+# DST-only too -- rough weather is a defense/special-teams signal, not an
+# offensive-skill-position one, per how this was scoped). Ownership uses
+# its own DST-specific breakpoints (see backend/services/ownership/
+# scoring.py's score_dst_ownership_pct) even though it shares the same
+# `ownership` field/column as offense. This gates defaulting and totaling
+# alike: a field that isn't in a position's set stays None unconditionally,
+# the same as if it were never asked about, rather than picking up a stray
 # default value that would silently inflate that position's total without
 # ever appearing in its UI (see PlayerPoolView.tsx's
 # scoreFieldsForPosition, which this mirrors).
-_DST_FIELDS = {"game_matchup", "ownership", "salary_value"}
+_DST_FIELDS = {"game_matchup", "ownership", "salary_value", "weather"}
 _OFFENSE_FIELDS = {"game_environment", "game_matchup", "ownership", "volume", "talent"}
 
 
@@ -203,6 +215,23 @@ def _resolve_team_factor_default(
     return entry.factor if entry is not None else None
 
 
+def _resolve_weather_default(
+    game_id: str, weather_by_key: dict[str, WeatherGame]
+) -> float | None:
+    """The suggested Weather value for whichever game `game_id` names --
+    score_weather_color() applied to that game's own Weather note, or None
+    if this game has no notable-weather note at all this week (the common
+    case -- see WeatherGame's own docstring: only games someone actually
+    flagged appear here). None here just means _resolve_direct_scores' own
+    generic fallback chain continues on to the flat 2.0 in
+    _DEFAULT_SCORE_FIELDS, same as a game with no Team Default Factor set
+    falls through for Game Matchup."""
+    game = weather_by_key.get(game_id)
+    if game is None:
+        return None
+    return score_weather_color(game.color)
+
+
 def _resolve_game_environment(
     player: OwnershipPlayer, saved_entry: PlayerPoolEntry | None, game_env_entry: GameEnvironmentEntry | None
 ) -> tuple[float | None, float | None, float | None]:
@@ -266,6 +295,8 @@ def compute_player_pool(
     # (Team Default Factors, keyed by (team, position) instead of player).
     defaults_by_player = load_defaults_for_season(nfl_data_dir, season)
     team_factors_by_key = load_factors_for_season(nfl_data_dir, season)
+    weather = load_weather(nfl_data_dir, season, week)
+    weather_by_key: dict[str, WeatherGame] = {g.game_key: g for g in weather.games} if weather is not None else {}
     name_aliases = (
         {alias.alias: alias.canonical for alias in load_name_aliases(name_aliases_json)}
         if name_aliases_json is not None
@@ -285,6 +316,7 @@ def compute_player_pool(
         player_defaults["game_matchup"] = _resolve_team_factor_default(
             player.opponent, player.position, team_factors_by_key
         )
+        player_defaults["weather"] = _resolve_weather_default(game_id, weather_by_key)
         direct_scores = _resolve_direct_scores(player.position, saved_entry, player_defaults)
         effective_env, override_env, suggested_env = _resolve_game_environment(
             player, saved_entry, game_env_by_key.get(game_id)

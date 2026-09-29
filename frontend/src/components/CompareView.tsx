@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
-import { fetchDiffCompare, fetchDiffLatest, listSnapshots } from "../api";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchDiffCompare, fetchDiffLatest, fetchStarPlayers, listSnapshots } from "../api";
 import { autoDepthFilter, defaultDepthFilter, depthFilterOptions } from "../depthFilter";
-import type { DiffResult, SnapshotSummary } from "../types";
+import type { DiffResult, SnapshotSummary, StarPlayerEntry } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { DiffResults } from "./DiffResults";
 import { PositionFilterSelect } from "./PositionFilterSelect";
@@ -33,6 +33,22 @@ export function CompareView({ refreshSignal, onScraped }: CompareViewProps) {
   const [depthFilter, setDepthFilter] = useState<Set<string>>(defaultDepthFilter());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Read-only here (unlike Depth Charts' own clickable toggle) -- Star
+  // Players is edited from the Depth Charts tab; this just displays the
+  // same gold star next to a player's name so a starred player's status
+  // change stands out here too, same as Injury Report's own read-only star.
+  const [starPlayers, setStarPlayers] = useState<StarPlayerEntry[]>([]);
+
+  useEffect(() => {
+    fetchStarPlayers()
+      .then((result) => setStarPlayers(result.players))
+      .catch(() => {
+        // Comparison still works without star data -- just no stars shown.
+      });
+  }, []);
+
+  const starredKeys = useMemo(() => new Set(starPlayers.map((e) => `${e.team}|${e.player}`)), [starPlayers]);
 
   const refreshSnapshots = useCallback(async () => {
     try {
@@ -101,7 +117,13 @@ export function CompareView({ refreshSignal, onScraped }: CompareViewProps) {
       {error && <p className="error">{error}</p>}
       {loading && <p className="hint">Loading…</p>}
 
-      <DiffResults diff={diff} positionFilter={positionFilter} statusFilter={statusFilter} depthFilter={depthFilter} />
+      <DiffResults
+        diff={diff}
+        positionFilter={positionFilter}
+        statusFilter={statusFilter}
+        depthFilter={depthFilter}
+        starredKeys={starredKeys}
+      />
     </>
   );
 }

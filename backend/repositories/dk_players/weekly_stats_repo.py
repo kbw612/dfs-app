@@ -1,13 +1,20 @@
 """
-Persists the 4 FantasyData stat exports (QB/RB/WR/TE -- see
+Persists the 5 FantasyData stat exports (QB/RB/WR/TE/DST -- see
 backend/services/dk_players/weekly_stats_loader.py for the column shape
 each one has) that feed DK Players' calculate_week_points(). One file per
 (season, position) -- FantasyData_QBs.csv, FantasyData_RBs.csv,
-FantasyData_WRs.csv, FantasyData_TEs.csv -- that grows across the season
-as each week's stats are saved into it, unlike every other per-week
-snapshot in this app which is one file per week. These are league-wide
-stats, not tied to a DK platform/contest, so there's no platform
-dimension here either.
+FantasyData_WRs.csv, FantasyData_TEs.csv, FantasyData_DSTs.csv -- that
+grows across the season as each week's stats are saved into it, unlike
+every other per-week snapshot in this app which is one file per week.
+These are league-wide stats, not tied to a DK platform/contest, so
+there's no platform dimension here either.
+
+DST's file has the same shape as the other four (NAME/TEAM/WK/RK columns
+and all) even though its NAME is a team nickname rather than a player --
+see weekly_stats_scraper.py's DST-specific parsing for why. RK is still a
+real per-week rank (1..N, sorted by that week's FPTS) synthesized by the
+scraper itself since the source page has no rank column of its own, so
+the (WK, RK) sort key below works unchanged for DST too.
 
 Each scrape (see backend/services/dk_players/weekly_stats_scraper.py)
 hands in exactly one week's rows. merge_week_into_season_csv folds those
@@ -31,13 +38,14 @@ import io
 from pathlib import Path
 from typing import Literal
 
-Position = Literal["QB", "RB", "WR", "TE"]
+Position = Literal["QB", "RB", "WR", "TE", "DST"]
 
 _FILENAME_BY_POSITION: dict[Position, str] = {
     "QB": "FantasyData_QBs.csv",
     "RB": "FantasyData_RBs.csv",
     "WR": "FantasyData_WRs.csv",
     "TE": "FantasyData_TEs.csv",
+    "DST": "FantasyData_DSTs.csv",
 }
 
 

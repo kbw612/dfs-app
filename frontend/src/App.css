@@ -669,6 +669,22 @@ button.calendar-cell.no-data .day-number {
   line-height: 1.4;
 }
 
+.confirm-dialog-message p:first-child {
+  margin-top: 0;
+}
+
+/* WeeklyStatsUpload's per-position Add/Update summary -- two grid columns
+   (label, value) rather than a fixed monospace width, so the value column
+   lines up at whatever x-position the widest label ("WR:") needs,
+   regardless of each label's actual rendered (proportional-font) width. */
+.confirm-dialog-grid {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 8px;
+  row-gap: 2px;
+  margin-top: 8px;
+}
+
 .confirm-dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -1300,6 +1316,18 @@ button.calendar-cell.no-data .day-number {
   white-space: nowrap;
 }
 
+/* Onslaught-only -- "Remaining Salary: $30,000 / $6,000 per player",
+   worked out from the platform's own cap and DK_CLASSIC_ROSTER_SIZE (see
+   SalaryBlocksView.tsx) -- same muted/smaller treatment as
+   .block-team-split so it reads as supplementary context next to the
+   combined-salary figure rather than competing with it. */
+.block-remaining-salary {
+  color: #666;
+  font-weight: 400;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 .block-arrow {
   color: #666;
   font-size: 0.85rem;
@@ -1751,6 +1779,18 @@ table.player-selection-grid .player-selection-checkbox-input {
    row regardless of label length. */
 table.multipliers-grid thead th {
   vertical-align: bottom;
+}
+
+/* Multipliers has the widest column count of any tab here (15 fixed
+   columns plus however many Multiplier/W* history columns are showing) --
+   tighter padding/font than .player-pool-grid's own defaults buys back
+   just enough per-column width, combined with .app's own widened
+   max-width above, to fit every column without the .player-pool-grid-wrap
+   horizontal scrollbar kicking in at this table's default settings. */
+table.multipliers-grid th,
+table.multipliers-grid td {
+  padding: 5px 3px;
+  font-size: 0.8rem;
 }
 
 /* Player Rankings only (not the shared .player-pool-grid used by every
@@ -2281,6 +2321,146 @@ table.ownership-summary-grid {
   color: #a68b00;
 }
 
+/* Compare Depth Charts tab only (see DiffResults.tsx's own
+   compareStatusColorClassName) -- a healthy player (status null) gets this
+   explicit green rather than statusColorClassName's plain "no color,"
+   since this tab lists healthy and injured players side by side and
+   healthy should read as its own status at a glance, not as unstyled
+   text. Same green family as .ownership-diff-positive elsewhere in the app. */
+.status-color-green {
+  color: #1a7f37;
+}
+
+/* Depth Charts tab: inline star toggle before each player's name (see
+   DepthChartsView.tsx's handleToggleStar). Only ever rendered for an
+   already-starred player (the gold ★) -- there's no hollow-star icon for
+   an unstarred player, so a player who isn't a star player shows no icon
+   at all; toggling a star on for them instead happens by clicking their
+   name (see .depth-chart-name-toggle below). Plain-button reset since this
+   sits inline in running text, not in a normal button row -- the star
+   glyph itself (★) carries all the visual weight. */
+.depth-chart-star-toggle {
+  background: none;
+  border: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: -1px;
+}
+
+.depth-chart-star-toggle-active {
+  color: #d4a017;
+}
+
+/* The player's own name, also a toggle button (clicking it stars/unstars
+   the same as the gold star icon above) -- plain-button reset so it reads
+   as ordinary inline text, not a button, and still picks up
+   statusBackgroundClassName's background (red/yellow, see
+   .status-bg-out/-questionable below) exactly the way Injury Report shades
+   its own rows. Font stays plain black, same "the signal lives in the
+   background, not the text color" rule Injury Report uses. */
+.depth-chart-name-toggle {
+  background: none;
+  border: none;
+  padding: 0 2px;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.depth-chart-name-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Status-driven background shading for one player's own name in the Depth
+   Charts tab (see statusBackgroundClassName in statusCodes.ts) -- same
+   colors as Injury Report's own .injury-report-row-out/-questionable, just
+   applied to one inline name instead of a whole table row, since several
+   players can sit in one position's own line here. */
+.status-bg-out {
+  background: #f5c6c6;
+}
+
+.status-bg-questionable {
+  background: #fdf6e3;
+}
+
+/* Injury Report tab -- read-only star display (no click handler, unlike
+   the Depth Charts tab's own toggle button above), so this is just a
+   colored table cell rather than a <button>. */
+.injury-report-star-cell {
+  color: #d4a017;
+  text-align: center;
+  width: 1.5em;
+  font-size: 1.1rem;
+}
+
+/* Compare Depth Charts tab -- same read-only gold star as Injury Report's
+   own .injury-report-star-cell, just inline before the player's name
+   (see DiffResults.tsx) instead of its own table cell, since this tab's
+   rows are <li> lines, not a grid. */
+.diff-star {
+  color: #d4a017;
+}
+
+/* Bold (not background -- see .injury-report-row-out/-questionable below
+   for that) highlight for a starred player's row, so it's unmistakable at a
+   glance which rows actually passed the Star filter, rather than relying on
+   noticing a single small glyph in the leftmost column. */
+.injury-report-row-starred td {
+  font-weight: 600;
+}
+
+/* Status-driven row shading (Injury Report tab only) -- font stays the
+   normal black for every status; the severity signal lives in the row's
+   own background instead. .injury-report-star-cell keeps its own gold
+   color regardless of which of these is active, so a starred Out player
+   still shows a gold star against the red background. */
+.injury-report-row-out {
+  background: #f5c6c6;
+}
+
+.injury-report-row-questionable {
+  background: #fdf6e3;
+}
+
+/* Two side-by-side team columns per game, each with its own team-name
+   band up top -- the Team column that used to repeat on every row is
+   dropped in favor of that one band, since every row below it already
+   belongs to that team. */
+.injury-report-columns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.injury-report-team-column {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.injury-report-team-band {
+  font-weight: 600;
+  background: #ebf4ff;
+  border: 1px solid #cbd5e0;
+  padding: 4px 8px;
+  border-radius: 4px 4px 0 0;
+  margin-bottom: 8px;
+}
+
+/* Injury Report's own player grid header -- a distinct blue tint (matching
+   the team band above it) instead of the shared .player-pool-grid thead's
+   plain gray, so the Star/Pos/Player/Status row reads as this tab's own
+   header rather than every other tab's identical gray one. */
+.injury-report-grid thead th {
+  background: #ebf4ff;
+  border-bottom: 1px solid #cbd5e0;
+}
+
 /* Boom/Bust Players tab -- same green/gold/red palette as Vegas Lines'
    own tiering (kept as separate classes since the two tabs tier on
    different rules -- team implied total there, ownership% here -- even
@@ -2319,6 +2499,21 @@ table.ownership-summary-grid {
 
 .game-logs-tier-yellow-light {
   background-color: #ffe599;
+}
+
+/* Multipliers tab's own "Repeat Performers" panel, above the main "all
+   players" grid -- a condensed, pre-filtered fade-candidate list rather
+   than something the person sorts for themselves (see MultipliersView.tsx's
+   own repeatPerformers memo). Just spacing/heading treatment; the table
+   itself reuses the exact same .player-pool-grid/.ownership-summary-grid/
+   .multipliers-grid classes as the main grid below it. */
+.multipliers-repeat-performers {
+  margin-bottom: 20px;
+}
+
+.multipliers-repeat-performers h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
 }
 
 /* Repeated column-header row before each position group inside a team's
@@ -2708,4 +2903,600 @@ table.contest-results-grid {
   color: #888;
   font-size: 0.8rem;
   margin-left: 8px;
+}
+
+/* Game Preview tab -- one bounded card per this week's own Schedule
+   matchup (see GamePreviewView.tsx). Same rounded-card treatment as
+   .weather-note-card's list (.pivot-card-list's sibling pattern), but a
+   plain vertical stack rather than a colored left-border accent, since
+   this card doesn't have a single severity color the way a weather note
+   does. */
+.game-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.game-preview-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.game-preview-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.game-preview-matchup {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.game-preview-kickoff {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+/* Flags a game whose Vegas over/under is 47+ (see
+   game_preview_matchups.py's HIGH_OVER_UNDER_PCT) -- called out separately
+   from the Ownership narrative section's own ratio bullet so it's visible
+   at a glance on the card header, not just buried in the bullet text. */
+.game-preview-high-ou-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8a4b00;
+  background: #ffe8c2;
+  border: 1px solid #f0b25c;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* Flags a game whose Vegas over/under is under 40 (see
+   game_preview_matchups.py's LOW_OVER_UNDER_PCT) -- the low-total mirror
+   of .game-preview-high-ou-badge above, same treatment with a cool
+   (rather than warm) color scheme so the two read as opposites at a
+   glance. */
+.game-preview-low-ou-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0b4f6c;
+  background: #d7ecf5;
+  border: 1px solid #7fb8d1;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
+/* Same pill treatment as .game-preview-high-ou-badge/.game-preview-low-ou-
+   badge above, reused for a team's own low-ownership call-out inside the
+   Ownership narrative bullet -- replaces the old plain "📉 " emoji-prefix
+   text with a proper badge so it reads consistently with the card's other
+   flag badges, right before the rest of that team's ownership sentence. */
+.game-preview-low-own-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #0b4f6c;
+  background: #d7ecf5;
+  border: 1px solid #7fb8d1;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+/* Same pill treatment as .game-preview-high-ou-badge above (warm color
+   scheme, the opposite of .game-preview-low-own-badge's cool one), reused
+   for a team's own high-ownership call-out inside the Ownership narrative
+   bullet -- see game_preview_narrative.py's HIGH_OWNERSHIP_ICON. */
+.game-preview-high-own-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #8a4b00;
+  background: #ffe8c2;
+  border: 1px solid #f0b25c;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+  margin-right: 6px;
+}
+
+/* First-bullet High/Low O/U flag inside the Ownership narrative section
+   (see game_preview_narrative.py's HIGH_OVER_UNDER_FLAG_LINE/
+   LOW_OVER_UNDER_FLAG_LINE) -- rendered as the same badge look as the
+   card header's own badge, not plain bullet text, via
+   .game-preview-high-ou-badge/.game-preview-low-ou-badge directly. */
+
+/* The Phase C auto-generated bullets -- one <li> per notable signal
+   (Vegas, DST matchup, Play/Fade/Monitor), plus a final Weather <li> with
+   its own colored swatch (see below) appended by the component itself,
+   never duplicated elsewhere on the card. */
+.game-preview-narrative-list {
+  list-style: disc;
+  margin: 10px 0;
+  padding-left: 20px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #222;
+}
+
+.game-preview-narrative-list li {
+  margin-bottom: 4px;
+}
+
+.game-preview-narrative-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* A labeled section ("DST", "Plays to consider", "Fade", "Monitor") renders
+   its own bold label followed by a nested bullet list of entries, one per
+   line, instead of a single joined sentence. */
+.game-preview-narrative-sublist {
+  list-style: circle;
+  margin: 4px 0 0;
+  padding-left: 20px;
+  font-weight: normal;
+}
+
+.game-preview-narrative-sublist li {
+  margin-bottom: 2px;
+}
+
+/* The Weather line is a normal bulleted <li> (same disc marker as every
+   other narrative bullet) -- this inner wrapper just lays out the bold
+   "Weather" label, the colored swatch (same color-coding convention as the
+   Weather tab's own cards), and the message in a row after that bullet. */
+.game-preview-weather-bullet {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.game-preview-weather-swatch {
+  flex: 0 0 auto;
+  width: 8px;
+  align-self: stretch;
+  border-radius: 3px;
+  background: #ccc;
+}
+
+/* Same 5-color palette as .weather-note-yellow/-orange/-green/-red/
+   -unknown (WeatherView's own cards), just applied as a filled swatch
+   background instead of a card border. */
+.game-preview-weather-swatch-yellow {
+  background: #d4a017;
+}
+
+.game-preview-weather-swatch-orange {
+  background: #d2691e;
+}
+
+.game-preview-weather-swatch-green {
+  background: #2f855a;
+}
+
+.game-preview-weather-swatch-red {
+  background: #c53030;
+}
+
+.game-preview-weather-swatch-unknown {
+  background: #999;
+}
+
+.game-preview-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+@media (max-width: 720px) {
+  .game-preview-sides {
+    grid-template-columns: 1fr;
+  }
+}
+
+.game-preview-team-panel {
+  padding-top: 10px;
+}
+
+.game-preview-team-panel h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+/* Phase D -- both teams' own injury summary now nests directly under the
+   card's own "Injuries" bullet in the top narrative list (see GameCard),
+   one column per side, instead of repeating per-team under each
+   TeamSidePanel's own abbreviation. The divider that used to sit above
+   TeamSidePanel (separating the narrative list from the team panels) now
+   sits here instead, below the injury tables -- so it still separates
+   "things about the game" (narrative bullets + injuries) from "things
+   about each team's players" (name + player tags) below. */
+.game-preview-injuries-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 6px 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+@media (max-width: 720px) {
+  .game-preview-injuries-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.game-preview-injuries-col {
+  min-width: 0;
+}
+
+/* Team abbrev heading above each side's own injury tables in the row above
+   -- same size/weight as TeamSidePanel's own <h4>, so the two columns read
+   as "this team's own injuries" without repeating the word "Injuries"
+   itself (that label already leads the bullet above). */
+.game-preview-injuries-col-team {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* Kept visually distinct from the player tag list below (small, muted, no
+   colored badges) since these are plain status call-outs, not a
+   play/fade verdict. */
+.game-preview-injury-group {
+  margin-bottom: 8px;
+}
+
+.game-preview-injury-group-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 2px;
+}
+
+/* Reuses Injury Report's own .player-pool-grid/.injury-report-grid
+   table styling (star cell, row shading) -- see InjuryReportView.tsx's
+   own injuryStatusRowClassName for the exact rule this mirrors. Rendered
+   with no <thead> (tried without a header row per explicit request)
+   since the group's own label above already says what the columns mean.
+   Smaller and tighter than the main grid since this is a small
+   per-team, per-group list, not a full-page table. */
+.game-preview-injury-table {
+  font-size: 0.8rem;
+}
+
+.game-preview-injury-table td {
+  padding: 2px 6px;
+}
+
+.game-preview-no-players {
+  margin: 0;
+}
+
+.game-preview-player-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-preview-player-row {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.game-preview-player-row:last-child {
+  border-bottom: none;
+}
+
+.game-preview-player-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.game-preview-player-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.game-preview-player-position {
+  color: #2b6cb0;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.game-preview-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* One badge per fired tag -- colored by kind so Play/Fade read as
+   green/red at a glance, same "color carries the verdict" idea as
+   .status-color-red/-gold elsewhere in this app, just as a filled pill
+   instead of colored text (there's no single cell here to color). */
+.game-preview-tag {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: white;
+}
+
+.game-preview-tag-play {
+  background: #2f855a;
+}
+
+.game-preview-tag-fade {
+  background: #c53030;
+}
+
+.game-preview-tag-monitor {
+  background: #b7791f;
+}
+
+.game-preview-tag-leverage {
+  background: #2b6cb0;
+}
+
+.game-preview-tag-chalk {
+  background: #6b46c1;
+}
+
+/* Each tag's own full reason, spelled out below the compact badge row --
+   the badge alone ("Play") isn't self-explanatory, and every tag's own
+   `reason` string is already a complete, specific sentence fragment
+   worth showing in full rather than only on hover. */
+.game-preview-tag-reasons {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  font-size: 0.78rem;
+  color: #555;
+}
+
+/* Lineup Scenarios tab -- upload control, scenario builder, and results
+   table. Reuses .player-pool-upload-label/.player-pool-save-button for
+   the upload/Add-scenario/Evaluate buttons and .chip/.chip-row for the
+   per-game away/home toggles, same convention as every other tab's
+   filter chips -- only the pieces unique to this tab (game rows, the
+   scenario chip list, the results table, and the satisfied/unsatisfied
+   badge) get their own rules below. */
+.lineup-scenarios-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.lineup-scenarios-error {
+  color: #b3261e;
+}
+
+.lineup-scenarios-builder {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.lineup-scenarios-builder h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.lineup-scenarios-label-input {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  min-height: 36px;
+  padding: 6px 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.lineup-scenarios-game-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lineup-scenarios-game-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.lineup-scenarios-game-label {
+  min-width: 110px;
+  font-size: 0.85rem;
+  color: #444;
+  padding-top: 6px;
+}
+
+.lineup-scenarios-role-sides {
+  display: flex;
+  flex: 1;
+  gap: 20px;
+}
+
+.lineup-scenarios-role-side {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lineup-scenarios-role-team-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.lineup-scenarios-role-select {
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  max-width: 260px;
+  flex: 1;
+}
+
+.lineup-scenarios-position-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Stacked list of role rows for one side of one game -- lets the same
+   team carry more than one role+position flag within a single scenario
+   (see LineupScenariosView.tsx's GameRoleFlags). */
+.lineup-scenarios-flag-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lineup-scenarios-flag-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid #e6e6e6;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.lineup-scenarios-flag-row-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lineup-scenarios-remove-role {
+  border: none;
+  background: transparent;
+  color: #8a8a8a;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lineup-scenarios-remove-role:hover {
+  color: #b3261e;
+  background: #f4e5e4;
+}
+
+.lineup-scenarios-add-role {
+  align-self: flex-start;
+  border: 1px dashed #bbb;
+  background: transparent;
+  color: #555;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lineup-scenarios-add-role:hover {
+  border-color: #888;
+  color: #222;
+}
+
+.lineup-scenarios-list {
+  margin-bottom: 12px;
+}
+
+.lineup-scenarios-evaluate {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.lineup-scenarios-min-stack-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.lineup-scenarios-min-stack-label input {
+  width: 56px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.lineup-scenarios-unresolved {
+  margin-bottom: 10px;
+}
+
+.lineup-scenarios-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.lineup-scenarios-table th,
+.lineup-scenarios-table td {
+  border: 1px solid #e2e2e2;
+  padding: 6px 10px;
+  text-align: left;
+  font-size: 0.82rem;
+  vertical-align: top;
+}
+
+.lineup-scenarios-roster-cell {
+  max-width: 480px;
+  color: #444;
+}
+
+/* Same filled-pill treatment as .game-preview-high-ou-badge and friends,
+   green for satisfied and a muted red/grey for unsatisfied so the whole
+   results table scans at a glance without reading every cell's title
+   tooltip (which still carries the per-team stack-count breakdown). */
+.lineup-scenarios-badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 2px 10px;
+  cursor: default;
+}
+
+.lineup-scenarios-badge.satisfied {
+  color: #1b6b3a;
+  background: #d9f2e3;
+  border: 1px solid #6fbf8f;
+}
+
+.lineup-scenarios-badge.unsatisfied {
+  color: #8a8a8a;
+  background: #efefef;
+  border: 1px solid #cfcfcf;
 }

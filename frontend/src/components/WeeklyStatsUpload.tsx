@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { fetchWeeklyStatsFileInfo, scrapeWeeklyStats } from "../api";
 import type { WeeklyStatsFileStatus } from "../types";
 import { ConfirmDialog } from "./ConfirmDialog";
 
-// Settings' Weekly Stats panel -- the 4 FantasyData exports (QB/RB/WR/TE)
+// Settings' Weekly Stats panel -- the 5 FantasyData exports (QB/RB/WR/TE/DST)
 // that feed DK Players' "Calc Week N Points & Fantasy Data" action (see
 // backend/services/dk_players/weekly_stats_loader.py for the column shape
 // each one has). Not platform-scoped -- these are league-wide stats, not
@@ -24,29 +25,40 @@ export function WeeklyStatsUpload({ season, week, onUploaded }: WeeklyStatsUploa
   // browser dialog, not part of the app's own UI) with an in-page modal.
   // Set this to show it; the dialog's own Confirm/Cancel buttons resolve
   // or clear it.
-  const [confirm, setConfirm] = useState<{ message: string; onConfirm: () => void } | null>(null);
+  const [confirm, setConfirm] = useState<{ message: ReactNode; onConfirm: () => void } | null>(null);
 
-  // Scrapes all 4 positions from FantasyData in one action. Checks
-  // file-info first so an existing week's data isn't silently clobbered --
-  // scrapeWeeklyStats itself always overwrites, so the confirmation has to
-  // happen here rather than server-side.
+  // Scrapes all 4 positions from FantasyData in one action. Always checks
+  // file-info first and always confirms before scraping -- not just when
+  // something would be overwritten -- so the season/week being scraped and
+  // each position's Add (season file has no rows for this week yet) vs.
+  // Update (this week's rows already exist and will be replaced) status are
+  // both stated up front rather than only surfacing a warning in the
+  // overwrite case. scrapeWeeklyStats itself always overwrites an existing
+  // week's rows, so this is the only place that distinction is shown.
   async function handleScrape() {
     setScraping(true);
     setScrapeMessage(null);
     try {
       const info = await fetchWeeklyStatsFileInfo(season, week);
-      const existing = info.files.filter((f) => f.week_has_data).map((f) => f.position);
-      if (existing.length > 0) {
-        setScraping(false);
-        setConfirm({
-          message: `Week ${week} already has saved stats for ${existing.join(", ")} -- scraping will overwrite ${
-            existing.length === 1 ? "it" : "them"
-          }. Continue?`,
-          onConfirm: performScrape,
-        });
-        return;
-      }
-      await performScrape();
+      setScraping(false);
+      setConfirm({
+        message: (
+          <>
+            <p>
+              Scrape Week {week}, {season} stats?
+            </p>
+            <div className="confirm-dialog-grid">
+              {info.files.map((f) => (
+                <Fragment key={f.position}>
+                  <span>{f.position}:</span>
+                  <span>{f.week_has_data ? "Update" : "Add"}</span>
+                </Fragment>
+              ))}
+            </div>
+          </>
+        ),
+        onConfirm: performScrape,
+      });
     } catch (err) {
       setScrapeMessage(err instanceof Error ? err.message : "Failed to scrape weekly stats");
       setScraping(false);
@@ -74,14 +86,14 @@ export function WeeklyStatsUpload({ season, week, onUploaded }: WeeklyStatsUploa
     <div className="weekly-stats-upload">
       <div className="weekly-stats-scrape-row">
         <button type="button" className="player-pool-save-button" disabled={scraping} onClick={handleScrape}>
-          {scraping ? "Scraping…" : "Scrape Weekly Stats (QB/RB/WR/TE)"}
+          {scraping ? "Scraping…" : "Scrape Weekly Stats (QB/RB/WR/TE/DST)"}
         </button>
         {scrapeMessage && <span className="hint">{scrapeMessage}</span>}
       </div>
       {confirm && (
         <ConfirmDialog
           message={confirm.message}
-          confirmLabel="Overwrite"
+          confirmLabel="Scrape"
           onConfirm={confirm.onConfirm}
           onCancel={() => setConfirm(null)}
         />

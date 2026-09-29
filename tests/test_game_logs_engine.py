@@ -216,14 +216,28 @@ def test_build_game_log_rows_usage_stats_for_rb_include_touches():
         _row("Tony Pollard", "RB", "TEN", 13, 4900, 6.3, 6.3, 0.0),
         _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
     ]
-    stat_lines = {"RB": {("Tony Pollard", 13): {"rush_att": 12, "rush_yards": 60, "targets": 2, "receptions": 1, "receiving_yards": 3}}}
+    stat_lines = {
+        "RB": {
+            ("Tony Pollard", 13): {
+                "rush_att": 12,
+                "rush_yards": 60,
+                "rush_td": 1,
+                "targets": 2,
+                "receptions": 1,
+                "receiving_yards": 3,
+                "rec_td": 0,
+            }
+        }
+    }
     rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
     row = rows[0]
     assert row.rush_att == 12
     assert row.rush_yards == 60
+    assert row.rush_td == 1
     assert row.targets == 2
     assert row.receptions == 1
     assert row.receiving_yards == 3
+    assert row.rec_td == 0
     assert row.touches == 13  # 12 rush_att + 1 reception
 
 
@@ -233,16 +247,19 @@ def test_build_game_log_rows_qb_has_no_receiving_stats():
         _row("Cam Ward", "QB", "TEN", 15, 4800, 0.0, 0.0, 0.0),
     ]
     # QB's FantasyData file has no RECEIVING_* columns at all -- so its
-    # stat line here simply has no "targets"/"receptions"/"receiving_yards"
-    # keys, same shape load_weekly_stat_lines would produce for a QB file.
-    stat_lines = {"QB": {("Cam Ward", 13): {"rush_att": 5, "rush_yards": 29}}}
+    # stat line here simply has no "targets"/"receptions"/"receiving_yards"/
+    # "rec_td" keys, same shape load_weekly_stat_lines would produce for a
+    # QB file. rush_td IS present -- a QB's file carries RUSHING_TD too.
+    stat_lines = {"QB": {("Cam Ward", 13): {"rush_att": 5, "rush_yards": 29, "rush_td": 1}}}
     rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
     row = rows[0]
     assert row.rush_att == 5
     assert row.rush_yards == 29
+    assert row.rush_td == 1
     assert row.targets is None
     assert row.receptions is None
     assert row.receiving_yards is None
+    assert row.rec_td is None
     assert row.touches == 5  # rush_att + 0 receptions (missing key defaults to 0)
 
 
@@ -301,6 +318,27 @@ def test_build_game_log_rows_non_qb_has_no_passing_line():
     assert row.pass_int is None
     assert row.pass_sck is None
     assert row.pass_rtg is None
+
+
+def test_build_game_log_rows_dst_includes_sacks_from_its_own_stat_file():
+    tracker_rows = [
+        _row("Chargers", "DST", "LAC", 13, 2500, 17.0, 17.0, 0.0, roster_position="DST"),
+        _row("Chargers", "DST", "LAC", 15, 2500, 0.0, 0.0, 0.0, roster_position="DST"),
+    ]
+    stat_lines = {"DST": {("Chargers", 13): {"sacks": 4, "team": "LAC"}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    row = rows[0]
+    assert row.sacks == 4
+
+
+def test_build_game_log_rows_non_dst_has_no_sacks():
+    tracker_rows = [
+        _row("Tony Pollard", "RB", "TEN", 13, 4900, 6.3, 6.3, 0.0),
+        _row("Tony Pollard", "RB", "TEN", 15, 4900, 0.0, 0.0, 0.0),
+    ]
+    stat_lines = {"RB": {("Tony Pollard", 13): {"rush_att": 12, "rush_yards": 60}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=15, lookback_weeks=6)
+    assert rows[0].sacks is None
 
 
 def test_build_game_log_rows_filters_roster_to_contest_teams_when_provided():

@@ -1,11 +1,12 @@
 """
 Computes the Game Logs tab's rows -- for every player currently rostered
-at QB/RB/WR/TE (from the DK Players tracker's most recent snapshot week),
-their own FPTS/Non_TD_FPTS/TD_FPTS history for up to `lookback_weeks`
-prior weeks, enriched with that week's Opponent/GameLocation (from the
-Schedule file, backend/repositories/schedule/schedule_repo.py) and usage
-stats (Touches/Targets/Receptions/Receiving Yards/Rush Att/Rush Yards, and
--- QB only -- their own Cmp/Att/Cmp%/Yds/Avg/TD/Int/Sck/Rtg passing line),
+at QB/RB/WR/TE/DST (from the DK Players tracker's most recent snapshot
+week), their own FPTS/Non_TD_FPTS/TD_FPTS history for up to
+`lookback_weeks` prior weeks, enriched with that week's Opponent/
+GameLocation (from the Schedule file, backend/repositories/schedule/
+schedule_repo.py) and usage stats (Touches/Targets/Receptions/Receiving
+Yards/Rush Att/Rush Yards, -- QB only -- their own Cmp/Att/Cmp%/Yds/Avg/
+TD/Int/Sck/Rtg passing line, and -- DST only -- their own sacks recorded),
 all read live from the season's FantasyData weekly stats files -- see
 backend/services/dk_players/weekly_stats_loader.py's
 load_weekly_stat_lines.
@@ -41,14 +42,12 @@ since traded/released/benched.
 
 DST is rostered and shown like every other position, but never checked
 against the zero-FPTS filter below -- see build_game_log_rows' own
-docstring for why. It still gets no usage-stat enrichment (Touch/Targets/
-etc. always come back None) since no FantasyData file exists for
-defenses -- POSITIONS below (QB/RB/WR/TE only) is what the API layer
-still uses to decide which 4 stat files to load; DST was never a key into
-that dict and still isn't. TD_FPTS/Non_TD_FPTS still have no meaningful
-split for defense scoring either (see calculate_week_points, which never
-computes a TD component for DST) -- a DST's whole FPTS just shows up as
-Non_TD_FPTS, same as it always has everywhere else in this app.
+docstring for why. It now gets real usage-stat enrichment too (a `sacks`
+field, from FantasyData_DSTs.csv's own DEF_SCK column) now that a
+FantasyData file exists for defenses -- POSITIONS below (now including
+DST) is what the API layer uses to decide which stat files to load.
+TD_FPTS/Non_TD_FPTS now have a real split for DST too (DEF_TD/RET_TD via
+calculate_week_points), same as every other position.
 """
 
 from __future__ import annotations
@@ -65,19 +64,17 @@ from backend.services.shared.game_matchup import resolve_away_home
 from backend.services.shared.name_match import name_lookup_candidates
 from backend.services.shared.usage_shares import compute_touches
 
-Position = Literal["QB", "RB", "WR", "TE"]
+Position = Literal["QB", "RB", "WR", "TE", "DST"]
 
-POSITIONS: tuple[Position, ...] = ("QB", "RB", "WR", "TE")
+POSITIONS: tuple[Position, ...] = ("QB", "RB", "WR", "TE", "DST")
 
-# Who's eligible to be "currently rostered"/shown at all -- POSITIONS
-# above plus DST (included per an explicit request to show DSTs
-# regardless of score). Not itself a `Position` (DST has no FantasyData
-# stat file), so kept as its own plain-str tuple rather than widening the
-# Position Literal everywhere else in this module. Public (not
-# underscore-prefixed) since game_logs_against_engine.py's own roster
-# concept -- "every opposing player who faced this team" -- uses the same
-# QB/RB/WR/TE/DST set.
-ROSTER_POSITIONS: tuple[str, ...] = (*POSITIONS, "DST")
+# Who's eligible to be "currently rostered"/shown at all -- same set as
+# POSITIONS now that DST has its own FantasyData file too. Kept as its own
+# name (rather than just using POSITIONS directly everywhere) since it
+# predates DST joining POSITIONS and game_logs_against_engine.py's own
+# roster concept -- "every opposing player who faced this team" -- imports
+# this one specifically, not POSITIONS.
+ROSTER_POSITIONS: tuple[str, ...] = POSITIONS
 
 
 def build_game_options(
@@ -240,8 +237,10 @@ def build_game_log_rows(
                     targets=stat_line.get("targets"),
                     receptions=stat_line.get("receptions"),
                     receiving_yards=stat_line.get("receiving_yards"),
+                    rec_td=stat_line.get("rec_td"),
                     rush_att=stat_line.get("rush_att"),
                     rush_yards=stat_line.get("rush_yards"),
+                    rush_td=stat_line.get("rush_td"),
                     target_share_pct=stat_line.get("target_share_pct"),
                     touch_share_pct=stat_line.get("touch_share_pct"),
                     opp_share_pct=stat_line.get("opp_share_pct"),
@@ -254,6 +253,7 @@ def build_game_log_rows(
                     pass_int=stat_line.get("pass_int"),
                     pass_sck=stat_line.get("pass_sck"),
                     pass_rtg=stat_line.get("pass_rtg"),
+                    sacks=stat_line.get("sacks"),
                 )
             )
     return rows, reference_week

@@ -251,6 +251,12 @@ export interface GameOption {
 export interface PositionBlocksResult {
   blocks: PositionBlock[];
   games: GameOption[];
+  // cap - cheapest_dst_salary_this_contest -- every block in `blocks`
+  // already has total_salary <= this (see the backend's
+  // filter_blocks_by_max_salary), same rule as Onslaught's own
+  // max_onslaught_salary. null only when this contest's own salary file
+  // has no DST rows at all (the cap isn't applied then).
+  max_block_salary: number | null;
 }
 
 // Onslaught/Bring-back's own block shape (see backend/services/ownership/
@@ -280,6 +286,13 @@ export interface GameBlocksResult {
   // surfacing so it's clear why a specific matchup's blocks are missing
   // rather than looking like a silent gap.
   skipped_games: GameOption[];
+  // cap - cheapest_dst_salary_this_contest -- every block in `blocks`
+  // already has total_salary <= this (see the backend's
+  // filter_game_blocks_by_max_salary), surfaced here purely so this view
+  // can explain the cap in its own hint text rather than silently
+  // returning fewer blocks. null only when this contest's own salary file
+  // has no DST rows at all (the cap isn't applied then).
+  max_onslaught_salary: number | null;
 }
 
 // Result of POST /api/ownership/import-csv -- the temporary stand-in for a
@@ -337,6 +350,12 @@ export interface PlayerPoolPlayer {
   volume: number | null;
   talent: number | null;
   salary_value: number | null;
+  // DST-only -- the effective value counted in `total` (an explicit
+  // override if saved this week, otherwise score_weather_color()'s own
+  // suggestion from that DST's game's Weather note, defaulting to a
+  // neutral 2.0 with no notable weather this week). See backend
+  // PlayerPoolPlayer.weather's docstring.
+  weather: number | null;
   // Player Rankings' "Expected FPTS" column -- resolved Salary Multiplier
   // (Settings, or its computed default) times salary / 1000 -- see
   // backend/services/salary_multiplier/engine.py. Purely informational,
@@ -361,6 +380,7 @@ export interface PlayerPoolEntryInput {
   game_matchup: number | null;
   ownership: number | null;
   salary_value: number | null;
+  weather: number | null;
   volume: number | null;
   talent: number | null;
 }
@@ -453,6 +473,61 @@ export interface UsageBumpTeamEntry {
 
 export interface UsageBumpPlayersResult {
   teams: UsageBumpTeamEntry[];
+}
+
+// GET /api/star-players/latest, PUT /api/star-players/entry -- the
+// hand-curated "this player is a difference-maker" flag (backend/schemas/
+// star_players/star_players.py), set from the Depth Charts tab's star
+// icon at any position, not just skill positions that already have their
+// own Player Pool scoring. Keyed by (team, player), same rationale as
+// UsageBumpTeamEntry's own teamAbbrev keying -- the depth-chart snapshot
+// matches players by name only, so two same-named players on different
+// teams would otherwise collide.
+export interface StarPlayerEntry {
+  team: string;
+  player: string;
+}
+
+export interface StarPlayersResult {
+  players: StarPlayerEntry[];
+}
+
+// Body sent to PUT /api/star-players/entry -- distinct from StarPlayerEntry
+// above (the response list's shape, where presence alone means "starred")
+// since setting the flag needs an explicit target state to request.
+export interface StarPlayerEntryInput {
+  team: string;
+  player: string;
+  starred: boolean;
+}
+
+// Injury Report (backend/schemas/injury_report/injury_report.py) -- every
+// player from the latest Depth Charts snapshot who currently carries a
+// non-null status, grouped by this week's game matchup. `starred` is
+// already joined in server-side from Star Players, since this tab is
+// read-only display (no star-toggle control of its own).
+export interface InjuryPlayerEntry {
+  team: string;
+  player: string;
+  position: string;
+  status: string;
+  starred: boolean;
+  // 1-based index within this player's own position's depth-chart array
+  // (e.g. 1 = starter). Powers the Position Depth chip filter.
+  depth: number;
+}
+
+export interface InjuryGameGroup {
+  key: string;
+  label: string;
+  teams: string[];
+  players: InjuryPlayerEntry[];
+}
+
+export interface InjuryReportResult {
+  scraped_at: string;
+  week: number;
+  games: InjuryGameGroup[];
 }
 
 // Body sent to/returned from PUT /api/game-environment/entry -- one
@@ -575,6 +650,15 @@ export interface OwnershipScoresApplyResult {
   skipped_count: number;
 }
 
+// See backend/api/player_pool/calculate_weather_scores.py -- Player
+// Rankings' DST-only Weather refresh icon.
+export interface WeatherScoresApplyResult {
+  season: number;
+  week: number;
+  applied_count: number;
+  skipped_count: number;
+}
+
 // See backend/api/player_pool/reset_matchup.py -- Player Rankings' DST
 // Matchup refresh icon. reset_count is how many DSTs actually had an
 // explicit Matchup override cleared (a DST with no override to begin with
@@ -638,6 +722,39 @@ export interface OwnershipProjectionsResult {
   initial_uploaded_at: string;
   current_uploaded_at: string;
   players: OwnershipProjectionsPlayer[];
+}
+
+// Mirrors backend/schemas/ownership/ownership_summary.py -- backend-
+// computed team/game ownership rollups for the Ownership Summary tab (see
+// backend/services/ownership/ownership_summary.py's own docstring for why
+// this moved server-side instead of being computed here in the frontend).
+// actual_total_ownership_pct is null (not 0) when no Contest Standings are
+// uploaded yet for this (season, week, platform, contest) -- distinct
+// from a real 0% total, same convention as everywhere else in this app.
+export interface TeamOwnershipRollup {
+  team: string;
+  initial_total_ownership_pct: number;
+  total_ownership_pct: number;
+  actual_total_ownership_pct: number | null;
+}
+
+export interface GameOwnershipRollup {
+  key: string;
+  label: string;
+  away_team: string | null;
+  home_team: string | null;
+  initial_total_ownership_pct: number;
+  total_ownership_pct: number;
+  actual_total_ownership_pct: number | null;
+  // Every player in the game (any position, including DST), sorted by
+  // ownership_pct descending -- backs this tab's own per-game detail
+  // expand.
+  players: OwnershipProjectionsPlayer[];
+}
+
+export interface OwnershipSummaryResult {
+  teams: TeamOwnershipRollup[];
+  games: GameOwnershipRollup[];
 }
 
 // Result of GET /api/ownership/projections-file-info -- see
@@ -1039,8 +1156,10 @@ export interface GameLogRow {
   targets: number | null;
   receptions: number | null;
   receiving_yards: number | null;
+  rec_td: number | null;
   rush_att: number | null;
   rush_yards: number | null;
+  rush_td: number | null;
   // TGTSHARE/TOUCHSHARE/OPPSHARE -- see backend's usage_shares.py for the
   // exact formula each one uses. All three null when the underlying team
   // total is unavailable; target_share_pct is additionally null for QB
@@ -1060,6 +1179,9 @@ export interface GameLogRow {
   pass_int: number | null;
   pass_sck: number | null;
   pass_rtg: number | null;
+  // DST's own sacks recorded -- always null for every other position, and
+  // deliberately separate from pass_sck (that's sacks *taken* by a QB).
+  sacks: number | null;
 }
 
 export interface GameOption {
@@ -1086,6 +1208,15 @@ export interface GameLogsResult {
 export interface TrailingMultiplier {
   week: number;
   multiplier: number | null;
+  // Same fpts/(salary/1000) formula as `multiplier`, run against
+  // non_td_fpts instead -- feeds the Breakout Watch panel's non-TD
+  // multiplier trend without needing this week's own salary client-side.
+  non_td_multiplier: number | null;
+  // This week's own TD FPTS -- null only when there's no tracker row for
+  // this week at all. Lets Breakout Watch apply its "a week with a
+  // touchdown doesn't count as high" rule to trailing weeks, not just the
+  // base week (see MultiplierRow.td_fpts for the base week's equivalent).
+  td_fpts: number | null;
 }
 
 // Mirrors backend/schemas/multipliers/multipliers.py's MultiplierRow exactly
@@ -1103,6 +1234,7 @@ export interface MultiplierRow {
   opponent: string | null;
   game_location: "Home" | "Away" | "BYE" | null;
   multiplier: number | null;
+  non_td_multiplier: number | null;
   fpts: number;
   non_td_fpts: number;
   non_td_fpts_pct: number | null;
@@ -1124,6 +1256,183 @@ export interface MultipliersResult {
   trailing_weeks: number;
   games: GameOption[];
   rows: MultiplierRow[];
+}
+
+// Mirrors backend/schemas/dst_trends/dst_trends.py's DstTrendTeamRow --
+// one row per team, in either the DST Trends tab's "Forcing" leaderboard
+// (this team's own DST sacks/takeaways generated) or its "Allowing"
+// leaderboard (the SAME fields, but summed from opponents' DST rows that
+// had this team as their own OPP that week -- sacks/turnovers given up by
+// this team's offense). See DstTrendsResult's own forcing/allowing split.
+export interface DstTrendTeamRow {
+  team: string;
+  games: number;
+  sacks: number;
+  sacks_per_game: number;
+  takeaways: number;
+  takeaways_per_game: number;
+}
+
+// Mirrors backend/schemas/dst_trends/dst_trends.py's DstTrendsResult.
+// `through_week` is always `week - 1` -- same "review the most recently
+// completed week" convention as Multipliers' own base_week.
+export interface DstTrendsResult {
+  season: number;
+  week: number;
+  through_week: number;
+  window_weeks: number;
+  forcing: DstTrendTeamRow[];
+  allowing: DstTrendTeamRow[];
+}
+
+// Mirrors backend/schemas/game_preview/game_preview.py exactly. Every
+// field on GamePreviewVegas/GamePreviewWeather/GamePreviewDstMatchup can
+// be independently absent -- see that module's own per-field docstrings
+// for why (not yet scraped, no matching game_key, week 1, etc.) -- render
+// each piece defensively rather than assuming the whole object is present
+// just because the game itself is.
+export interface GamePreviewVegas {
+  over_under: number | null;
+  away_implied_total: number | null;
+  home_implied_total: number | null;
+  kickoff_label: string | null;
+}
+
+export interface GamePreviewWeather {
+  color: string;
+  note: string;
+}
+
+export interface GamePreviewTeamFactors {
+  qb: number | null;
+  rb: number | null;
+  wr: number | null;
+  te: number | null;
+  dst: number | null;
+}
+
+export interface GamePreviewDstMatchup {
+  games: number;
+  sacks_per_game_forced: number;
+  takeaways_per_game_forced: number;
+  opponent_sacks_per_game_allowed: number;
+  opponent_takeaways_per_game_allowed: number;
+}
+
+// Phase B -- one fired signal on a player, with a plain-English reason.
+// "leverage"/"chalk" are ownership-only signals (not narrated in the
+// game's own `narrative_sections` -- see game_preview_narrative.py) but
+// still shown on the player's own tag list.
+export type GamePreviewTagKind = "play" | "fade" | "monitor" | "leverage" | "chalk";
+
+export interface GamePreviewPlayerTag {
+  kind: GamePreviewTagKind;
+  reason: string;
+}
+
+// Only players with >=1 fired tag appear here at all -- see
+// GamePreviewPlayer's own backend docstring ("no signal, no row").
+export interface GamePreviewPlayer {
+  name: string;
+  position: string;
+  team: string;
+  // 1-indexed depth-chart rank (e.g. 1 for a starting WR1, 4 for a WR4) --
+  // null when no depth-chart snapshot was available or this name didn't
+  // match anyone on it.
+  depth: number | null;
+  tags: GamePreviewPlayerTag[];
+}
+
+// Phase D -- one player-level row inside an injury group. `starred`
+// mirrors Star Players' own flag -- rendered as a gold star next to the
+// name (same convention as Depth Charts/Injury Report), not as a
+// separate group of its own.
+export interface GamePreviewInjuryEntry {
+  player: string;
+  position: string;
+  depth: number;
+  status: string;
+  starred: boolean;
+}
+
+// One group's worth of injury entries (e.g. every Offensive Line player
+// at depth 1 who has a status this week) -- `label` is the display
+// heading ("O-Line (depth 1)", etc.). Only groups with >=1 entry appear
+// in GamePreviewTeamSide.injury_groups at all.
+export interface GamePreviewInjuryGroup {
+  label: string;
+  entries: GamePreviewInjuryEntry[];
+}
+
+// Phase C -- one section of the auto-generated summary. `label` is null
+// for the standalone Vegas line (rendered as a single flat bullet with
+// no heading) and set for every other section ("O vs D Line Matchup",
+// "Pace", "Matchup Trends", "Ownership", "Plays to consider", "Fade",
+// "Monitor") -- rendered as a heading followed by its own nested bullet
+// list.
+export interface GamePreviewNarrativeSection {
+  label: string | null;
+  entries: string[];
+}
+
+export interface GamePreviewTeamSide {
+  team: string;
+  is_home: boolean;
+  team_factors: GamePreviewTeamFactors;
+  dst_matchup: GamePreviewDstMatchup | null;
+  players: GamePreviewPlayer[];
+  // Phase D -- this team's own injury summary, one group per position
+  // bucket (O-Line/Defensive Front/Defensive Backs depth 1, Skill
+  // positions depth 1-4) -- see game_preview_injuries.py. A starred
+  // player shows a gold star on their own entry rather than getting a
+  // separate group. Empty when there's nothing notable, or no
+  // depth-chart snapshot at all.
+  injury_groups: GamePreviewInjuryGroup[];
+  // Sum of ownership_pct across this team's own rostered QB/RB/WR/TE rows
+  // (DST excluded) -- same rule as Ownership Summary's own
+  // computeTeamOwnership(). Null when there's no ownership data at all for
+  // this team this week -- see backend GamePreviewTeamSide.projected_ownership_pct's
+  // own docstring.
+  projected_ownership_pct: number | null;
+}
+
+export interface GamePreviewGame {
+  key: string;
+  label: string;
+  teams: string[];
+  vegas: GamePreviewVegas | null;
+  weather: GamePreviewWeather | null;
+  away: GamePreviewTeamSide;
+  home: GamePreviewTeamSide;
+  // Phase C -- a handful of deterministic, rule-based sections combining
+  // this game's own context above with its players' own tags. Weather is
+  // NOT one of these -- see `weather` above, rendered as its own
+  // dedicated line. Always non-empty (see build_game_narrative's own
+  // docstring for the no-signal fallback section).
+  narrative_sections: GamePreviewNarrativeSection[];
+  // away.projected_ownership_pct + home.projected_ownership_pct -- null
+  // when neither side has ownership data this week.
+  combined_projected_ownership_pct: number | null;
+  // combined_projected_ownership_pct / vegas.over_under -- lower means a
+  // comparable scoring environment at a lower combined ownership cost. Null
+  // when either input is missing (or over_under is 0).
+  total_to_ownership_ratio: number | null;
+  // vegas.over_under >= 47.0 -- surfaced so the frontend can highlight a
+  // high-total game without re-deriving the threshold. Always false when
+  // vegas or vegas.over_under is null.
+  high_over_under: boolean;
+  // vegas.over_under < 40.0 -- the low-total mirror of high_over_under
+  // above, same reasoning. Never true at the same time as high_over_under
+  // (the two thresholds don't overlap).
+  low_over_under: boolean;
+}
+
+export interface GamePreviewResult {
+  season: number;
+  week: number;
+  through_week: number;
+  window_weeks: number;
+  games: GamePreviewGame[];
 }
 
 // Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the
@@ -1151,8 +1460,10 @@ export interface GameLogAgainstRow {
   targets: number | null;
   receptions: number | null;
   receiving_yards: number | null;
+  rec_td: number | null;
   rush_att: number | null;
   rush_yards: number | null;
+  rush_td: number | null;
   target_share_pct: number | null;
   touch_share_pct: number | null;
   opp_share_pct: number | null;
@@ -1165,6 +1476,7 @@ export interface GameLogAgainstRow {
   pass_int: number | null;
   pass_sck: number | null;
   pass_rtg: number | null;
+  sacks: number | null;
 }
 
 export interface GameLogsAgainstResult {
@@ -1173,4 +1485,98 @@ export interface GameLogsAgainstResult {
   lookback_weeks: number;
   games: GameOption[];
   rows: GameLogAgainstRow[];
+}
+
+// Lineup Scenarios -- mirrors backend/schemas/lineup_scenarios/
+// lineup_scenarios.py exactly (see that module's docstring for the full
+// feature shape: upload a batch of externally-built lineups, define
+// team-stack scenarios, see which lineups satisfy which scenarios).
+export interface ScheduleGamesResult {
+  season: number;
+  week: number;
+  games: GameOption[];
+}
+
+export interface LineupScenarioUploadResult {
+  lineup_count: number;
+  roster_positions: string[];
+}
+
+export interface UploadedLineupPlayer {
+  roster_position: string;
+  name: string;
+  team: string | null;
+  // This player's own real NFL position (QB/RB/WR/TE/DST), resolved from
+  // the DK salary snapshot -- distinct from roster_position, which can be
+  // an ambiguous "FLEX" slot. null whenever `team` is also null.
+  position: string | null;
+  // This player's own depth-chart slot, e.g. "RB1", "WR2" -- resolved from
+  // the latest depth chart snapshot. This, not the coarser `position`
+  // above, is what a scenario team flag's own `positions` filter actually
+  // checks. DST always resolves to the literal "DST" (no ranked depth).
+  // null whenever `team` is unresolved, the position isn't depth-tracked,
+  // or no depth-chart snapshot has been scraped yet.
+  depth_slot: string | null;
+}
+
+export interface UploadedLineup {
+  index: number;
+  players: UploadedLineupPlayer[];
+}
+
+// The seven role labels a caller can pin to one flagged team within a
+// scenario -- purely descriptive/organizational on the backend, but each
+// has a natural-language meaning and a sensible default `positions` filter
+// this picker pre-fills when it's chosen (see ROLE_DEFAULT_POSITIONS below).
+export type ScenarioRole =
+  | "high_scoring"
+  | "low_scoring"
+  | "positive_script"
+  | "negative_script"
+  | "pass_funnel"
+  | "extended_game"
+  | "any";
+
+// One flagged team within a scenario, plus the role the caller thinks that
+// team is playing this week and, optionally, which of that team's
+// positions actually benefit from it -- mirrors the backend's
+// LineupScenarioTeamFlag exactly.
+export interface LineupScenarioTeamFlag {
+  team: string;
+  role: ScenarioRole;
+  // Empty list means "any position counts".
+  positions: string[];
+}
+
+// The scenario builder's own local shape before it's sent to the evaluate
+// endpoint -- mirrors the backend's LineupScenarioDefinition exactly.
+export interface LineupScenarioDefinition {
+  label: string;
+  team_flags: LineupScenarioTeamFlag[];
+}
+
+export interface ScenarioTeamStack {
+  team: string;
+  // Echoed back from the request's own LineupScenarioTeamFlag.
+  role: ScenarioRole;
+  positions: string[];
+  count: number;
+  satisfied: boolean;
+}
+
+export interface LineupScenarioMatch {
+  label: string;
+  satisfied: boolean;
+  team_stacks: ScenarioTeamStack[];
+}
+
+export interface LineupScenarioResult {
+  lineup: UploadedLineup;
+  matches: LineupScenarioMatch[];
+}
+
+export interface LineupScenarioAnalysis {
+  results: LineupScenarioResult[];
+  unresolved_player_names: string[];
+  min_stack_size: number;
 }

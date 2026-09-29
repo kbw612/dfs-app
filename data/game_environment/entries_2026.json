@@ -228,6 +228,120 @@
         "home_implied_total": 27.5,
         "away_implied_total": 20.5
       }
+    },
+    "3": {
+      "ATL-GB": {
+        "home_team": "GB",
+        "away_team": "ATL",
+        "over_under": 43.0,
+        "home_implied_total": 23.75,
+        "away_implied_total": 19.25
+      },
+      "BUF-LAC": {
+        "home_team": "BUF",
+        "away_team": "LAC",
+        "over_under": 50.0,
+        "home_implied_total": 28.75,
+        "away_implied_total": 21.25
+      },
+      "CAR-CLE": {
+        "home_team": "CLE",
+        "away_team": "CAR",
+        "over_under": 42.0,
+        "home_implied_total": 19.75,
+        "away_implied_total": 22.25
+      },
+      "DET-NYJ": {
+        "home_team": "DET",
+        "away_team": "NYJ",
+        "over_under": 48.0,
+        "home_implied_total": 27.25,
+        "away_implied_total": 20.75
+      },
+      "HOU-IND": {
+        "home_team": "IND",
+        "away_team": "HOU",
+        "over_under": 42.5,
+        "home_implied_total": 20.5,
+        "away_implied_total": 22.0
+      },
+      "KC-MIA": {
+        "home_team": "MIA",
+        "away_team": "KC",
+        "over_under": 45.5,
+        "home_implied_total": 17.5,
+        "away_implied_total": 28.0
+      },
+      "NYG-TEN": {
+        "home_team": "NYG",
+        "away_team": "TEN",
+        "over_under": 38.0,
+        "home_implied_total": 20.25,
+        "away_implied_total": 17.75
+      },
+      "CIN-PIT": {
+        "home_team": "PIT",
+        "away_team": "CIN",
+        "over_under": 43.0,
+        "home_implied_total": 19.75,
+        "away_implied_total": 23.25
+      },
+      "SEA-WAS": {
+        "home_team": "WAS",
+        "away_team": "SEA",
+        "over_under": 40.0,
+        "home_implied_total": 16.0,
+        "away_implied_total": 24.0
+      },
+      "JAX-NE": {
+        "home_team": "JAX",
+        "away_team": "NE",
+        "over_under": 46.0,
+        "home_implied_total": 24.5,
+        "away_implied_total": 21.5
+      },
+      "ARI-SF": {
+        "home_team": "SF",
+        "away_team": "ARI",
+        "over_under": 48.0,
+        "home_implied_total": 28.5,
+        "away_implied_total": 19.5
+      },
+      "MIN-TB": {
+        "home_team": "TB",
+        "away_team": "MIN",
+        "over_under": 42.5,
+        "home_implied_total": 20.5,
+        "away_implied_total": 22.0
+      },
+      "BAL-DAL": {
+        "home_team": "DAL",
+        "away_team": "BAL",
+        "over_under": 53.5,
+        "home_implied_total": 25.25,
+        "away_implied_total": 28.25
+      },
+      "LV-NO": {
+        "home_team": "NO",
+        "away_team": "LV",
+        "over_under": 43.5,
+        "home_implied_total": 23.25,
+        "away_implied_total": 20.25
+      },
+      "DEN-LAR": {
+        "home_team": "DEN",
+        "away_team": "LAR",
+        "over_under": 43.5,
+        "home_implied_total": 20.75,
+        "away_implied_total": 22.75
+      },
+      "CHI-PHI": {
+        "home_team": "CHI",
+        "away_team": "PHI",
+        "over_under": 41.0,
+        "home_implied_total": 18.0,
+        "away_implied_total": 23.0
+      }
     }
   }
 }

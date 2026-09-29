@@ -237,6 +237,61 @@ def test_merge_td_points_combines_all_position_files():
     assert merged == {"Lamar Jackson": 14.0, "Bijan Robinson": 6.0}
 
 
+DST_HEADER = "RK,NAME,TEAM,POS,WK,OPP,LOSS,DEF_SCK,QB_HITS,DEF_INT,FR,SFTY,DEF_TD,RET_TD,OPP_PTS,FPTS"
+
+
+def test_parse_weekly_stats_csv_dst_computes_def_and_ret_td_points():
+    # 1 DEF_TD + 1 RET_TD, each worth 6, same as any other non-passing TD.
+    csv_text = f"{DST_HEADER}\n1,Chargers,LAC,DST,3,DEN,7,4,9,2,1,0,1,1,10,23.0\n"
+    result = parse_weekly_stats_csv(csv_text, week=3)
+    assert result == {"Chargers": 12.0}
+
+
+def test_merge_td_points_includes_dst_file():
+    qb_csv = f"{QB_HEADER}\n1,Lamar Jackson,BAL,QB,1,BUF,14,19,73.7,209,11.0,2,0,39,2,144.4,6,70,11.7,1,29.4\n"
+    dst_csv = f"{DST_HEADER}\n1,Chargers,LAC,DST,1,DEN,7,4,9,2,1,0,1,0,10,17.0\n"
+    merged = merge_td_points({"QB": qb_csv, "DST": dst_csv}, week=1)
+    assert merged == {"Lamar Jackson": 14.0, "Chargers": 6.0}
+
+
+def test_load_weekly_stat_lines_dst_file_has_sacks_but_no_passing_or_receiving_keys():
+    csv_text = f"{DST_HEADER}\n1,Chargers,LAC,DST,3,DEN,7,4,9,2,1,0,1,0,10,17.0\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Chargers", 3)]
+    assert stat_line["sacks"] == 4
+    assert stat_line["team"] == "LAC"
+    for key in ("targets", "receptions", "receiving_yards", "rush_att", "rush_yards", "pass_cmp", "pass_sck"):
+        assert key not in stat_line
+
+
+def test_load_weekly_stat_lines_dst_file_has_def_int_and_fumble_recoveries():
+    # DEF_INT=2, FR=1 -- feeds dst_trends_engine.py's own takeaways = def_int + fumble_recoveries.
+    csv_text = f"{DST_HEADER}\n1,Chargers,LAC,DST,3,DEN,7,4,9,2,1,0,1,0,10,17.0\n"
+    lines = load_weekly_stat_lines(csv_text)
+    stat_line = lines[("Chargers", 3)]
+    assert stat_line["def_int"] == 2
+    assert stat_line["fumble_recoveries"] == 1
+
+
+def test_load_weekly_stat_lines_opponent_present_for_every_position():
+    # OPP is on every FantasyData file, not just DST -- parsed
+    # unconditionally (dst_trends_engine.py specifically needs a DST row's
+    # own opponent to attribute sacks/takeaways to the opposing offense).
+    dst_csv = f"{DST_HEADER}\n1,Chargers,LAC,DST,3,DEN,7,4,9,2,1,0,1,0,10,17.0\n"
+    assert load_weekly_stat_lines(dst_csv)[("Chargers", 3)]["opponent"] == "DEN"
+
+    rb_csv = f"{RB_HEADER}\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4\n"
+    assert load_weekly_stat_lines(rb_csv)[("Bijan Robinson", 1)]["opponent"] == "TB"
+
+
+def test_load_weekly_stat_lines_non_dst_file_has_no_sacks_key():
+    csv_text = f"{RB_HEADER}\n2,Bijan Robinson,ATL,RB,1,TB,12,24,2.0,0,7,6,100,1,0,0,24.4\n"
+    lines = load_weekly_stat_lines(csv_text)
+    assert "sacks" not in lines[("Bijan Robinson", 1)]
+    assert "def_int" not in lines[("Bijan Robinson", 1)]
+    assert "fumble_recoveries" not in lines[("Bijan Robinson", 1)]
+
+
 def test_load_weekly_stat_lines_reads_every_week_at_once():
     csv_text = (
         f"{RB_HEADER}\n"
@@ -247,10 +302,13 @@ def test_load_weekly_stat_lines_reads_every_week_at_once():
     assert lines[("Tony Pollard", 13)] == {
         "rush_att": 12,
         "rush_yards": 60,
+        "rush_td": 0,
         "targets": 2,
         "receptions": 1,
         "receiving_yards": 3,
+        "rec_td": 0,
         "team": "TEN",
+        "opponent": "CLE",
     }
     assert lines[("Tony Pollard", 14)]["rush_att"] == 18
 
@@ -261,10 +319,14 @@ def test_load_weekly_stat_lines_qb_file_has_no_receiving_keys():
     stat_line = lines[("Lamar Jackson", 1)]
     assert stat_line["rush_att"] == 6
     assert stat_line["rush_yards"] == 70
+    # QB's file DOES carry RUSHING_TD (same column as RB/WR/TE) -- only
+    # RECEIVING_TD (and the other receiving columns) are absent for QB.
+    assert stat_line["rush_td"] == 1
     assert stat_line["team"] == "BAL"
     assert "targets" not in stat_line
     assert "receptions" not in stat_line
     assert "receiving_yards" not in stat_line
+    assert "rec_td" not in stat_line
 
 
 def test_load_weekly_stat_lines_qb_file_includes_passing_line():
@@ -521,14 +583,62 @@ def test_calculate_week_points_reports_possible_stat_name_mismatch_for_a_close_t
     assert mismatch.suggested_match == "Unknown Runnar"
 
 
-def test_calculate_week_points_never_flags_dst_in_either_stat_list():
+def test_calculate_week_points_matches_dst_against_its_own_stat_file():
+    # DST now goes through the same matching as every other position now
+    # that FantasyData_DSTs.csv exists -- its tracker row's own name is
+    # already the bare nickname (e.g. "Packers"), same as the scraped
+    # stat file's NAME column, so no special-casing is needed.
     existing = [make_row("Packers", week=1, position="DST")]
     contest_rows = [ContestReferenceRow(player="Packers", roster_position="DST", pct_drafted=10.0, fpts=7.0)]
     updated_rows, result = calculate_week_points(
-        existing, week=1, td_points_by_player={}, contest_rows=contest_rows, name_aliases={}, missing_stat_positions=["QB", "RB", "WR", "TE"]
+        existing,
+        week=1,
+        td_points_by_player={"Packers": 6.0},
+        contest_rows=contest_rows,
+        name_aliases={},
+        missing_stat_positions=["QB", "RB", "WR", "TE"],
     )
     assert result.possible_stat_name_mismatches == []
     assert result.no_stats_recorded == []
+    assert updated_rows[0].fpts == 7.0
+    assert updated_rows[0].td_fpts == 6.0
+    assert updated_rows[0].non_td_fpts == 1.0
+
+
+def test_calculate_week_points_flags_dst_no_stats_recorded_when_its_file_exists_but_has_no_match():
+    # Unlike the old "DST is never checked" behavior, a DST whose own
+    # stat file HAS been scraped but has no row for it now surfaces in
+    # no_stats_recorded, same as any other position would.
+    existing = [make_row("Packers", week=1, position="DST")]
+    updated_rows, result = calculate_week_points(
+        existing,
+        week=1,
+        td_points_by_player={"Cowboys": 6.0},
+        contest_rows=[],
+        name_aliases={},
+        missing_stat_positions=["QB", "RB", "WR", "TE"],
+    )
+    assert result.no_stats_recorded == ["Packers"]
+    assert updated_rows[0].fpts == 0.0
+
+
+def test_calculate_week_points_skips_dst_when_its_own_stat_file_is_missing():
+    # missing_stat_positions including "DST" (the file simply hasn't been
+    # scraped yet) still exempts it from stat-checking entirely, same as
+    # a missing QB/RB/WR/TE file would.
+    existing = [make_row("Packers", week=1, position="DST")]
+    contest_rows = [ContestReferenceRow(player="Packers", roster_position="DST", pct_drafted=10.0, fpts=7.0)]
+    updated_rows, result = calculate_week_points(
+        existing,
+        week=1,
+        td_points_by_player={},
+        contest_rows=contest_rows,
+        name_aliases={},
+        missing_stat_positions=["QB", "RB", "WR", "TE", "DST"],
+    )
+    assert result.possible_stat_name_mismatches == []
+    assert result.no_stats_recorded == []
+    assert result.missing_stat_files == ["DST", "QB", "RB", "TE", "WR"]
     assert updated_rows[0].fpts == 7.0
     assert updated_rows[0].td_fpts == 0.0
     assert updated_rows[0].non_td_fpts == 7.0

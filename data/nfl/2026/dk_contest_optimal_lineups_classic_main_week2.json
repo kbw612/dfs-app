@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Omarion Hampton",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 18.5
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 258.46,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Brock Purdy",
+          "position": "QB",
+          "salary": 6200,
+          "fpts": 28.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Omarion Hampton",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 18.5
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49600,
+      "total_fpts": 257.18,
+      "salary_leftover": 400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Christian McCaffrey",
+          "position": "RB",
+          "salary": 8000,
+          "fpts": 22.6
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3100,
+          "fpts": 18.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 254.96,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Omarion Hampton",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 18.5
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Rashod Bateman",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 21.8
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 254.36,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Omarion Hampton",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 18.5
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyle Juszczyk",
+          "position": "RB",
+          "salary": 4000,
+          "fpts": 10.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49600,
+      "total_fpts": 254.35999999999999,
+      "salary_leftover": 400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Chuba Hubbard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 14.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49000,
+      "total_fpts": 254.35999999999999,
+      "salary_leftover": 1000
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Rachaad White",
+          "position": "RB",
+          "salary": 5000,
+          "fpts": 14.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 48200,
+      "total_fpts": 254.26,
+      "salary_leftover": 1800
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drew Lock",
+          "position": "QB",
+          "salary": 4900,
+          "fpts": 21.4
+        },
+        {
+          "roster_position": "RB",
+          "player": "Christian McCaffrey",
+          "position": "RB",
+          "salary": 8000,
+          "fpts": 22.6
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 254.2,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5600,
+          "fpts": 14.2
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 48800,
+      "total_fpts": 254.16,
+      "salary_leftover": 1200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Dak Prescott",
+          "position": "QB",
+          "salary": 6400,
+          "fpts": 29.76
+        },
+        {
+          "roster_position": "RB",
+          "player": "Breece Hall",
+          "position": "RB",
+          "salary": 6200,
+          "fpts": 14.2
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 4200,
+          "fpts": 14.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jaxon Smith-Njigba",
+          "position": "WR",
+          "salary": 8100,
+          "fpts": 45.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7300,
+          "fpts": 38.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeVonta Smith",
+          "position": "WR",
+          "salary": 6800,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Dalton Schultz",
+          "position": "TE",
+          "salary": 3200,
+          "fpts": 29.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4500,
+          "fpts": 25.9
+        },
+        {
+          "roster_position": "DST",
+          "player": "Panthers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 26.0
+        }
+      ],
+      "total_salary": 49400,
+      "total_fpts": 254.16,
+      "salary_leftover": 600
+    }
+  ]
+}
