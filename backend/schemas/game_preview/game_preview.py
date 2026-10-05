@@ -26,6 +26,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from backend.schemas.game_logs.game_logs import TeamStatSummaryRow
+
 
 class GamePreviewVegas(BaseModel):
     # All three None when the Vegas Lines scrape has no row for this game
@@ -86,6 +88,46 @@ class GamePreviewDstMatchup(BaseModel):
     opponent_takeaways_per_game_allowed: float
 
 
+# One played week's worth of this team's own offensive pace, used as an
+# entry in GamePreviewPaceTrend.trailing -- same four pace numbers as the
+# parent object's own single-week snapshot, plus that week's own opponent
+# and its own week-over-week deltas (vs. the played week immediately before
+# THIS one, not necessarily the trend object's own top-level "most recent
+# week" comparison) so a weeks-as-columns table can show the shift at every
+# column, not just the newest one.
+class GamePreviewPaceWeek(BaseModel):
+    week: int
+    # This team's own opponent that week, from the Schedule file -- "BYE"
+    # is never possible here since a bye week never has a stat line to
+    # build a GamePreviewPaceWeek from in the first place. None only when
+    # no Schedule file covers that week/team at all (schedule_rows == [],
+    # or a row genuinely missing for that combination).
+    opponent: str | None = None
+    # "home" or "away" -- this team's own side of that week's game, from
+    # the Schedule file's own GameLocation column, so a caller can render
+    # "vs DEN" (home) vs. "@ DEN" (away) instead of a location-blind "vs".
+    # None under the exact same condition as `opponent` (no Schedule
+    # coverage for that team/week).
+    opponent_location: Literal["home", "away"] | None = None
+    plays: int
+    pass_att: int
+    rush_att: int
+    pass_rate_pct: float | None = None
+    rush_rate_pct: float | None = None
+    # vs. the played week immediately before THIS one (not the trend
+    # object's own top-level "most recent" comparison) -- None for the
+    # oldest week in `trailing` when there's no earlier played week at all
+    # to diff against (this team's very first played week of the season).
+    plays_delta: int | None = None
+    pass_rate_delta: float | None = None
+    # Always pass_rate_delta's negation (100 - pass_rate_pct is rush's own
+    # share, so a shift toward pass is an equal shift away from rush) --
+    # stored as its own field rather than left for the frontend to negate,
+    # same "always store both rates" convention as pass_rate_pct/
+    # rush_rate_pct above.
+    rush_rate_delta: float | None = None
+
+
 # This team's own offensive pace for the most recently PLAYED week before
 # the game being previewed (skips bye weeks -- `week` is that real week,
 # not necessarily `preview_week - 1`), plus how that compares to the week
@@ -112,6 +154,17 @@ class GamePreviewPaceTrend(BaseModel):
     # season, or a bye-week gap right before it).
     plays_delta: int | None = None
     pass_rate_delta: float | None = None
+    # Up to `window_weeks` most recently PLAYED weeks strictly before the
+    # game being previewed, ordered NEWEST FIRST (trailing[0] duplicates
+    # this same object's own week/plays/pass_att/etc as its first entry --
+    # kept as a real entry rather than skipped, so a caller rendering a
+    # weeks-as-columns table doesn't need to special-case "the first column
+    # is somewhere else"). Fewer than window_weeks entries whenever this
+    # team doesn't have that many played weeks yet (early season, or bye
+    # weeks in the window) -- never padded with placeholder weeks. Empty
+    # list under the exact same "no data at all" condition that makes the
+    # whole GamePreviewPaceTrend field None.
+    trailing: list[GamePreviewPaceWeek] = []
 
 
 # One offensive position this team's own DEFENSE has been a soft/
@@ -231,6 +284,34 @@ class GamePreviewTeamSide(BaseModel):
     # group -- same "no signal, no row" convention as everywhere else in
     # this feature.
     injury_groups: list[GamePreviewInjuryGroup] = Field(default_factory=list)
+    # This team's own Rush Att/Rush Yds/Rush TD/Pass Att/Pass Yds/Pass TD/
+    # Rec TD average+median over the trailing `window_weeks` -- the exact
+    # same TeamStatSummaryRow/StatAverage shape (and the same
+    # average_tier/median_tier red/green volume thresholds) Game Logs'
+    # own "Team Summary (Avg / Median)" section already computes (see
+    # backend/services/game_logs/game_logs_engine.py's
+    # build_team_stat_summary/tier_for_stat_value) -- reused directly
+    # rather than re-derived, so "above/below threshold" means the same
+    # thing on both tabs. None when this team has no played week with any
+    # stat line in the window at all (same "no data yet" condition as
+    # pace_trend being None).
+    stat_summary: TeamStatSummaryRow | None = None
+    # Two INDEPENDENT tiers, not a single mutually-exclusive pick -- a
+    # team can be "high" on run volume AND "low" on pass volume (or any
+    # other combination) at once. Derived purely from `stat_summary`'s own
+    # average_tier values (see game_preview_engine.py's
+    # _volume_tier_flags): run_volume_tier is "high" when Rush Att or Rush
+    # Yds tiers "high" (checked first), else "low" when either tiers
+    # "low", else None (both sit strictly between their own thresholds);
+    # pass_volume_tier mirrors this for Pass Att/Pass Yds. Both None
+    # together can mean either "no data at all" (`stat_summary` itself is
+    # None) or "this team's volume is genuinely in the normal range on
+    # both sides" (`stat_summary` exists, neither stat tripped a
+    # threshold) -- callers that need to tell those two apart should check
+    # `stat_summary` directly rather than inferring it from these two
+    # fields (see frontend TeamStatSummaryColumn's own usage).
+    run_volume_tier: Literal["low", "high"] | None = None
+    pass_volume_tier: Literal["low", "high"] | None = None
 
 
 # Phase C -- one section of the auto-generated summary (see

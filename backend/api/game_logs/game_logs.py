@@ -18,6 +18,14 @@ Players tracker itself. 404 only if the tracker has no rows at all yet
 for this (season, platform) -- there's nothing to show at all in that
 case, same as every other "nothing uploaded yet" 404 in this app.
 
+Also returns `team_stat_summary` -- one TEAM-level Average/Median entry
+per currently-shown team (every rostered player's own value summed into a
+team-week total first, then averaged/medianed across weeks), across 9
+counting stats, over exactly the weeks already in `rows` (see
+backend/services/game_logs/game_logs_engine.py's build_team_stat_summary
+and backend/schemas/game_logs/game_logs.py's TeamStatSummaryRow) --
+computed here, not on the frontend.
+
 `contest` (defaults to "Classic Main", same default every other
 contest-scoped endpoint in this app uses) narrows both the roster and the
 Game filter down to just the teams on that contest's own DK salary slate
@@ -45,7 +53,12 @@ from backend.schemas.game_logs.game_logs import GameLogsResult
 from backend.services.dk_players.dk_players_csv import parse_dk_players_csv
 from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lines
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
-from backend.services.game_logs.game_logs_engine import POSITIONS, build_game_log_rows, build_game_options
+from backend.services.game_logs.game_logs_engine import (
+    POSITIONS,
+    build_game_log_rows,
+    build_game_options,
+    build_team_stat_summary,
+)
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 
 router = APIRouter()
@@ -86,6 +99,7 @@ def game_logs_endpoint(
         tracker_rows, schedule_rows, stat_lines_by_position, week, lookback_weeks, name_aliases, contest_teams
     )
     games = build_game_options(schedule_rows, week, contest_teams)
+    team_stat_summary = build_team_stat_summary(rows, lambda r: r.team)
 
     return GameLogsResult(
         season=season,
@@ -94,4 +108,5 @@ def game_logs_endpoint(
         lookback_weeks=lookback_weeks,
         games=games,
         rows=rows,
+        team_stat_summary=team_stat_summary,
     )

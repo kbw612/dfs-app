@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchInjuryReport } from "../api";
 import { POSITION_FILTER_GROUPS, POSITION_FILTER_INDIVIDUAL, positionsForFilters } from "../positionFilters";
-import { STATUS_FILTER_GROUPS, statusMatchesFilter } from "../statusCodes";
+import { STATUS_FILTER_GROUPS, isMultiWeekOut, statusMatchesFilter } from "../statusCodes";
 import type { InjuryGameGroup, InjuryPlayerEntry, InjuryReportResult } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { CollapsibleHint } from "./CollapsibleHint";
@@ -12,9 +12,12 @@ import { StatusKey } from "./StatusKey";
 // explicit "keep the font color black" request; the signal now lives in the
 // row's own background instead. Doubtful and every "Out" code (see the "O"
 // filter group's own codes list) shade red (seriously in doubt or gone
-// entirely) regardless of star status. Questionable is different: the gold
-// shade only shows up for a STARRED Questionable player -- it's the same
-// gold the star icon itself already is, so it reads as "this starred
+// entirely) regardless of star status -- except a multi-week Out code (IR,
+// SUS, PUP, etc. -- see statusCodes.ts's isMultiWeekOut), which shades a
+// visibly darker red than plain "O"/Doubtful, since those mean gone for
+// several weeks rather than just this one. Questionable is different: the
+// gold shade only shows up for a STARRED Questionable player -- it's the
+// same gold the star icon itself already is, so it reads as "this starred
 // player is a bit banged up" rather than a general severity color; a
 // non-starred Questionable player gets no background at all, per an
 // explicit "remove yellow background for non-star questionable players"
@@ -24,6 +27,7 @@ import { StatusKey } from "./StatusKey";
 function injuryStatusRowClassName(status: string | null, starred: boolean): string {
   if (status === null) return "";
   if (status === "Q") return starred ? "injury-report-row-questionable" : "";
+  if (isMultiWeekOut(status)) return "injury-report-row-out-multi-week";
   const outCodes = STATUS_FILTER_GROUPS.find((g) => g.key === "O")!.codes;
   if (status === "D" || outCodes.includes(status)) return "injury-report-row-out";
   return "";

@@ -55,6 +55,7 @@ from __future__ import annotations
 from backend.schemas.depth_charts.snapshot import Snapshot
 from backend.schemas.dk_players.dk_players import DkPlayerRow
 from backend.schemas.dst_trends.dst_trends import DstTrendTeamRow
+from backend.schemas.game_logs.game_logs import GameLogRow, TeamStatSummaryRow
 from backend.schemas.game_preview.game_preview import (
     GamePreviewDstMatchup,
     GamePreviewGame,
@@ -71,6 +72,7 @@ from backend.schemas.team_factors.team_factors import TeamFactorEntry
 from backend.schemas.vegas_lines.vegas_lines import VegasLinesSnapshot
 from backend.schemas.weather.weather import WeatherSnapshot
 from backend.services.dst_trends.dst_trends_engine import build_dst_trend_leaderboards
+from backend.services.game_logs.game_logs_engine import build_game_log_rows, build_team_stat_summary
 from backend.services.game_preview.game_preview_injuries import build_team_injury_groups
 from backend.services.game_preview.game_preview_matchups import (
     build_positional_matchup_signals,
@@ -89,6 +91,71 @@ from backend.services.schedule.schedule_loader import ScheduleRow, games_for_wee
 from backend.services.shared.game_matchup import game_key, game_label, resolve_away_home
 
 _FACTOR_POSITIONS = ("QB", "RB", "WR", "TE", "DST")
+
+
+def _stat_summary_for_team(team: str, game_log_rows: list[GameLogRow]) -> TeamStatSummaryRow | None:
+    """This team's own TeamStatSummaryRow out of `game_log_rows` (already
+    built once for the whole call via build_game_log_rows -- see
+    build_game_preview), or None if this team has no rows in it at all
+    (no played week with any stat line in the window yet). Reuses Game
+    Logs' own build_team_stat_summary unmodified -- filtering to one
+    team's own rows first means that function's internal per-team
+    grouping only ever has one group to return."""
+    rows_for_team = [r for r in game_log_rows if r.team == team]
+    summaries = build_team_stat_summary(rows_for_team, get_team=lambda r: r.team)
+    return summaries[0] if summaries else None
+
+
+def _combined_tier(*tiers: str | None) -> str | None:
+    """Collapses any number of individual tier reads -- e.g. Rush Att's
+    and Rush Yds's own average_tier AND median_tier, all four at once --
+    into one tier for the group: "high" wins if ANY of them is "high"
+    (checked first), else "low" if any is "low", else None (every one of
+    them sits strictly between its own thresholds). "high" is checked
+    before "low" so a team that's high on one read but low on another
+    (e.g. high on Rush Yds but low on Rush Att -- lots of yards on fewer
+    carries, or high on the average but low on the median -- one huge
+    game pulling the mean up) still reads as an elevated team overall
+    rather than a suppressed one. Feeding in both average_tier and
+    median_tier (rather than average_tier alone) means a team whose
+    average sits in the dead zone between thresholds but whose median
+    clears one (or vice versa -- a hot median dragged down by a single
+    cold week) still gets credit for the signal either reading alone
+    would have caught."""
+    if any(t == "high" for t in tiers):
+        return "high"
+    if any(t == "low" for t in tiers):
+        return "low"
+    return None
+
+
+def _volume_tier_flags(stat_summary: TeamStatSummaryRow | None) -> tuple[str | None, str | None]:
+    """(run_volume_tier, pass_volume_tier) -- see
+    GamePreviewTeamSide.run_volume_tier/pass_volume_tier's own docstring
+    for the exact rule. Two INDEPENDENT _combined_tier calls, each
+    folding in BOTH average_tier and median_tier for its pair of
+    sub-stats (already computed by tier_for_stat_value) -- a team can
+    come back ("high", "low") just as validly as ("high", "high") or
+    (None, None); neither result depends on the other. Both None (not
+    just "no signal") only when `stat_summary` itself is None (no data
+    to judge at all) -- see that field's own docstring for why this is
+    ambiguous with "genuinely normal on both sides" and how callers
+    should tell the two apart."""
+    if stat_summary is None:
+        return None, None
+    run_tier = _combined_tier(
+        stat_summary.rush_att.average_tier,
+        stat_summary.rush_att.median_tier,
+        stat_summary.rush_yards.average_tier,
+        stat_summary.rush_yards.median_tier,
+    )
+    pass_tier = _combined_tier(
+        stat_summary.pass_att.average_tier,
+        stat_summary.pass_att.median_tier,
+        stat_summary.pass_yds.average_tier,
+        stat_summary.pass_yds.median_tier,
+    )
+    return run_tier, pass_tier
 
 
 def _team_factors(team: str, factors_by_team_position: dict[tuple[str, str], TeamFactorEntry]) -> GamePreviewTeamFactors:
@@ -158,6 +225,7 @@ def build_game_preview(
     depth_chart_snapshot: Snapshot | None = None,
     star_players: StarPlayersResult | None = None,
     contest_teams: set[str] | None = None,
+    name_aliases: dict[str, str] | None = None,
 ) -> GamePreviewResult:
     """One GamePreviewGame per this WEEK's own Schedule matchup (not
     week - 1 -- Vegas/Weather/Team Factors are all forward-looking context
@@ -192,7 +260,15 @@ def build_game_preview(
     convention as build_game_options' own contest_teams (see that
     function's docstring for the full reasoning); left at its default
     (None) skips this filter entirely and every league-wide game still
-    shows."""
+    shows.
+
+    `name_aliases` (optional, Settings' Name Aliases panel) resolves the
+    same cross-source spelling drift Game Logs' own build_game_log_rows
+    handles -- passed straight through to that function below, since
+    GamePreviewTeamSide.stat_summary/pass_rush_lean are built from its
+    own rows. Left at its default (None -> {}) means a spelling mismatch
+    simply looks like "no stats recorded" for that player that week, same
+    graceful-degradation convention as everywhere else here."""
     tracker_rows = tracker_rows or []
     stat_lines_by_position = stat_lines_by_position or {}
     ownership_players = ownership_players or []
@@ -202,6 +278,23 @@ def build_game_preview(
     dst_result = build_dst_trend_leaderboards(dst_stat_lines, season, week, window_weeks)
     forcing_by_team = {r.team: r for r in dst_result.forcing}
     allowing_by_team = {r.team: r for r in dst_result.allowing}
+
+    # Team Stat Summary (Rush/Pass Att/Yds/TD averages+medians, plus the
+    # Rush/Pass lean derived from them) -- built once up front, same "one
+    # shared computation, filtered per side below" pattern as
+    # exploitable_positions_by_team just below. Reuses Game Logs' own
+    # build_game_log_rows/build_team_stat_summary unmodified (see
+    # _stat_summary_for_team above) rather than re-deriving this
+    # per-week-per-team aggregation a second way.
+    game_log_rows, _reference_week = build_game_log_rows(
+        tracker_rows,
+        schedule_rows,
+        stat_lines_by_position,  # type: ignore[arg-type]
+        week,
+        window_weeks,
+        name_aliases=name_aliases,
+        contest_teams=contest_teams,
+    )
 
     # Team pace trend + the new positional-matchup signal (see
     # game_preview_matchups.py's own module docstring) -- both computed
@@ -250,14 +343,22 @@ def build_game_preview(
         vegas_for_game = _vegas_for_game(vegas, key)
         weather_for_game = _weather_for_game(weather, key)
 
+        away_stat_summary = _stat_summary_for_team(away_team, game_log_rows)
+        home_stat_summary = _stat_summary_for_team(home_team, game_log_rows)
+        away_run_tier, away_pass_tier = _volume_tier_flags(away_stat_summary)
+        home_run_tier, home_pass_tier = _volume_tier_flags(home_stat_summary)
+
         away_side = GamePreviewTeamSide(
             team=away_team,
             is_home=False,
             team_factors=_team_factors(away_team, factors_by_team_position),
             dst_matchup=_dst_matchup(away_team, home_team, forcing_by_team, allowing_by_team),
-            pace_trend=build_team_pace_trend(away_team, week, stat_lines_by_position),
+            pace_trend=build_team_pace_trend(away_team, week, window_weeks, stat_lines_by_position, schedule_rows),
             exploitable_positions=exploitable_positions_by_team.get(away_team, []),
             projected_ownership_pct=team_projected_ownership_pct(away_team, ownership_players),
+            stat_summary=away_stat_summary,
+            run_volume_tier=away_run_tier,
+            pass_volume_tier=away_pass_tier,
             players=build_team_player_tags(
                 away_team,
                 tracker_rows,
@@ -282,9 +383,12 @@ def build_game_preview(
             is_home=True,
             team_factors=_team_factors(home_team, factors_by_team_position),
             dst_matchup=_dst_matchup(home_team, away_team, forcing_by_team, allowing_by_team),
-            pace_trend=build_team_pace_trend(home_team, week, stat_lines_by_position),
+            pace_trend=build_team_pace_trend(home_team, week, window_weeks, stat_lines_by_position, schedule_rows),
             exploitable_positions=exploitable_positions_by_team.get(home_team, []),
             projected_ownership_pct=team_projected_ownership_pct(home_team, ownership_players),
+            stat_summary=home_stat_summary,
+            run_volume_tier=home_run_tier,
+            pass_volume_tier=home_pass_tier,
             players=build_team_player_tags(
                 home_team,
                 tracker_rows,

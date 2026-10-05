@@ -1,9 +1,17 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { fetchGameLogs } from "../api";
-import type { GameLogRow, GameOption } from "../types";
+import { fetchGameLogs, fetchGameRecaps } from "../api";
+import type { GameLogRow, GameOption, GameRecapEntry, GameRecapWeekSnapshot, TeamStatSummaryRow } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { GameRecapModal } from "./GameRecapModal";
+import { HeaderInfoPopover } from "./HeaderInfoPopover";
+import { PlayerStatSummaryTable } from "./PlayerStatSummaryTable";
+import { MULTIPLIER_TIER_NOTES, SHARE_RANK_NOTES, statTierNotes } from "./scoringNotes";
+import { TeamRecapTable } from "./TeamRecapTable";
 import {
+  buildGameTeamOrder,
+  compareTeamsByGameOrder,
+  distinctTeamWeeks,
   formatCount,
   formatDecimal,
   formatMultiplier,
@@ -14,6 +22,7 @@ import {
   positionRank,
   rankTopSharesByTeamAndWeek,
   shareRankClassName,
+  statTierClassName,
   tierClassName,
 } from "./gameLogsShared";
 
@@ -41,20 +50,22 @@ interface TeamGroup {
   rows: GameLogRow[];
 }
 
-// Team (alphabetical) > Position (QB/RB/WR/TE order) > week descending,
-// then FPTS descending within that week -- the "Group by position,
-// interleaved by week" layout the user picked, matching the reference
-// Google Sheet's own per-position blocks with multiple players'
-// rows interleaved by week, with each week's own rows led by whoever
-// scored the most that week.
-function groupByTeamAndPosition(rows: GameLogRow[]): TeamGroup[] {
+// Team (by this week's own game matchups, same order as Game Previews --
+// see buildGameTeamOrder/compareTeamsByGameOrder) > Position (QB/RB/WR/TE
+// order) > week descending, then FPTS descending within that week -- the
+// "Group by position, interleaved by week" layout the user picked,
+// matching the reference Google Sheet's own per-position blocks with
+// multiple players' rows interleaved by week, with each week's own rows
+// led by whoever scored the most that week.
+function groupByTeamAndPosition(rows: GameLogRow[], teamOrder: Map<string, number>): TeamGroup[] {
   const byTeam = new Map<string, GameLogRow[]>();
   for (const row of rows) {
     if (!byTeam.has(row.team)) byTeam.set(row.team, []);
     byTeam.get(row.team)!.push(row);
   }
+  const compareTeams = compareTeamsByGameOrder(teamOrder);
   return [...byTeam.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => compareTeams(a, b))
     .map(([team, teamRows]) => ({
       team,
       rows: [...teamRows].sort((a, b) => {
@@ -82,9 +93,17 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
 
   const [games, setGames] = useState<GameOption[]>([]);
   const [rows, setRows] = useState<GameLogRow[] | null>(null);
+  const [teamStatSummary, setTeamStatSummary] = useState<TeamStatSummaryRow[]>([]);
   const [referenceWeek, setReferenceWeek] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Game Recaps -- one fetch per distinct week present in the currently
+  // loaded rows (not per team), shared across every team's own
+  // TeamRecapTable below via findTeamRecap. null = fetched, nothing
+  // scraped yet for that week; absent from the map = not fetched yet.
+  const [recapsByWeek, setRecapsByWeek] = useState<Map<number, GameRecapWeekSnapshot | null>>(new Map());
+  const [openRecap, setOpenRecap] = useState<{ entry: GameRecapEntry; sourceUrl: string } | null>(null);
 
   // Single-select -- only one game at a time, per the user's explicit
   // "I only want to select one game at a time" answer. null = "All".
@@ -102,15 +121,46 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
         setRows(result.rows);
         setGames(result.games);
         setReferenceWeek(result.reference_week);
+        setTeamStatSummary(result.team_stat_summary);
       })
       .catch((err) => {
         setRows(null);
         setGames([]);
         setReferenceWeek(null);
+        setTeamStatSummary([]);
         setError(err instanceof Error ? err.message : "Failed to load game logs");
       })
       .finally(() => setLoading(false));
   }, [season, week, platform, contest, lookbackWeeks]);
+
+  // Fetches Game Recaps for every distinct week present in `rows`, once
+  // per week (not per team-group render) -- a small, bounded number of
+  // requests (the lookback window), reused across every team via
+  // findTeamRecap. Already-fetched weeks aren't re-requested on a re-render
+  // caused by filter changes, only when the underlying `rows` set changes.
+  useEffect(() => {
+    const weeks = new Set((rows ?? []).map((r) => r.week));
+    const toFetch = [...weeks].filter((w) => !recapsByWeek.has(w));
+    if (toFetch.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      toFetch.map((w) =>
+        fetchGameRecaps(season, w)
+          .then((snapshot): [number, GameRecapWeekSnapshot | null] => [w, snapshot])
+          .catch((): [number, GameRecapWeekSnapshot | null] => [w, null])
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      setRecapsByWeek((prev) => {
+        const next = new Map(prev);
+        for (const [w, snapshot] of results) next.set(w, snapshot);
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rows, season, recapsByWeek]);
 
   useEffect(() => {
     const timer = lookbackDebounce;
@@ -166,7 +216,8 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
     });
   }, [rows, selectedGame, selectedTeams, gameByKey]);
 
-  const groups = useMemo(() => groupByTeamAndPosition(filteredRows), [filteredRows]);
+  const teamOrder = useMemo(() => buildGameTeamOrder(games), [games]);
+  const groups = useMemo(() => groupByTeamAndPosition(filteredRows, teamOrder), [filteredRows, teamOrder]);
 
   // That team's top 2 Opp Share/Tgt Share/Touch Share values for that
   // week -- see gameLogsShared.rankTopSharesByTeamAndWeek's own docstring.
@@ -180,6 +231,17 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
   );
   const touchShareRanks = useMemo(
     () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.touch_share_pct),
+    [filteredRows]
+  );
+  // That team's top 2 Rush Yds/Rec Yds values for that week -- same
+  // pattern and same green shading as the Share columns above, per an
+  // explicit "follow green shading color in other columns" request.
+  const rushYardsRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.rush_yards),
+    [filteredRows]
+  );
+  const receivingYardsRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.team, (r) => r.receiving_yards),
     [filteredRows]
   );
 
@@ -202,6 +264,11 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
           `Any of those show "-" until the relevant Settings scrape exists (or, for Pass/Share columns, until Calc
           Week Points has run, or for Pass columns, for every non-QB row).`,
           "Weeks with 0 FPTS are hidden except for DST, which always shows.",
+          `The Team Summary (Avg / Median) table under each team's own game outcomes sums every currently-shown
+          player's own Rec/Rec Yds/Rec TD/Rush Att/Rush Yds/Rush TD/Pass Att/Pass Yds/Pass TD into a team-week
+          total, then averages/medians those team totals over exactly the weeks shown below it -- a team-level
+          number, not a per-player one. Computed server-side, not recomputed in the browser.`,
+          "Rush Yds and Rec Yds each highlight that team's own top 2 values for the week, same green shading as Tgt/Touch Share.",
         ]}
       />
 
@@ -257,6 +324,13 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
         groups.map((group) => (
           <section className="ownership-section" key={group.team}>
             <h2>{group.team}</h2>
+            <TeamRecapTable
+              team={group.team}
+              weeks={distinctTeamWeeks(group.rows)}
+              recapsByWeek={recapsByWeek}
+              onOpenRecap={(entry, sourceUrl) => setOpenRecap({ entry, sourceUrl })}
+            />
+            <PlayerStatSummaryTable rows={teamStatSummary.filter((r) => r.team === group.team)} />
             <div className="player-pool-grid-wrap ownership-summary-grid-wrap">
               <table className="player-pool-grid ownership-summary-grid">
                 <tbody>
@@ -287,7 +361,10 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                             <th>{row.position}</th>
                             <th>Salary</th>
                             <th>Opp</th>
-                            <th>Multiplier</th>
+                            <th>
+                              Multiplier
+                              <HeaderInfoPopover title="Multiplier" lines={MULTIPLIER_TIER_NOTES} />
+                            </th>
                             <th>FPTS</th>
                             <th>
                               Non-TD
@@ -314,16 +391,21 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               Tgt
                               <br />
                               Share
+                              <HeaderInfoPopover title="Tgt Share" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>
                               Touch
                               <br />
                               Share
+                              <HeaderInfoPopover title="Touch Share" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>Touches</th>
                             <th>Tgts</th>
                             <th>Rec</th>
-                            <th>Rec Yds</th>
+                            <th>
+                              Rec Yds
+                              <HeaderInfoPopover title="Rec Yds" lines={SHARE_RANK_NOTES} />
+                            </th>
                             <th>
                               Rec
                               <br />
@@ -338,6 +420,7 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               Rush
                               <br />
                               Yds
+                              <HeaderInfoPopover title="Rush Yds" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>
                               Rush
@@ -353,6 +436,7 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               Pass
                               <br />
                               Att
+                              <HeaderInfoPopover title="Pass Att" lines={statTierNotes(28, 38)} />
                             </th>
                             <th>
                               Pass
@@ -363,6 +447,7 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                               Pass
                               <br />
                               Yds
+                              <HeaderInfoPopover title="Pass Yds" lines={statTierNotes(175, 261)} />
                             </th>
                             <th>
                               Pass
@@ -420,15 +505,23 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                           <td className="player-pool-grid-num">{formatCount(row.touches)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.targets)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receptions)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.receiving_yards)}</td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(receivingYardsRanks.get(row))}`}>
+                            {formatCount(row.receiving_yards)}
+                          </td>
                           <td className="player-pool-grid-num">{formatCount(row.rec_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_att)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.rush_yards)}</td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(rushYardsRanks.get(row))}`}>
+                            {formatCount(row.rush_yards)}
+                          </td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_cmp)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.pass_att)}</td>
+                          <td className={`player-pool-grid-num ${statTierClassName(row.pass_att_tier)}`}>
+                            {formatCount(row.pass_att)}
+                          </td>
                           <td className="player-pool-grid-num">{formatPct(row.pass_cmp_pct)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.pass_yds)}</td>
+                          <td className={`player-pool-grid-num ${statTierClassName(row.pass_yds_tier)}`}>
+                            {formatCount(row.pass_yds)}
+                          </td>
                           <td className="player-pool-grid-num">{formatDecimal(row.pass_avg)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_int)}</td>
@@ -443,6 +536,10 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
             </div>
           </section>
         ))}
+
+      {openRecap && (
+        <GameRecapModal entry={openRecap.entry} sourceUrl={openRecap.sourceUrl} onClose={() => setOpenRecap(null)} />
+      )}
     </>
   );
 }

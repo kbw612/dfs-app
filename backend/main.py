@@ -54,6 +54,7 @@ from backend.api.team_factors import router as team_factors_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.api.usage_bump.players import router as usage_bump_players_router
 from backend.api.vegas_lines import router as vegas_lines_router
+from backend.api.game_recap import router as game_recap_router
 from backend.api.weather import router as weather_router
 from backend.config import settings
 
@@ -94,6 +95,7 @@ app.include_router(weather_router, prefix="/api")
 app.include_router(star_players_router, prefix="/api")
 app.include_router(injury_report_router, prefix="/api")
 app.include_router(lineup_scenarios_router, prefix="/api")
+app.include_router(game_recap_router, prefix="/api")
 
 
 @app.get("/health")

@@ -52,10 +52,11 @@ calculate_week_points), same as every other position.
 
 from __future__ import annotations
 
-from typing import Literal
+from statistics import median as _median
+from typing import Callable, Literal, Protocol, TypeVar
 
 from backend.schemas.dk_players.dk_players import DkPlayerRow
-from backend.schemas.game_logs.game_logs import GameLogRow, GameOption
+from backend.schemas.game_logs.game_logs import GameLogRow, GameOption, StatAverage, TeamStatSummaryRow
 from backend.services.game_logs.scoring import multiplier as _multiplier
 from backend.services.game_logs.scoring import pct_of_total as _pct
 from backend.services.schedule.schedule_loader import ScheduleRow, games_for_week, opponent_and_location
@@ -253,7 +254,168 @@ def build_game_log_rows(
                     pass_int=stat_line.get("pass_int"),
                     pass_sck=stat_line.get("pass_sck"),
                     pass_rtg=stat_line.get("pass_rtg"),
+                    pass_att_tier=tier_for_stat_value("pass_att", stat_line.get("pass_att")),
+                    pass_yds_tier=tier_for_stat_value("pass_yds", stat_line.get("pass_yds")),
                     sacks=stat_line.get("sacks"),
                 )
             )
     return rows, reference_week
+
+
+# Background-color thresholds for the 4 passing/rushing volume stats that
+# get red/green shading, in both the Team Stat Summary (StatAverage's own
+# average_tier/median_tier, applied to the averaged/medianed team-week
+# totals) and the per-week grid (GameLogRow/GameLogAgainstRow's own
+# pass_att_tier/pass_yds_tier, applied to a single week's raw value --
+# deliberately NOT extended to rush_att/rush_yards there, since the
+# person's own request only colors the passing columns per-week; rush/rec
+# already have their own unrelated top-2-share shading computed client-
+# side). Each tuple is (red-threshold, green-threshold): at or under the
+# first is "low" (red), at or over the second is "high" (green), anything
+# in between is None (no shading) -- see tier_for_stat_value.
+_STAT_TIER_THRESHOLDS: dict[str, tuple[float, float]] = {
+    "pass_yds": (175, 261),
+    "pass_att": (28, 38),
+    "rush_yards": (85, 141),
+    "rush_att": (21, 30),
+}
+
+
+def tier_for_stat_value(field: str, value: float | int | None) -> Literal["low", "high"] | None:
+    """The single shared source of truth for every "color this stat's
+    background" decision this feature makes -- both StatAverage's
+    average_tier/median_tier (game_logs.py) and GameLogRow/
+    GameLogAgainstRow's own pass_att_tier/pass_yds_tier call this with the
+    same `field` name and thresholds, so a week's raw value and this same
+    stat's team-week average/median are always judged by identical rules.
+    None for a `value` of None, for a `field` with no entry in
+    _STAT_TIER_THRESHOLDS (Rec TD, Rush TD, Pass TD -- no thresholds
+    requested for these), or for a value that falls strictly between the
+    two thresholds (no shading)."""
+    if value is None:
+        return None
+    thresholds = _STAT_TIER_THRESHOLDS.get(field)
+    if thresholds is None:
+        return None
+    low, high = thresholds
+    if value <= low:
+        return "low"
+    if value >= high:
+        return "high"
+    return None
+
+
+# The 7 counting stats TeamStatSummaryRow summarizes -- see that schema's
+# own docstring (Receptions/Receiving Yards were dropped at the person's
+# own request). Order here is what build_team_stat_summary iterates in;
+# doesn't affect the response shape (each is its own named field), just
+# kept in the same Rush/Pass block order the main Game Logs grid itself
+# uses for these columns.
+_SUMMARY_STAT_FIELDS: tuple[str, ...] = (
+    "rec_td",
+    "rush_att",
+    "rush_yards",
+    "rush_td",
+    "pass_att",
+    "pass_yds",
+    "pass_td",
+)
+
+
+class _StatSummaryRow(Protocol):
+    """Structural type for whatever row build_team_stat_summary is called
+    with (GameLogRow or GameLogAgainstRow) -- both already carry identical
+    field names/types for every field referenced here, so one function
+    serves both tabs (see each engine's own call site for how `get_team`
+    differs)."""
+
+    week: int
+    rec_td: int | None
+    rush_att: int | None
+    rush_yards: int | None
+    rush_td: int | None
+    pass_att: int | None
+    pass_yds: int | None
+    pass_td: int | None
+
+
+_RowT = TypeVar("_RowT", bound=_StatSummaryRow)
+
+
+def _average_and_median(field: str, values: list[float]) -> StatAverage:
+    """None/None/None/None when `values` is empty -- i.e. every one of
+    this team's own weeks had this particular stat's team total as None
+    (not a real 0), same "not applicable" convention StatAverage's own
+    docstring describes. `field` decides average_tier/median_tier via
+    tier_for_stat_value -- None for both on a stat with no thresholds
+    (Rec TD, Rush TD, Pass TD)."""
+    if not values:
+        return StatAverage(average=None, median=None, average_tier=None, median_tier=None)
+    average = sum(values) / len(values)
+    median = float(_median(values))
+    return StatAverage(
+        average=average,
+        median=median,
+        average_tier=tier_for_stat_value(field, average),
+        median_tier=tier_for_stat_value(field, median),
+    )
+
+
+def build_team_stat_summary(rows: list[_RowT], get_team: Callable[[_RowT], str]) -> list[TeamStatSummaryRow]:
+    """A TEAM-level summary, not a per-player one: for each team, for each
+    week that team has at least one row, every one of that team's own rows
+    for that week is summed per stat into a single team-week total (a
+    None-valued field -- e.g. Pass Yds on a non-QB row -- contributes
+    nothing to the sum, same "not applicable" exclusion as everywhere else
+    in this app; a week where NO row for that team has a non-None value
+    for a stat leaves that week out of the stat's own average/median
+    entirely, rather than counting it as 0). Each of the 7
+    _SUMMARY_STAT_FIELDS is then averaged/medianed across however many of
+    that team's own weeks had a real team total for it (see
+    _average_and_median).
+
+    `team` comes from `get_team`, since GameLogRow's own roster team and
+    GameLogAgainstRow's own `against_team` panel grouping are different
+    fields on the two row types. `rows` is expected to already be
+    whatever's actually being shown (post zero-FPTS filtering, within the
+    lookback window) -- this function does no week-window filtering of its
+    own, so the summary always matches what's on screen, per the person's
+    own "only the weeks shown" answer.
+
+    `games` on each result row is the count of that team's own distinct
+    weeks with at least one row (not the count behind any one stat's own
+    average, which can be fewer -- e.g. a bye-week-free team with no QB
+    row one week still counts that week in `games`, just not in Pass Yds'
+    own average).
+
+    Sorted by team -- a stable, predictable order the frontend can render
+    directly without re-sorting (consistent with this module's "no calcs
+    on the frontend" design for this feature)."""
+    rows_by_team_week: dict[tuple[str, int], list[_RowT]] = {}
+    for row in rows:
+        key = (get_team(row), row.week)
+        rows_by_team_week.setdefault(key, []).append(row)
+
+    # Per-team: for each of its own weeks, one team-total value per stat
+    # (or no entry at all for a stat that week if nothing contributed).
+    team_week_totals: dict[str, dict[str, list[float]]] = {}
+    team_games: dict[str, int] = {}
+    for (team, _week), week_rows in rows_by_team_week.items():
+        team_games[team] = team_games.get(team, 0) + 1
+        stat_totals = team_week_totals.setdefault(team, {field: [] for field in _SUMMARY_STAT_FIELDS})
+        for field in _SUMMARY_STAT_FIELDS:
+            values = [getattr(row, field) for row in week_rows if getattr(row, field) is not None]
+            if values:
+                stat_totals[field].append(float(sum(values)))
+
+    summaries: list[TeamStatSummaryRow] = []
+    for team in sorted(team_week_totals):
+        stat_totals = team_week_totals[team]
+        summaries.append(
+            TeamStatSummaryRow(
+                team=team,
+                games=team_games[team],
+                **{field: _average_and_median(field, stat_totals[field]) for field in _SUMMARY_STAT_FIELDS},
+            )
+        )
+    return summaries

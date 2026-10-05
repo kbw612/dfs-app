@@ -438,6 +438,26 @@ button:disabled {
   color: #333;
 }
 
+/* Extra breathing room around the Compare tab's own status badge (see
+   DiffResults.tsx's compareStatusBackgroundClassName) -- the inline text
+   alone left almost no background visible around the letters, so this
+   adds padding + a slight corner round, same "pill" treatment the other
+   background-shaded badges in this app use. */
+.diff-status-badge {
+  padding: 2px 7px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.dfs-type-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 12px;
+  white-space: nowrap;
+  font-weight: normal;
+}
+
 /* Fixed min-widths above assume a wide row; on a phone that leaves the
    change-values column almost no room, so drop them and let each piece
    take its own line instead. */
@@ -683,6 +703,97 @@ button.calendar-cell.no-data .day-number {
   column-gap: 8px;
   row-gap: 2px;
   margin-top: 8px;
+}
+
+/* GameRecapModal -- wider than the default .modal-dialog (which is sized
+   for a short confirm message) since a recap runs several paragraphs, and
+   scrolls internally rather than growing past the viewport. */
+.game-recap-modal {
+  width: 660px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-recap-modal-body {
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.game-recap-paragraph {
+  margin: 0 0 10px;
+}
+
+.game-recap-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.game-recap-modal-source {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+/* Week/Opp/Score/Recap mini-table rendered between a team's own <h2> and
+   its stats grid on both Game Logs and Game Logs Against (see
+   TeamRecapTable.tsx) -- small and narrow like Ownership Summary's own
+   tables, not the wide auto-layout .player-pool-grid default, so
+   table.team-recap-table (element + class) overrides width:100% the same
+   way table.ownership-summary-grid does further down this file. */
+table.team-recap-table {
+  width: auto;
+  margin-bottom: 10px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.team-recap-table th,
+.team-recap-table td {
+  padding: 7px 20px 7px 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.team-recap-table thead th {
+  font-weight: 800;
+  color: #1a202c;
+  border-bottom: 1px solid #ddd;
+}
+
+/* Score cell win/loss/tie background -- tie intentionally has no rule of
+   its own so it falls back to the table's plain white background. Win
+   reuses the same dark green as a 4.0+ Multiplier cell
+   (.game-logs-tier-green-dark); loss reuses the same darker red as a
+   multi-week IR/SUS/PUP Out status (.injury-report-row-out-multi-week),
+   rather than each defining its own one-off shade. */
+.team-recap-table td.team-recap-score-win {
+  background-color: #6aa84f;
+}
+
+.team-recap-table td.team-recap-score-loss {
+  background-color: #e08a8a;
+}
+
+.team-recap-table td.team-recap-score-tie {
+  background-color: #ffffff;
+}
+
+.team-recap-view-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2b6cb0;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.team-recap-view-link:hover {
+  color: #1a4e8a;
 }
 
 .confirm-dialog-actions {
@@ -1906,6 +2017,37 @@ table.ownership-summary-grid {
   margin-bottom: 4px;
 }
 
+/* PlayerStatSummaryTable's own wrap -- overrides the inline-block default
+   above since this wrap holds a label span above the table (not just the
+   table alone), and the two need to stack vertically rather than sit side
+   by side. */
+.player-stat-summary-wrap {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.player-stat-summary-label {
+  display: block;
+  font-weight: 700;
+  color: #4a5568;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+
+.player-stat-summary-table {
+  font-size: 0.8rem;
+}
+
+.player-stat-summary-table th,
+.player-stat-summary-table td {
+  text-align: right;
+}
+
+.player-stat-summary-table th.player-selection-name-col,
+.player-stat-summary-table td.player-selection-name-col {
+  text-align: left;
+}
+
 /* .chip-filter alone has no margin of its own (same reasoning as
    .vegas-lines-sort further down this file) -- this gives Ownership
    Summary's Position/Sort filter rows breathing room above whichever
@@ -2317,6 +2459,14 @@ table.ownership-summary-grid {
   color: #c53030;
 }
 
+/* Multi-week Out codes (IR, IR-R, SUS, PUP, NFI, CEL, EX -- see
+   statusCodes.ts's isMultiWeekOut) get a visibly darker red than plain
+   "O"/Doubtful above, so the shade itself signals "gone a while" vs "just
+   this week" without reading the actual code text. */
+.status-color-red-dark {
+  color: #7a1414;
+}
+
 .status-color-gold {
   color: #a68b00;
 }
@@ -2385,8 +2535,30 @@ table.ownership-summary-grid {
   background: #f5c6c6;
 }
 
+/* Healthy (no status at all) background for the Compare tab's own status
+   badge -- DiffResults.tsx shows healthy and injured players side by side
+   in the same list, so "healthy" needs its own explicit shade to read as
+   a status at a glance rather than looking unstyled. Same light-tint
+   convention as .status-bg-out/-questionable, just green instead of
+   red/gold. */
+.status-bg-healthy {
+  background: #c6f6d5;
+}
+
+/* Darker background counterpart to .status-bg-out for a multi-week Out
+   code (see .status-color-red-dark above) -- same idea, applied as a
+   background instead of text color. */
+.status-bg-out-multi-week {
+  background: #e08a8a;
+}
+
+/* Darker gold than the original pale #fdf6e3 -- matches the same darker
+   gold already used elsewhere as a font color (.status-color-gold) and as
+   a background (the Multiplier tab's own 3.0-3.49 tier,
+   .game-logs-tier-yellow-dark), so Questionable reads as clearly gold
+   rather than a near-white tint. */
 .status-bg-questionable {
-  background: #fdf6e3;
+  background: #f1c232;
 }
 
 /* Injury Report tab -- read-only star display (no click handler, unlike
@@ -2422,6 +2594,14 @@ table.ownership-summary-grid {
    still shows a gold star against the red background. */
 .injury-report-row-out {
   background: #f5c6c6;
+}
+
+/* Darker background counterpart to .injury-report-row-out for a multi-week
+   Out code (see .status-bg-out-multi-week above) -- same idea, applied as a
+   whole-row shade so a glance at the Injury Report tells "gone a while" vs
+   "just this week." */
+.injury-report-row-out-multi-week {
+  background: #e08a8a;
 }
 
 .injury-report-row-questionable {
@@ -2499,6 +2679,22 @@ table.ownership-summary-grid {
 
 .game-logs-tier-yellow-light {
   background-color: #ffe599;
+}
+
+/* Pass Att/Pass Yds/Rush Att/Rush Yds volume shading, both in the Team
+   Summary (Avg/Median) section's own StatAverage cells and in the
+   per-week grid's Pass Att/Pass Yds cells (see PlayerStatSummaryTable.tsx
+   and GameLogsView.tsx/GameLogsAgainstView.tsx) -- "low" (at/under that
+   stat's red threshold) and "high" (at/over its green threshold) are
+   computed server-side (tier_for_stat_value), this just supplies the same
+   darker red/green already used elsewhere for a below/above-the-bar read
+   (.status-bg-out-multi-week / .game-logs-tier-green-dark). */
+.stat-tier-low {
+  background-color: #e08a8a;
+}
+
+.stat-tier-high {
+  background-color: #6aa84f;
 }
 
 /* Multipliers tab's own "Repeat Performers" panel, above the main "all
@@ -2714,6 +2910,21 @@ table.contest-results-grid {
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
+}
+
+.game-recap-url-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.game-recap-url-mode label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
 }
 
 .weekly-stats-position-label {
@@ -3149,6 +3360,175 @@ table.contest-results-grid {
   margin: 0 0 6px;
   font-size: 0.95rem;
   font-weight: 700;
+}
+
+/* Team Volume (Avg / Median) section -- now nested directly under the
+   Offensive Pace heading/table (NarrativeSectionItem in
+   GamePreviewView.tsx), so this is its own sub-heading rather than a
+   second top-level <strong> bullet label. TeamStatSummaryColumn's own
+   bullet list reuses .game-preview-injuries-row/-col/-col-team above for
+   the two-column away/home layout. */
+.game-preview-stat-summary-heading {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin: 10px 0 4px;
+  color: #4a5568;
+}
+
+.game-preview-stat-summary-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+}
+
+.game-preview-stat-summary-thresholds {
+  color: #6b7280;
+  font-size: 0.78rem;
+}
+
+/* Run Volume/Pass Volume badges next to each team's own heading --
+   base pill shape shared by every variant below (see
+   .game-preview-lean-neither/-low/-high for the actual coloring). */
+.game-preview-lean-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Wraps the Run Volume/Pass Volume pair when both show at once (a team
+   that's e.g. high on one and low on the other) -- just a gap between
+   them, no border/background of its own. */
+.game-preview-lean-badges {
+  display: inline-flex;
+  gap: 6px;
+  vertical-align: middle;
+}
+
+/* "Neither" -- neither Run nor Pass Volume tripped a threshold this
+   window. Blue, same palette as the Low Own badge, kept distinct from
+   the red/green volume-tier colors below so "no signal" never reads as
+   "low." */
+.game-preview-lean-neither {
+  color: #0b4f6c;
+  background: #d7ecf5;
+  border: 1px solid #7fb8d1;
+}
+
+/* Below that stat's own red-shading threshold -- same red used
+   everywhere else in this app for a below-the-bar read (.stat-tier-low,
+   .status-bg-out-multi-week). */
+.game-preview-lean-low {
+  color: #742a2a;
+  background: #fbd4d4;
+  border: 1px solid #e08a8a;
+}
+
+/* At or above that stat's own green-shading threshold -- same green used
+   everywhere else in this app for an above-the-bar read (.stat-tier-high,
+   .game-logs-tier-green-dark). */
+.game-preview-lean-high {
+  color: #22543d;
+  background: #c6f6d5;
+  border: 1px solid #6aa84f;
+}
+
+/* Weeks-as-columns pace trend table (PaceTrendTable in GamePreviewView.tsx)
+   -- one row per team, one column per played week, sized by the "Weeks to
+   show" input. Small/dense since it's one of several bullets/blocks in an
+   already-packed preview card. */
+.game-preview-pace-table {
+  border-collapse: collapse;
+  margin: 6px 0 4px;
+  font-size: 0.78rem;
+}
+
+.game-preview-pace-table th,
+.game-preview-pace-table td {
+  border: 1px solid #e2e2e2;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.game-preview-pace-table th[scope="row"] {
+  text-align: left;
+  font-weight: 700;
+  background: #fafafa;
+}
+
+.game-preview-pace-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Top row of each Pace Trend cell -- score (color-coded win/loss),
+   opponent, Recap link, side by side with a gap between each so the 3
+   pieces of data don't run together (see PaceTrendCell in
+   GamePreviewView.tsx). Same win/green (#6aa84f) / loss/red (#e08a8a)
+   convention as Game Logs' own TeamRecapTable.tsx, just under new class
+   names since that table's own .team-recap-score-win/-loss/-tie are
+   scoped under .team-recap-table. */
+.game-preview-pace-cell-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.72rem;
+}
+
+.game-preview-pace-cell-opp {
+  color: #888;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.game-preview-pace-cell-plays {
+  font-weight: 600;
+}
+
+.game-preview-pace-cell-rate {
+  color: #666;
+  font-size: 0.72rem;
+}
+
+.game-preview-pace-cell-empty {
+  color: #bbb;
+}
+
+.game-preview-pace-score-win {
+  background-color: #6aa84f;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.game-preview-pace-score-loss {
+  background-color: #e08a8a;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+.game-preview-pace-score-tie {
+  background-color: #ffffff;
+  padding: 0 4px;
+  border-radius: 2px;
+}
+
+/* Pace trend delta coloring -- a positive week-over-week change (more
+   plays, higher pass/run rate) in green, a negative one in red, so the
+   direction reads at a glance without parsing the +/- sign. */
+.game-preview-delta-positive {
+  color: #1a7f37;
+  font-weight: 600;
+}
+
+.game-preview-delta-negative {
+  color: #c0342c;
+  font-weight: 600;
 }
 
 /* Kept visually distinct from the player tag list below (small, muted, no

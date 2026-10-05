@@ -47,7 +47,7 @@ from __future__ import annotations
 
 from backend.schemas.dk_players.dk_players import DkPlayerRow
 from backend.schemas.game_logs.game_logs_against import GameLogAgainstRow
-from backend.services.game_logs.game_logs_engine import Position, ROSTER_POSITIONS
+from backend.services.game_logs.game_logs_engine import Position, ROSTER_POSITIONS, tier_for_stat_value
 from backend.services.game_logs.scoring import multiplier, pct_of_total
 from backend.services.schedule.schedule_loader import ScheduleRow, opponent_and_location
 from backend.services.shared.name_match import name_lookup_candidates
@@ -146,6 +146,8 @@ def build_game_logs_against_rows(
                     pass_int=stat_line.get("pass_int"),
                     pass_sck=stat_line.get("pass_sck"),
                     pass_rtg=stat_line.get("pass_rtg"),
+                    pass_att_tier=tier_for_stat_value("pass_att", stat_line.get("pass_att")),
+                    pass_yds_tier=tier_for_stat_value("pass_yds", stat_line.get("pass_yds")),
                     sacks=stat_line.get("sacks"),
                 )
             )

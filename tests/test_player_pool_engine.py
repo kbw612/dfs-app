@@ -214,14 +214,14 @@ def test_compute_player_pool_default_lookup_prefers_exact_match_over_alias(tmp_p
 def test_compute_player_pool_default_lookup_falls_through_blank_stub_to_alias(tmp_path: Path):
     # Real-world case found in production data: a suffix-mismatch cleanup
     # left a stub Default behind under the pool's own spelling ("Brian
-    # Thomas Jr.", dfs_type set but volume/talent never filled in) while
+    # Thomas Jr.", dfs_types set but volume/talent never filled in) while
     # the real, curated values still sit under the old spelling ("Brian
     # Thomas"). A naive "first entry that matches, whole object" lookup
     # would lock in the stub's blank fields and never look further;
     # per-field merging should still find the real values via the alias.
     ge_dir, nfl_dir = dirs(tmp_path)
     save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Brian Thomas", volume=1.0, talent=2.0))
-    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Brian Thomas Jr.", dfs_type="Boom/Bust"))
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Brian Thomas Jr.", dfs_types=["Boom/Bust"]))
     aliases_path = tmp_path / "name-aliases.json"
     save_name_aliases(aliases_path, [NameAlias(alias="Brian Thomas Jr.", canonical="Brian Thomas")])
     players = [make_player("Brian Thomas Jr.", "WR", "JAX", "CLE", 5500)]
@@ -433,6 +433,94 @@ def test_compute_player_pool_dst_ignores_saved_player_default(tmp_path: Path):
     row = result.players[0]
     assert row.volume is None
     assert row.talent is None
+
+
+def test_compute_player_pool_standalone_false_with_no_default_set(tmp_path: Path):
+    ge_dir, nfl_dir = dirs(tmp_path)
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].standalone is False
+
+
+def test_compute_player_pool_standalone_true_from_settings_default(tmp_path: Path):
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Josh Allen", dfs_types=["Standalone"]))
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].standalone is True
+
+
+def test_compute_player_pool_standalone_true_alongside_boom_bust_tag(tmp_path: Path):
+    # A player can carry both tags at once -- Boom/Bust presence shouldn't
+    # affect whether Standalone resolves true.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Josh Allen", dfs_types=["Boom/Bust", "Standalone"]))
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].standalone is True
+
+
+def test_compute_player_pool_standalone_explicit_week_override_wins_over_default(tmp_path: Path):
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Josh Allen", dfs_types=["Standalone"]))
+    save_entry(nfl_dir, PlayerPoolEntry(season=2025, week=9, platform=PLATFORM, player="Josh Allen", standalone=False))
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    # Explicit False this week beats the Default's True.
+    assert result.players[0].standalone is False
+
+
+def test_compute_player_pool_standalone_explicit_week_override_can_turn_on_without_default(tmp_path: Path):
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_entry(nfl_dir, PlayerPoolEntry(season=2025, week=9, platform=PLATFORM, player="Josh Allen", standalone=True))
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].standalone is True
+
+
+def test_compute_player_pool_dst_standalone_always_none(tmp_path: Path):
+    # DST has no Standalone concept at all, same unconditional gate as
+    # volume/talent -- even an explicit saved override is ignored.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Chargers", dfs_types=["Standalone"]))
+    save_entry(nfl_dir, PlayerPoolEntry(season=2025, week=9, platform=PLATFORM, player="Chargers", standalone=True))
+    players = [make_player("Chargers", "DST", "LAC", "ARI", 3500)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    assert result.players[0].standalone is None
+
+
+def test_compute_player_pool_standalone_not_counted_in_total(tmp_path: Path):
+    # A boolean flag, not a 1.0-3.0 judgment-call score -- must never be
+    # summed into entry_total(), unlike volume/talent/etc.
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_entry(
+        nfl_dir,
+        PlayerPoolEntry(season=2025, week=9, platform=PLATFORM, player="Josh Allen", volume=2.0, standalone=True),
+    )
+    players = [make_player("Josh Allen", "QB", "BUF", "NO", 7700)]
+    result = compute_player_pool(players, 2025, 9, PLATFORM, ge_dir, nfl_dir)
+    row = result.players[0]
+    assert row.standalone is True
+    assert row.total == entry_total(
+        {
+            "game_matchup": row.game_matchup,
+            "ownership": row.ownership,
+            "volume": row.volume,
+            "talent": row.talent,
+            "game_environment": row.game_environment,
+        }
+    )
+
+
+def test_compute_player_pool_standalone_resolves_via_alias(tmp_path: Path):
+    ge_dir, nfl_dir = dirs(tmp_path)
+    save_default(nfl_dir, PlayerDefaultEntry(season=2025, player="Brian Thomas", dfs_types=["Standalone"]))
+    aliases_path = tmp_path / "name-aliases.json"
+    save_name_aliases(aliases_path, [NameAlias(alias="Brian Thomas Jr.", canonical="Brian Thomas")])
+    players = [make_player("Brian Thomas Jr.", "WR", "JAX", "CLE", 5500)]
+
+    result = compute_player_pool(players, 2025, 10, PLATFORM, ge_dir, nfl_dir, name_aliases_json=aliases_path)
+    assert result.players[0].standalone is True
 
 
 def test_compute_player_pool_expected_fpts_defaults_to_salary_over_1000(tmp_path: Path):

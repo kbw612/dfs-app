@@ -23,7 +23,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from backend.schemas.game_logs.game_logs import GameOption
+from backend.schemas.game_logs.game_logs import GameOption, TeamStatSummaryRow
 
 
 class GameLogAgainstRow(BaseModel):
@@ -76,6 +76,10 @@ class GameLogAgainstRow(BaseModel):
     pass_int: int | None
     pass_sck: int | None
     pass_rtg: float | None
+    # Same field/convention as GameLogRow's own pass_att_tier/pass_yds_tier
+    # -- see that schema's docstring.
+    pass_att_tier: Literal["low", "high"] | None
+    pass_yds_tier: Literal["low", "high"] | None
     # DST's own sacks recorded -- same field/convention as GameLogRow's own
     # `sacks` (see that schema's docstring for why it's not pass_sck).
     sacks: int | None
@@ -87,3 +91,8 @@ class GameLogsAgainstResult(BaseModel):
     lookback_weeks: int
     games: list[GameOption]
     rows: list[GameLogAgainstRow]
+    # One entry per distinct against_team in `rows` -- see
+    # TeamStatSummaryRow's own docstring (game_logs.py). `team` on each
+    # entry here holds `against_team`, since that's this tab's own
+    # grouping concept in place of a rostered player's real team.
+    team_stat_summary: list[TeamStatSummaryRow]

@@ -1,7 +1,7 @@
 import { matchesDepth } from "../depthFilter";
 import { positionsForFilter } from "../positionFilters";
 import { formatSnapshotLabel, yearFromId } from "../snapshotId";
-import { statusColorClassName, statusMatchesFilter } from "../statusCodes";
+import { STATUS_FILTER_GROUPS, isMultiWeekOut, statusMatchesFilter } from "../statusCodes";
 import type { Change, ChangeValue, DiffResult } from "../types";
 import { isPlayerChangeValue } from "../types";
 
@@ -24,15 +24,23 @@ function starKey(team: string, player: string): string {
   return `${team}|${player}`;
 }
 
-// Same red/gold rules as statusColorClassName (Depth Charts' own convention:
-// Q gold, D/O/IR/IR-R/PUP/SUS/NFI/CEL/EX/COV red) but healthy (status null)
-// gets green here instead of statusColorClassName's "no color" -- this tab
-// shows both healthy and injured players side by side in the same list, so
-// "healthy" needs its own explicit color to read as a status at a glance
-// rather than looking like plain, unstyled text.
-function compareStatusColorClassName(status: string | null): string {
-  if (status === null) return "status-color-green";
-  return statusColorClassName(status) ?? "";
+// Background-shaded status badge, same green/gold/red convention as Depth
+// Charts and Injury Report (see statusCodes.ts's own
+// statusBackgroundClassName) -- but unconditional here rather than
+// starred-only for Questionable (this tab has no "starred" concept for an
+// individual change row), and healthy (status null) gets its own green
+// shade instead of no color at all, since this tab shows healthy and
+// injured players side by side in the same list and "healthy" needs to
+// read as a status at a glance rather than looking like plain, unstyled
+// text. Font stays the default color -- the signal lives in the
+// background, not the text, same rule Depth Charts/Injury Report use.
+function compareStatusBackgroundClassName(status: string | null): string {
+  if (status === null) return "status-bg-healthy";
+  if (status === "Q") return "status-bg-questionable";
+  if (isMultiWeekOut(status)) return "status-bg-out-multi-week";
+  const outCodes = STATUS_FILTER_GROUPS.find((g) => g.key === "O")!.codes;
+  if (status === "D" || outCodes.includes(status)) return "status-bg-out";
+  return "";
 }
 
 // The "(rank N)" suffix is deliberately left out of the colored span --
@@ -43,7 +51,10 @@ function ChangeValueDisplay({ value }: { value: ChangeValue }) {
   if (isPlayerChangeValue(value)) {
     return (
       <>
-        <span className={compareStatusColorClassName(value.status)}>{value.status ?? "healthy"}</span> (rank{" "}
+        <span className={`diff-status-badge ${compareStatusBackgroundClassName(value.status)}`}>
+          {value.status ?? "healthy"}
+        </span>{" "}
+        (rank{" "}
         {value.rank})
       </>
     );

@@ -134,7 +134,7 @@ _DEFAULT_GAME_ENVIRONMENT = 2.0
 # ever appearing in its UI (see PlayerPoolView.tsx's
 # scoreFieldsForPosition, which this mirrors).
 _DST_FIELDS = {"game_matchup", "ownership", "salary_value", "weather"}
-_OFFENSE_FIELDS = {"game_environment", "game_matchup", "ownership", "volume", "talent"}
+_OFFENSE_FIELDS = {"game_environment", "game_matchup", "ownership", "volume", "talent", "standalone"}
 
 
 def _fields_for_position(position: str) -> set[str]:
@@ -171,6 +171,42 @@ def _resolve_player_defaults(
         if merged["talent"] is None and entry.talent is not None:
             merged["talent"] = entry.talent
     return merged
+
+
+def _resolve_default_standalone(
+    player_name: str, defaults_by_player: dict[str, object], name_aliases: dict[str, str]
+) -> bool:
+    """Whether any of `player_name`'s own Settings Default entries (own
+    spelling or any name_lookup_candidates alias, same alias-aware merge
+    _resolve_player_defaults uses for volume/talent) has "Standalone" in
+    its dfs_types -- False if there's no Default at all, or none of them
+    carry that tag. Unlike volume/talent's None-means-"keep checking the
+    next fallback" merge, this is a plain boolean: True as soon as any
+    candidate spelling has the tag, since there's no further fallback
+    after this (see _resolve_standalone)."""
+    for candidate in name_lookup_candidates(player_name, name_aliases):
+        entry = defaults_by_player.get(candidate)
+        if entry is not None and "Standalone" in entry.dfs_types:
+            return True
+    return False
+
+
+def _resolve_standalone(
+    position: str, saved_entry: PlayerPoolEntry | None, default_standalone: bool
+) -> bool | None:
+    """This exact week's explicit save if there is one, otherwise
+    `default_standalone` (see _resolve_default_standalone) -- None
+    unconditionally for DST, same "doesn't apply to this position"
+    convention _resolve_direct_scores uses for volume/talent (see
+    _fields_for_position). Deliberately kept separate from
+    _resolve_direct_scores/_DIRECT_SCORE_FIELDS: this is a boolean flag,
+    not a 1.0-3.0 judgment-call score, and must never be summed into
+    entry_total()."""
+    if "standalone" not in _fields_for_position(position):
+        return None
+    if saved_entry is not None and saved_entry.standalone is not None:
+        return saved_entry.standalone
+    return default_standalone
 
 
 def _resolve_direct_scores(
@@ -321,6 +357,8 @@ def compute_player_pool(
         effective_env, override_env, suggested_env = _resolve_game_environment(
             player, saved_entry, game_env_by_key.get(game_id)
         )
+        default_standalone = _resolve_default_standalone(player.player, defaults_by_player, name_aliases)
+        standalone = _resolve_standalone(player.position, saved_entry, default_standalone)
         ownership_pct = player.ownership_pct
         if ownership_pct is None and ownership_retrieved:
             ownership_pct = 0.0
@@ -338,6 +376,7 @@ def compute_player_pool(
                 game_environment=effective_env,
                 game_environment_override=override_env,
                 game_environment_suggested=suggested_env,
+                standalone=standalone,
                 expected_fpts=expected_fantasy_points(player.salary, multiplier),
                 total=entry_total({**direct_scores, "game_environment": effective_env}),
                 **direct_scores,

@@ -53,6 +53,20 @@ export const TALENT_EXPLOSIVENESS_NOTES: string[] = [
   "average player = 0 points",
 ];
 
+// QB/RB/WR/TE only -- not a judgment-call score like the columns above, a
+// plain yes/no tag: can this player be rostered in a lineup with nobody
+// else from his own game (not his own QB, not the opposing QB)? Not
+// enforced anywhere today -- future use is a lineup-optimizer validator
+// that flags a non-Standalone player played without any game-mates.
+// Defaults from Settings' Player Default Factors grid (the Standalone
+// checkbox there), same fallback chain as Volume/Talent, and can be
+// overridden for just this week without changing that Default.
+export const STANDALONE_NOTES: string[] = [
+  "Checked = this player is fine to roster without anyone else from his game.",
+  "Unchecked (the default) = treat him as tied to his own game's other players for lineup purposes.",
+  "Defaults from Settings' Player Default Factors grid; overriding it here only changes this week.",
+];
+
 // DST-only -- there's no separate Ownership/Talent concept for a defense,
 // just how attractively priced its salary is this week. Unlike Game
 // Environment/Ownership's own suggestions (both computed server-side from
@@ -79,3 +93,40 @@ export const WEATHER_NOTES: string[] = [
   "Pulled from the Weather tab's own snapshot for this game -- a game nobody flagged that week just stays at the neutral 2.",
   "The refresh (↻) icon next to this header recomputes every DST's value from the Weather tab's current data -- overwrites whatever's currently saved for each one this week.",
 ];
+
+// Game Logs/Game Logs Against's own Multiplier column -- the 4-band
+// yellow/green background shading (see gameLogsShared.ts's
+// multiplierTier/tierClassName), shown via its header's info icon so the
+// bands aren't just a wall of unexplained color.
+export const MULTIPLIER_TIER_NOTES: string[] = [
+  "4.0 or higher = dark green",
+  "3.5 to 3.99 = light green",
+  "3.0 to 3.49 = dark gold",
+  "2.0 to 2.99 = light gold",
+  "Below 2.0 = no shading",
+];
+
+// Game Logs/Game Logs Against's own Tgt Share/Touch Share/Rec Yds/Rush
+// Yds columns -- the top-2-per-team-per-week green highlight (see
+// gameLogsShared.ts's rankTopSharesByTeamAndWeek/shareRankClassName).
+// Different mechanism than the red/green volume tiers below (a relative
+// rank among that team's own rows that week, not a fixed threshold).
+export const SHARE_RANK_NOTES: string[] = [
+  "Dark green = that team's highest value in this column for that week.",
+  "Light green = that team's 2nd-highest value in this column for that week.",
+  "Ranked separately per column, per team, per week -- being the leader in one column doesn't mean leading another.",
+];
+
+// Shared red/green volume-tier thresholds for Pass Att/Pass Yds/Rush
+// Att/Rush Yds -- used both on the Team Stat Summary's own Avg/Median
+// cells (all 4 stats) and the per-week grid's Pass Att/Pass Yds cells
+// (see backend/services/game_logs/game_logs_engine.py's
+// tier_for_stat_value, the single source of truth these numbers mirror).
+// `low`/`high` are that stat's own red/green cutoffs.
+export function statTierNotes(low: number, high: number): string[] {
+  return [
+    `${low} or less = red background (below the usual range)`,
+    `${high} or more = green background (above the usual range)`,
+    "In between = no shading.",
+  ];
+}

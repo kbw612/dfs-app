@@ -147,7 +147,7 @@ export function BoomBustView({ season, week, platform, contest }: BoomBustViewPr
         // nameAliasMatching.ts.
         const boomBustNames = new Set(
           defaultsResult.defaults
-            .filter((d) => d.dfs_type === BOOM_BUST_DFS_TYPE)
+            .filter((d) => d.dfs_types.includes(BOOM_BUST_DFS_TYPE))
             .flatMap((d) => nameLookupCandidates(d.player, aliasesResult.aliases))
         );
         setPlayers(poolResult.players.filter((p) => p.position !== "DST" && boomBustNames.has(p.player)));

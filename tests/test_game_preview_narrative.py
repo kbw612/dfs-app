@@ -134,52 +134,28 @@ def test_ol_dl_matchup_section_includes_both_sides_even_when_one_alone_is_unrema
     assert any(e.startswith("DEN's D-line") for e in section.entries)
 
 
-def test_pace_section_always_states_pass_and_run_rate():
+def test_pace_section_appears_with_no_bullets_when_one_side_has_pace_trend():
+    # The Offensive Pace heading exists purely to gate the frontend's own
+    # weeks-as-columns pace trend table -- it never carries prose bullets of
+    # its own anymore (see _pace_section's docstring).
     pace = GamePreviewPaceTrend(
         week=10, plays=70, pass_att=45, rush_att=25, pass_rate_pct=64.3, rush_rate_pct=35.7,
     )
     away = _side("LAC", False, pace_trend=pace)
     home = _side("DEN", True)
     sections = build_game_narrative(LABEL, away, home, None)
-    pace_section = _section(sections, "Pace")
-    assert len(pace_section.entries) == 1
-    assert "LAC ran 70 plays at a 64.3% pass / 35.7% run rate in week 10." in pace_section.entries[0]
-    # No trend note -- no plays_delta/pass_rate_delta supplied.
-    assert "vs. the week before" not in pace_section.entries[0]
-
-
-def test_pace_section_appends_trend_note_when_notable():
-    pace = GamePreviewPaceTrend(
-        week=10, plays=70, pass_att=45, rush_att=25, pass_rate_pct=64.3, rush_rate_pct=35.7,
-        plays_delta=8, pass_rate_delta=12.0,
-    )
-    away = _side("LAC", False, pace_trend=pace)
-    home = _side("DEN", True)
-    sections = build_game_narrative(LABEL, away, home, None)
-    pace_section = _section(sections, "Pace")
-    assert "(+8 plays, +12.0 pts pass rate vs. the week before.)" in pace_section.entries[0]
-
-
-def test_pace_section_omits_trend_note_when_not_notable():
-    pace = GamePreviewPaceTrend(
-        week=10, plays=62, pass_att=32, rush_att=30, pass_rate_pct=51.6, rush_rate_pct=48.4,
-        plays_delta=1, pass_rate_delta=1.0,
-    )
-    away = _side("LAC", False, pace_trend=pace)
-    home = _side("DEN", True)
-    sections = build_game_narrative(LABEL, away, home, None)
-    pace_section = _section(sections, "Pace")
-    assert "vs. the week before" not in pace_section.entries[0]
+    pace_section = _section(sections, "Offensive Pace")
+    assert pace_section.entries == []
 
 
 def test_pace_section_omitted_when_no_pace_trend_at_all():
     away = _side("LAC", False)
     home = _side("DEN", True)
     sections = build_game_narrative(LABEL, away, home, None)
-    assert not any(s.label == "Pace" for s in sections)
+    assert not any(s.label == "Offensive Pace" for s in sections)
 
 
-def test_pace_section_combines_both_sides():
+def test_pace_section_appears_with_no_bullets_when_both_sides_have_pace_trend():
     away_pace = GamePreviewPaceTrend(
         week=10, plays=70, pass_att=45, rush_att=25, pass_rate_pct=64.3, rush_rate_pct=35.7,
         plays_delta=8, pass_rate_delta=12.0,
@@ -191,10 +167,8 @@ def test_pace_section_combines_both_sides():
     away = _side("LAC", False, pace_trend=away_pace)
     home = _side("DEN", True, pace_trend=home_pace)
     sections = build_game_narrative(LABEL, away, home, None)
-    pace_section = _section(sections, "Pace")
-    assert len(pace_section.entries) == 2
-    assert any(e.startswith("LAC ran") for e in pace_section.entries)
-    assert any(e.startswith("DEN ran") for e in pace_section.entries)
+    pace_section = _section(sections, "Offensive Pace")
+    assert pace_section.entries == []
 
 
 def test_matchup_trends_section_included_when_exploitable_positions_present():

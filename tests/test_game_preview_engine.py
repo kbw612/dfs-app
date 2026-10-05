@@ -3,7 +3,7 @@ from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.schemas.team_factors.team_factors import TeamFactorEntry
 from backend.schemas.vegas_lines.vegas_lines import VegasLineGame, VegasLinesSnapshot, VegasLineValues
 from backend.schemas.weather.weather import WeatherGame, WeatherSnapshot
-from backend.services.game_preview.game_preview_engine import build_game_preview
+from backend.services.game_preview.game_preview_engine import _combined_tier, build_game_preview
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 
 
@@ -385,3 +385,219 @@ def test_build_game_preview_flags_ownership_by_week_bands():
     assert _combined_line(games_by_label["TME @ TMF"]) == (
         "\U0001f4c9 80.0% projected ownership = \U0001f4c9 TME 15.0% + \U0001f4c8 TMF 65.0%"
     )
+
+
+def test_combined_tier_high_wins_over_low():
+    # An unusual combination (high on one sub-stat, low on the other) --
+    # "high" wins so the pair reads as elevated overall rather than
+    # suppressed.
+    assert _combined_tier("high", "low") == "high"
+    assert _combined_tier("low", "high") == "high"
+
+
+def test_combined_tier_low_when_either_low_and_neither_high():
+    assert _combined_tier("low", None) == "low"
+    assert _combined_tier(None, "low") == "low"
+
+
+def test_combined_tier_none_when_neither_set():
+    assert _combined_tier(None, None) is None
+
+
+def test_combined_tier_handles_more_than_two_reads():
+    # _volume_tier_flags feeds in average_tier AND median_tier for both
+    # sub-stats at once (four reads per call) -- any single "high" among
+    # them should still win, same as the two-arg case above.
+    assert _combined_tier(None, None, None, "high") == "high"
+    assert _combined_tier(None, "low", None, None) == "low"
+    assert _combined_tier(None, None, None, None) is None
+
+
+def test_build_game_preview_stat_summary_none_without_tracker_data():
+    # Neither tracker_rows nor stat_lines_by_position supplied -- same
+    # graceful-degradation convention as pace_trend being None.
+    result = build_game_preview(2026, 3, _schedule_rows(), {}, None, None, {})
+    game = result.games[0]
+    assert game.away.stat_summary is None
+    assert game.away.run_volume_tier is None
+    assert game.away.pass_volume_tier is None
+    assert game.home.stat_summary is None
+    assert game.home.run_volume_tier is None
+    assert game.home.pass_volume_tier is None
+
+
+def test_build_game_preview_stat_summary_run_high_pass_low():
+    # LAC: Rush Att 35 (>=30 high), Rush Yds 160 (>=141 high), Pass Att 20
+    # (<=28 low), Pass Yds 100 (<=175 low) -- rush elevated, pass
+    # suppressed -- run_volume_tier "high", pass_volume_tier "low".
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 2, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 2): {"pass_att": 20, "pass_yds": 100}},
+        "RB": {("LAC RB1", 2): {"rush_att": 35, "rush_yards": 160}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    game = result.games[0]
+    away = game.away
+    assert away.team == "LAC"
+    assert away.stat_summary is not None
+    assert away.stat_summary.rush_att.average == 35.0
+    assert away.stat_summary.rush_att.average_tier == "high"
+    assert away.stat_summary.rush_yards.average_tier == "high"
+    assert away.stat_summary.pass_att.average_tier == "low"
+    assert away.stat_summary.pass_yds.average_tier == "low"
+    assert away.run_volume_tier == "high"
+    assert away.pass_volume_tier == "low"
+    # DEN has no stat lines at all this window.
+    assert game.home.stat_summary is None
+    assert game.home.run_volume_tier is None
+    assert game.home.pass_volume_tier is None
+
+
+def test_build_game_preview_stat_summary_pass_high_run_low():
+    # LAC: Pass Att 45 (>=38 high), Pass Yds 300 (>=261 high), Rush Att 10
+    # (<=21 low), Rush Yds 40 (<=85 low) -- pass elevated, rush
+    # suppressed -- pass_volume_tier "high", run_volume_tier "low".
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 2, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 2): {"pass_att": 45, "pass_yds": 300}},
+        "RB": {("LAC RB1", 2): {"rush_att": 10, "rush_yards": 40}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.pass_volume_tier == "high"
+    assert away.run_volume_tier == "low"
+
+
+def test_build_game_preview_stat_summary_both_high_when_both_sides_elevated():
+    # Both Rush Att (35, high) and Pass Att (45, high) elevated at once --
+    # the two tiers are independent, so both come back "high" together
+    # (this is the whole point of splitting the old single "lean" pick
+    # into two separate fields -- a team can be both at once).
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 2, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 2): {"pass_att": 45, "pass_yds": 300}},
+        "RB": {("LAC RB1", 2): {"rush_att": 35, "rush_yards": 160}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.run_volume_tier == "high"
+    assert away.pass_volume_tier == "high"
+
+
+def test_build_game_preview_stat_summary_both_low_when_both_sides_suppressed():
+    # Both Rush Att (10, low) and Pass Att (20, low) suppressed at once --
+    # independent fields, so both come back "low" together.
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 2, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 2): {"pass_att": 20, "pass_yds": 100}},
+        "RB": {("LAC RB1", 2): {"rush_att": 10, "rush_yards": 40}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.run_volume_tier == "low"
+    assert away.pass_volume_tier == "low"
+
+
+def test_build_game_preview_stat_summary_both_none_when_neither_elevated():
+    # Rush Att 25 and Pass Att 32 both sit strictly between their own
+    # low/high thresholds -- neither tier should be set, even though
+    # stat_summary itself is present (distinguishing "genuinely normal"
+    # from "no data at all" is the caller's job -- see
+    # GamePreviewTeamSide.run_volume_tier's own docstring).
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 2, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 2): {"pass_att": 32, "pass_yds": 220}},
+        "RB": {("LAC RB1", 2): {"rush_att": 25, "rush_yards": 110}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.stat_summary is not None
+    assert away.run_volume_tier is None
+    assert away.pass_volume_tier is None
+
+
+def test_build_game_preview_stat_summary_includes_td_stats():
+    tracker_rows = [_tracker_row("LAC RB1", "RB", "LAC", 2, fpts=15.0)]
+    stat_lines_by_position = {"RB": {("LAC RB1", 2): {"rush_att": 20, "rush_yards": 90, "rush_td": 2}}}
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.stat_summary is not None
+    assert away.stat_summary.rush_td.average == 2.0
+    # TD stats have no defined thresholds -- always untiered.
+    assert away.stat_summary.rush_td.average_tier is None
+    assert away.stat_summary.rush_td.median_tier is None

@@ -77,31 +77,61 @@ def test_load_defaults_for_season_empty_when_none_saved(tmp_path: Path):
     assert load_defaults_for_season(tmp_path, 2025) == {}
 
 
-def test_dfs_type_defaults_to_none():
+def test_dfs_types_defaults_to_empty_list():
     entry = PlayerDefaultEntry(season=2025, player="Gibbs", volume=2.0)
-    assert entry.dfs_type is None
+    assert entry.dfs_types == []
 
 
-def test_dfs_type_accepts_any_string_not_a_fixed_enum():
+def test_dfs_types_accepts_any_string_not_a_fixed_enum():
     # Deliberately not a Literal/enum -- see the schema module's docstring
-    # on why new categories are added via the frontend dropdown list only.
-    entry = PlayerDefaultEntry(season=2025, player="Gibbs", dfs_type="Some Future Category")
-    assert entry.dfs_type == "Some Future Category"
+    # on why new categories are added via the frontend checkbox list only.
+    entry = PlayerDefaultEntry(season=2025, player="Gibbs", dfs_types=["Some Future Category"])
+    assert entry.dfs_types == ["Some Future Category"]
 
 
-def test_dfs_type_round_trips_alongside_volume_and_talent(tmp_path: Path):
-    entry = PlayerDefaultEntry(season=2025, player="Gibbs", volume=3.0, talent=2.5, dfs_type="Boom/Bust")
+def test_dfs_types_accepts_multiple_tags_at_once():
+    entry = PlayerDefaultEntry(season=2025, player="Gibbs", dfs_types=["Boom/Bust", "Standalone"])
+    assert entry.dfs_types == ["Boom/Bust", "Standalone"]
+
+
+def test_dfs_types_round_trips_alongside_volume_and_talent(tmp_path: Path):
+    entry = PlayerDefaultEntry(season=2025, player="Gibbs", volume=3.0, talent=2.5, dfs_types=["Boom/Bust"])
     save_default(tmp_path, entry)
 
     loaded = load_default(tmp_path, 2025, "Gibbs")
     assert loaded == entry
-    assert loaded.dfs_type == "Boom/Bust"
+    assert loaded.dfs_types == ["Boom/Bust"]
 
 
-def test_dfs_type_included_in_load_defaults_for_season(tmp_path: Path):
-    save_default(tmp_path, PlayerDefaultEntry(season=2025, player="Gibbs", dfs_type="Boom/Bust"))
+def test_dfs_types_included_in_load_defaults_for_season(tmp_path: Path):
+    save_default(tmp_path, PlayerDefaultEntry(season=2025, player="Gibbs", dfs_types=["Boom/Bust"]))
     save_default(tmp_path, PlayerDefaultEntry(season=2025, player="Bijan Robinson"))
 
     season_2025 = load_defaults_for_season(tmp_path, 2025)
-    assert season_2025["Gibbs"].dfs_type == "Boom/Bust"
-    assert season_2025["Bijan Robinson"].dfs_type is None
+    assert season_2025["Gibbs"].dfs_types == ["Boom/Bust"]
+    assert season_2025["Bijan Robinson"].dfs_types == []
+
+
+def test_legacy_dfs_type_string_migrates_to_dfs_types_list(tmp_path: Path):
+    # Pre-multi-tag files saved a single `dfs_type` string -- a file
+    # written before this migration existed should still resolve to the
+    # equivalent dfs_types list on load, not silently lose the tag.
+    path = tmp_path / "2025" / "settings" / "player_factors.json"
+    path.parent.mkdir(parents=True)
+    path.write_text('{"season": 2025, "defaults": {"Gibbs": {"volume": 2.0, "dfs_type": "Boom/Bust"}}}')
+
+    loaded = load_default(tmp_path, 2025, "Gibbs")
+    assert loaded.dfs_types == ["Boom/Bust"]
+    assert loaded.volume == 2.0
+
+    season_2025 = load_defaults_for_season(tmp_path, 2025)
+    assert season_2025["Gibbs"].dfs_types == ["Boom/Bust"]
+
+
+def test_legacy_dfs_type_null_migrates_to_empty_list(tmp_path: Path):
+    path = tmp_path / "2025" / "settings" / "player_factors.json"
+    path.parent.mkdir(parents=True)
+    path.write_text('{"season": 2025, "defaults": {"Gibbs": {"volume": 2.0, "dfs_type": null}}}')
+
+    loaded = load_default(tmp_path, 2025, "Gibbs")
+    assert loaded.dfs_types == []

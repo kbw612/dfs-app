@@ -47,6 +47,7 @@ from backend.repositories.depth_charts.snapshot_repo import find_latest_snapshot
 from backend.repositories.dk_players.dk_players_repo import load_dk_players_csv
 from backend.repositories.dk_players.weekly_stats_repo import load_weekly_stats_csv
 from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
+from backend.repositories.name_aliases.name_aliases_repo import load_name_aliases
 from backend.repositories.ownership.projections_repo import load_projections_csv
 from backend.repositories.schedule.schedule_repo import load_schedule_csv
 from backend.repositories.star_players.star_players_repo import load_star_players
@@ -113,6 +114,11 @@ def game_preview_endpoint(
         if position_csv is not None:
             stat_lines_by_position[position] = load_weekly_stat_lines(position_csv)
 
+    # Same cross-source spelling-drift resolution Game Logs' own endpoint
+    # uses -- see build_game_preview's own name_aliases docstring for why
+    # this tab needs it too now that it reuses build_game_log_rows.
+    name_aliases = {alias.alias: alias.canonical for alias in load_name_aliases(settings.name_aliases_json)}
+
     ownership_csv = load_projections_csv(settings.nfl_data_dir, season, week, platform)
     ownership_players, _messages = (
         parse_ownership_projections_csv(ownership_csv) if ownership_csv is not None else ([], [])
@@ -149,4 +155,5 @@ def game_preview_endpoint(
         depth_chart_snapshot=depth_chart_snapshot,
         star_players=star_players,
         contest_teams=contest_teams,
+        name_aliases=name_aliases,
     )

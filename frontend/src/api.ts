@@ -18,6 +18,8 @@ import type {
   GameLogsAgainstResult,
   GameLogsResult,
   GamePreviewResult,
+  GameRecapScrapeResult,
+  GameRecapWeekSnapshot,
   InjuryReportResult,
   LineupScenarioAnalysis,
   LineupScenarioDefinition,
@@ -790,6 +792,38 @@ export function scrapeVegasLines(season: number, week: number): Promise<VegasLin
 export function applyVegasLines(season: number, week: number): Promise<VegasLinesApplyResult> {
   const params = new URLSearchParams({ season: String(season), week: String(week) });
   return apiPost<VegasLinesApplyResult>(`/api/vegas-lines/apply?${params.toString()}`);
+}
+
+// Game Recaps -- see backend/api/game_recap/__init__.py. Fetching "latest"
+// 404s until you've scraped at least once for this (season, week); callers
+// treat that as "nothing scraped yet" rather than a real error, same
+// pattern as fetchVegasLines/fetchWeather.
+export function fetchGameRecaps(season: number, week: number): Promise<GameRecapWeekSnapshot> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiGet<GameRecapWeekSnapshot>(`/api/game-recap/latest?${params.toString()}`);
+}
+
+// Scrapes walterfootball.com's public recap page and fully replaces
+// whatever Game Recaps already has saved for this (season, week) -- no
+// merge step, same as scrapeWeather (see GameRecapWeekSnapshot's own
+// docstring for why there's no initial/current split the way Vegas Lines
+// has).
+//
+// `urlMode` mirrors the backend's UrlMode literal ("auto" | "week_page" |
+// "current_page") -- see game_recap_scraper.py's scrape() docstring. Left
+// undefined/"auto" preserves the original numbered-then-bare fallback;
+// GameRecapUpload's radio buttons pass "week_page"/"current_page" to
+// override it explicitly.
+export function scrapeGameRecaps(
+  season: number,
+  week: number,
+  urlMode?: "auto" | "week_page" | "current_page",
+): Promise<GameRecapScrapeResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  if (urlMode) {
+    params.set("url_mode", urlMode);
+  }
+  return apiPost<GameRecapScrapeResult>(`/api/game-recap/scrape?${params.toString()}`);
 }
 
 // Weather tab -- see backend/api/weather/__init__.py. Fetching "latest"

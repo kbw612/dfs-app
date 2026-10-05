@@ -1,16 +1,140 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchGamePreview } from "../api";
+import { fetchGamePreview, fetchGameRecaps } from "../api";
 import type {
   GamePreviewGame,
   GamePreviewInjuryEntry,
   GamePreviewInjuryGroup,
   GamePreviewNarrativeSection,
+  GamePreviewPaceTrend,
   GamePreviewPlayer,
   GamePreviewTagKind,
   GamePreviewTeamSide,
+  GameRecapEntry,
+  GameRecapWeekSnapshot,
+  StatAverage,
 } from "../types";
+import { findTeamRecap } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
-import { STATUS_FILTER_GROUPS } from "../statusCodes";
+import { GameRecapModal } from "./GameRecapModal";
+import { statTierClassName } from "./gameLogsShared";
+import { STATUS_FILTER_GROUPS, isMultiWeekOut } from "../statusCodes";
+
+// Shared by every PaceTrendCell -- which week's recap has been fetched
+// (undefined = not tried, null = fetched, nothing scraped for that week)
+// and the callback to open it in GameRecapModal, same "fetch once per
+// week, reuse everywhere" pattern as Game Logs' own TeamRecapTable/
+// recapsByWeek.
+interface RecapLookup {
+  recapsByWeek: Map<number, GameRecapWeekSnapshot | null>;
+  onOpenRecap: (entry: GameRecapEntry, sourceUrl: string) => void;
+}
+
+// Same red/green volume-tier thresholds the backend's own
+// tier_for_stat_value uses (see backend/services/game_logs/
+// game_logs_engine.py) -- shown in the Team Volume section below so the
+// person doesn't have to memorize or look up what "low"/"high" means for
+// each stat. Keys match GamePreviewTeamSide.stat_summary's own field
+// names.
+const STAT_SUMMARY_THRESHOLDS: Record<string, [number, number]> = {
+  rush_att: [21, 30],
+  rush_yards: [85, 141],
+  pass_att: [28, 38],
+  pass_yds: [175, 261],
+};
+
+function formatStatNum(value: number | null): string {
+  return value === null ? "-" : value.toFixed(1);
+}
+
+// Avg/median for one tiered stat (Rush Att/Rush Yds/Pass Att/Pass Yds) --
+// each number independently colored by its own tier (see
+// gameLogsShared.ts's statTierClassName), same red/green convention as
+// Game Logs' own Team Summary (Avg / Median) section.
+function TieredStatLine({ label, stat, thresholds }: { label: string; stat: StatAverage; thresholds: [number, number] }) {
+  const [low, high] = thresholds;
+  return (
+    <li>
+      {label}:{" "}
+      <span className={statTierClassName(stat.average_tier)}>{formatStatNum(stat.average)} avg</span>
+      {" / "}
+      <span className={statTierClassName(stat.median_tier)}>{formatStatNum(stat.median)} median</span>
+      <span className="game-preview-stat-summary-thresholds">
+        {" "}
+        (thresholds: ≤{low} low, ≥{high} high)
+      </span>
+    </li>
+  );
+}
+
+// Plain avg/median for one untiered stat (Rec TD/Rush TD/Pass TD) -- no
+// thresholds exist for these, so no coloring, per the person's own "just
+// show the numbers" answer.
+function PlainStatLine({ label, stat }: { label: string; stat: StatAverage }) {
+  return (
+    <li>
+      {label}: {formatStatNum(stat.average)} avg / {formatStatNum(stat.median)} median
+    </li>
+  );
+}
+
+// Two independent badges, not a single mutually-exclusive pick -- a team
+// can show "high" on Run Volume AND "low" on Pass Volume (or any other
+// combination) at once; a single blue "Neither" pill shows only when
+// NEITHER tier is set at all (both strictly in the normal range). Callers
+// should only invoke this when stat_summary itself is known to exist
+// (see TeamStatSummaryColumn below) -- runTier/passTier being null here
+// is read as "genuinely normal," not "no data."
+function volumeBadge(label: string, icon: string, tier: "low" | "high") {
+  const cls = tier === "high" ? "game-preview-lean-high" : "game-preview-lean-low";
+  return (
+    <span className={`game-preview-lean-badge ${cls}`}>
+      {icon} {label}
+    </span>
+  );
+}
+
+function leanBadges(runTier: "low" | "high" | null, passTier: "low" | "high" | null) {
+  if (runTier === null && passTier === null) {
+    return <span className="game-preview-lean-badge game-preview-lean-neither">Neither</span>;
+  }
+  return (
+    <span className="game-preview-lean-badges">
+      {runTier !== null && volumeBadge("Run", "🏃", runTier)}
+      {passTier !== null && volumeBadge("Pass", "🎯", passTier)}
+    </span>
+  );
+}
+
+// One team's own column in the Team Volume (Avg / Median) row -- mirrors
+// Game Logs' own Team Summary section's data (reused directly, see
+// backend GamePreviewTeamSide.stat_summary's own docstring), with the
+// same above/below-threshold coloring on Rush Att/Rush Yds/Pass Att/Pass
+// Yds, the TD stats shown plainly, and Run/Pass Volume badges -- same
+// "just like Ownership" badge treatment the person asked for, now with
+// its own red (below threshold)/green (above threshold) coloring per
+// side rather than one combined "leaning" pick.
+function TeamStatSummaryColumn({ side }: { side: GamePreviewTeamSide }) {
+  const s = side.stat_summary;
+  return (
+    <div className="game-preview-injuries-col">
+      <h5 className="game-preview-injuries-col-team">
+        {side.team} {s !== null && leanBadges(side.run_volume_tier, side.pass_volume_tier)}
+      </h5>
+      {s === null ? (
+        <p className="hint">No recent stat lines for {side.team} yet.</p>
+      ) : (
+        <ul className="game-preview-stat-summary-list">
+          <TieredStatLine label="Rush Att" stat={s.rush_att} thresholds={STAT_SUMMARY_THRESHOLDS.rush_att} />
+          <TieredStatLine label="Rush Yds" stat={s.rush_yards} thresholds={STAT_SUMMARY_THRESHOLDS.rush_yards} />
+          <TieredStatLine label="Pass Att" stat={s.pass_att} thresholds={STAT_SUMMARY_THRESHOLDS.pass_att} />
+          <TieredStatLine label="Pass Yds" stat={s.pass_yds} thresholds={STAT_SUMMARY_THRESHOLDS.pass_yds} />
+          <PlainStatLine label="Rush TD" stat={s.rush_td} />
+          <PlainStatLine label="Pass TD" stat={s.pass_td} />
+        </ul>
+      )}
+    </div>
+  );
+}
 
 // season/week/platform/contest come from the shared header control (see
 // App.tsx), same as every other weekly/platform/contest-scoped tab --
@@ -89,11 +213,19 @@ function TeamPlayers({ side }: { side: GamePreviewTeamSide }) {
 // red background/bold-starred treatment as that tab's own grid, reusing
 // its exact classes (.injury-report-row-out/-starred/-star-cell) rather
 // than a separate game-preview-only copy, per an explicit "table format
-// like Injury Report" request.
+// like Injury Report" request. A multi-week Out code (IR, SUS, PUP, etc. --
+// see statusCodes.ts's isMultiWeekOut) gets the darker
+// .injury-report-row-out-multi-week shade instead of plain -out, same
+// "gone a while" vs "just this week" distinction Injury Report and Depth
+// Charts both already make.
 function injuryRowClassName(status: string, starred: boolean): string {
   const classes: string[] = [];
   const outCodes = STATUS_FILTER_GROUPS.find((g) => g.key === "O")!.codes;
-  if (status === "D" || outCodes.includes(status)) classes.push("injury-report-row-out");
+  if (isMultiWeekOut(status)) {
+    classes.push("injury-report-row-out-multi-week");
+  } else if (status === "D" || outCodes.includes(status)) {
+    classes.push("injury-report-row-out");
+  }
   if (starred) classes.push("injury-report-row-starred");
   return classes.join(" ");
 }
@@ -224,7 +356,32 @@ function renderNarrativeEntry(entry: string, key: number) {
   return <li key={key}>{entry}</li>;
 }
 
-function NarrativeSectionItem({ section }: { section: GamePreviewNarrativeSection }) {
+// "8" -> "+8", "-8" -> "-8", "0" -> "+0" -- explicit sign on a delta so it
+// always reads as a change rather than a plain number, matching the sign
+// convention the narrative bullets already use for the same deltas.
+function signedDelta(value: number): string {
+  return value > 0 ? `+${value}` : `${value}`;
+}
+
+// Wraps a delta in a colored span -- green for a positive change, red for a
+// negative one -- so a glance at the pace table shows direction without
+// reading the sign character. Zero renders in the default (unstyled) color,
+// matching signedDelta's own "+0" text which isn't really an increase.
+function DeltaText({ value }: { value: number }) {
+  const cls =
+    value > 0 ? "game-preview-delta-positive" : value < 0 ? "game-preview-delta-negative" : undefined;
+  return <span className={cls}>({signedDelta(value)})</span>;
+}
+
+function NarrativeSectionItem({
+  section,
+  paceSides,
+  recaps,
+}: {
+  section: GamePreviewNarrativeSection;
+  paceSides?: { away: GamePreviewTeamSide; home: GamePreviewTeamSide };
+  recaps: RecapLookup;
+}) {
   if (section.label === null) {
     // The Vegas O/U line (with the High/Low O/U badge, when flagged,
     // leading that same bullet -- see game_preview_narrative.py's
@@ -237,14 +394,172 @@ function NarrativeSectionItem({ section }: { section: GamePreviewNarrativeSectio
   return (
     <li>
       <strong>{section.label}</strong>
-      <ul className="game-preview-narrative-sublist">
-        {section.entries.map((entry, i) => renderNarrativeEntry(entry, i))}
-      </ul>
+      {section.entries.length > 0 && (
+        <ul className="game-preview-narrative-sublist">
+          {section.entries.map((entry, i) => renderNarrativeEntry(entry, i))}
+        </ul>
+      )}
+      {/* The "Offensive Pace" section's own weeks-as-columns trend table --
+          nested directly under this same heading (rather than as a
+          separate bullet elsewhere in the card) since it's just the
+          multi-week view of the same pass/run rate numbers the bullets
+          above already summarize for the single most recent week. Team
+          Volume (Avg / Median) nests right under it too -- same Rush/Pass
+          volume concept as the pace numbers above it, just averaged/
+          medianed over the window instead of shown per week. */}
+      {paceSides && (
+        <>
+          <PaceTrendTable away={paceSides.away} home={paceSides.home} recaps={recaps} />
+          <div className="game-preview-stat-summary-heading">Team Volume (Avg / Median)</div>
+          <div className="game-preview-injuries-row">
+            <TeamStatSummaryColumn side={paceSides.away} />
+            <TeamStatSummaryColumn side={paceSides.home} />
+          </div>
+        </>
+      )}
     </li>
   );
 }
 
-function GameCard({ game }: { game: GamePreviewGame }) {
+// Weeks-as-columns pace trend table -- one row per team, one column per
+// played week (newest first, from each side's own pace_trend.trailing),
+// sized by the "Weeks to show" input. Only rendered when at least one side
+// has a pace trend at all (both null means neither team has a played week
+// with any stat line yet -- week 1, or no weekly stats uploaded).
+function paceTrendWeeks(away: GamePreviewPaceTrend | null, home: GamePreviewPaceTrend | null): number[] {
+  const weeks = new Set<number>();
+  for (const entry of away?.trailing ?? []) weeks.add(entry.week);
+  for (const entry of home?.trailing ?? []) weeks.add(entry.week);
+  return Array.from(weeks).sort((a, b) => b - a);
+}
+
+function PaceTrendCell({
+  trend,
+  week,
+  team,
+  recaps,
+}: {
+  trend: GamePreviewPaceTrend | null;
+  week: number;
+  team: string;
+  recaps: RecapLookup;
+}) {
+  const entry = trend?.trailing.find((w) => w.week === week);
+  if (!entry) return <span className="game-preview-pace-cell-empty">—</span>;
+  // "@" when this team played away that week, "vs" when home -- falls back
+  // to "vs" when opponent_location is null (no Schedule coverage), same as
+  // opponent itself falling back to "—" in that case.
+  const prefix = entry.opponent_location === "away" ? "@" : "vs";
+
+  // Score + win/loss shading + recap link -- same source/lookup Game
+  // Logs' own TeamRecapTable uses (findTeamRecap against a per-week
+  // GameRecapWeekSnapshot), fetched once per distinct week across every
+  // game's own pace trailing weeks (see GamePreviewView's own
+  // recapsByWeek effect). undefined in the map = not fetched yet, null =
+  // fetched, nothing scraped for that week -- both render as "—", same as
+  // a week with no recap at all.
+  const snapshot = recaps.recapsByWeek.get(week) ?? null;
+  const recapEntry = snapshot ? findTeamRecap(snapshot, team) : null;
+  const score = recapEntry ? (recapEntry.away_team === team ? recapEntry.away_team_score : recapEntry.home_team_score) : null;
+  const oppScore = recapEntry
+    ? recapEntry.away_team === team
+      ? recapEntry.home_team_score
+      : recapEntry.away_team_score
+    : null;
+  const scoreClass =
+    score !== null && oppScore !== null
+      ? score > oppScore
+        ? "game-preview-pace-score-win"
+        : score < oppScore
+          ? "game-preview-pace-score-loss"
+          : "game-preview-pace-score-tie"
+      : undefined;
+
+  return (
+    <span className="game-preview-pace-cell">
+      {/* Top row: score (color-coded win/loss), opponent, Recap link --
+          all three side by side, per the person's own "30-36 color coded
+          cell @ SF recap link" ordering, with a gap between each so they
+          don't run together. */}
+      <span className="game-preview-pace-cell-top">
+        {score !== null && oppScore !== null ? (
+          <span className={scoreClass}>
+            {score}-{oppScore}
+          </span>
+        ) : (
+          <span className="game-preview-pace-cell-empty">—</span>
+        )}
+        <span className="game-preview-pace-cell-opp">
+          {prefix} {entry.opponent ?? "—"}
+        </span>
+        {recapEntry && snapshot && (
+          <button
+            type="button"
+            className="team-recap-view-link"
+            onClick={() => recaps.onOpenRecap(recapEntry, snapshot.source_url)}
+          >
+            Recap
+          </button>
+        )}
+      </span>
+      <span className="game-preview-pace-cell-plays">
+        {entry.plays} plays{entry.plays_delta != null && <> <DeltaText value={entry.plays_delta} /></>}
+      </span>
+      <span className="game-preview-pace-cell-rate">
+        {entry.pass_rate_pct != null ? (
+          <>
+            {entry.pass_rate_pct}% pass{entry.pass_rate_delta != null && <> <DeltaText value={entry.pass_rate_delta} /></>}
+            {" / "}
+            {entry.rush_rate_pct}% rush{entry.rush_rate_delta != null && <> <DeltaText value={entry.rush_rate_delta} /></>}
+          </>
+        ) : (
+          "—"
+        )}
+      </span>
+    </span>
+  );
+}
+
+function PaceTrendTable({
+  away,
+  home,
+  recaps,
+}: {
+  away: GamePreviewTeamSide;
+  home: GamePreviewTeamSide;
+  recaps: RecapLookup;
+}) {
+  const weeks = paceTrendWeeks(away.pace_trend, home.pace_trend);
+  if (weeks.length === 0) return null;
+  return (
+    <table className="game-preview-pace-table">
+      <thead>
+        <tr>
+          <th scope="col">Team</th>
+          {weeks.map((w) => (
+            <th key={w} scope="col">
+              Week {w}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {[away, home].map((side) => (
+          <tr key={side.team}>
+            <th scope="row">{side.team}</th>
+            {weeks.map((w) => (
+              <td key={w}>
+                <PaceTrendCell trend={side.pace_trend} week={w} team={side.team} recaps={recaps} />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function GameCard({ game, recaps }: { game: GamePreviewGame; recaps: RecapLookup }) {
   return (
     <li className="game-preview-card">
       {/* The High/Low O/U badge used to also render here, top-center in the
@@ -258,7 +573,12 @@ function GameCard({ game }: { game: GamePreviewGame }) {
       </div>
       <ul className="game-preview-narrative-list">
         {game.narrative_sections.map((section, i) => (
-          <NarrativeSectionItem key={i} section={section} />
+          <NarrativeSectionItem
+            key={i}
+            section={section}
+            paceSides={section.label === "Offensive Pace" ? { away: game.away, home: game.home } : undefined}
+            recaps={recaps}
+          />
         ))}
         {/* Weather comes first, once, with a colored swatch (matching the
             Weather tab's own color coding) rather than being folded into
@@ -331,6 +651,14 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
   // "All"-by-default convention as Game Logs' own Game filter.
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
 
+  // Game Recaps for the Pace Trend table's own Score/Recap columns -- same
+  // "one fetch per distinct week, shared across every team/game" pattern
+  // as Game Logs' own TeamRecapTable/recapsByWeek (GameLogsView.tsx).
+  // undefined = not fetched yet, null = fetched, nothing scraped for that
+  // week.
+  const [recapsByWeek, setRecapsByWeek] = useState<Map<number, GameRecapWeekSnapshot | null>>(new Map());
+  const [openRecap, setOpenRecap] = useState<{ entry: GameRecapEntry; sourceUrl: string } | null>(null);
+
   useEffect(() => {
     setLoading(true);
     setError(null);
@@ -346,6 +674,39 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
       })
       .finally(() => setLoading(false));
   }, [season, week, windowWeeks, platform, contest]);
+
+  // Fetches Game Recaps for every distinct week present across every
+  // game's own away/home pace_trend.trailing -- a small, bounded number
+  // of requests (the "Weeks to show" window), same as Game Logs' own
+  // effect. Already-fetched weeks aren't re-requested on a re-render
+  // caused by filter changes, only when `games` itself changes.
+  useEffect(() => {
+    const weeks = new Set<number>();
+    for (const game of games ?? []) {
+      for (const entry of game.away.pace_trend?.trailing ?? []) weeks.add(entry.week);
+      for (const entry of game.home.pace_trend?.trailing ?? []) weeks.add(entry.week);
+    }
+    const toFetch = [...weeks].filter((w) => !recapsByWeek.has(w));
+    if (toFetch.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      toFetch.map((w) =>
+        fetchGameRecaps(season, w)
+          .then((snapshot): [number, GameRecapWeekSnapshot | null] => [w, snapshot])
+          .catch((): [number, GameRecapWeekSnapshot | null] => [w, null])
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      setRecapsByWeek((prev) => {
+        const next = new Map(prev);
+        for (const [w, snapshot] of results) next.set(w, snapshot);
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [games, season, recapsByWeek]);
 
   useEffect(() => {
     // Reset back to "All" whenever the underlying game list changes out
@@ -454,9 +815,17 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
       {!loading && !error && visibleGames !== null && visibleGames.length > 0 && (
         <ul className="game-preview-list">
           {visibleGames.map((game) => (
-            <GameCard key={game.key} game={game} />
+            <GameCard
+              key={game.key}
+              game={game}
+              recaps={{ recapsByWeek, onOpenRecap: (entry, sourceUrl) => setOpenRecap({ entry, sourceUrl }) }}
+            />
           ))}
         </ul>
+      )}
+
+      {openRecap && (
+        <GameRecapModal entry={openRecap.entry} sourceUrl={openRecap.sourceUrl} onClose={() => setOpenRecap(null)} />
       )}
     </>
   );

@@ -18,6 +18,7 @@ import {
   GAME_MATCHUP_NOTES,
   OWNERSHIP_NOTES,
   SALARY_VALUE_NOTES,
+  STANDALONE_NOTES,
   TALENT_EXPLOSIVENESS_NOTES,
   VOLUME_OPPORTUNITIES_NOTES,
   WEATHER_NOTES,
@@ -157,8 +158,12 @@ function resolvedMultiplierLabel(players: PlayerPoolPlayer[]): string {
 
 // Edit-form values are kept as strings (not numbers) so an input can sit
 // empty mid-edit rather than snapping to 0 -- parsed back to number|null
-// only when saving/totaling.
-type EditValues = Partial<Record<ScoreFieldKey, string>>;
+// only when saving/totaling. standalone is a separate boolean field, kept
+// entirely out of ScoreFieldKey/scoreFieldsForPosition's generic
+// score-column loop (and so out of liveTotal/Total) since it's a tag, not
+// a 1.0-3.0 judgment-call score -- see this file's own dedicated Standalone
+// column, built outside that loop the same way the My Pool checkbox is.
+type EditValues = Partial<Record<ScoreFieldKey, string>> & { standalone?: string };
 
 function scoreToInputValue(value: number | null): string {
   return value === null ? "" : String(value);
@@ -170,6 +175,20 @@ function inputValueToScore(value: string | undefined): number | null {
   if (trimmed === "") return null;
   const parsed = Number(trimmed);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+// standalone's edit value is the resolved effective boolean (row.standalone
+// -- already the explicit-override-or-default blend from the backend), not
+// a raw-override-only seed the way Game Environment is: PlayerPoolPlayer
+// carries no separate "standalone_override" field, so there's nothing else
+// to seed from. Encoded as "true"/"false" (never "", since row.standalone
+// is always a real boolean for QB/RB/WR/TE -- see types.ts).
+function standaloneToInputValue(value: boolean | null): string {
+  return value === true ? "true" : "false";
+}
+
+function inputValueToStandalone(value: string | undefined): boolean {
+  return value === "true";
 }
 
 function playerKey(p: PlayerPoolPlayer): string {
@@ -189,6 +208,7 @@ function buildEditValues(row: PlayerPoolPlayer): EditValues {
     talent: scoreToInputValue(row.talent),
     salary_value: scoreToInputValue(row.salary_value),
     weather: scoreToInputValue(row.weather),
+    standalone: standaloneToInputValue(row.standalone),
   };
 }
 
@@ -353,6 +373,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
         weather: inputValueToScore(values.weather),
         volume: inputValueToScore(values.volume),
         talent: inputValueToScore(values.talent),
+        standalone: values.standalone === undefined ? null : inputValueToStandalone(values.standalone),
       });
       setDirtyKeys((prev) => {
         const next = new Set(prev);
@@ -413,7 +434,7 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
       .map(playerKey);
   }
 
-  function updateCell(key: string, field: ScoreFieldKey, value: string) {
+  function updateCell(key: string, field: ScoreFieldKey | "standalone", value: string) {
     const teammateKeys = field === "game_matchup" ? teammateKeysSharingMatchup(key) : [];
 
     setEditValues((prev) => {
@@ -820,6 +841,14 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                           </span>
                         </th>
                       ))}
+                      {position !== "DST" && (
+                        <th>
+                          <span className="player-pool-header-label">Standalone</span>
+                          <span className="player-pool-header-icons">
+                            <HeaderInfoPopover title="Standalone" lines={STANDALONE_NOTES} />
+                          </span>
+                        </th>
+                      )}
                       <th
                         className="player-pool-grid-sticky-right"
                         aria-sort={sortField === "total" ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
@@ -897,6 +926,20 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                               )}
                             </td>
                           ))}
+                          {position !== "DST" && (
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={inputValueToStandalone(values.standalone)}
+                                title="Fine to roster without anyone else from his game -- defaults from Settings' Player Default Factors grid"
+                                onChange={(e) => {
+                                  updateCell(key, "standalone", e.target.checked ? "true" : "false");
+                                  handleCellBlur(key);
+                                }}
+                                aria-label={`${row.player} is Standalone`}
+                              />
+                            </td>
+                          )}
                           <td className="player-pool-grid-num player-pool-grid-total player-pool-grid-sticky-right">
                             {formatTotal(liveTotal(key, row, fields))}
                           </td>

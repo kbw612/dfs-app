@@ -76,6 +76,20 @@ class GameLogRow(BaseModel):
     pass_int: int | None
     pass_sck: int | None
     pass_rtg: float | None
+    # Background-color tier for this one week's raw pass_att/pass_yds
+    # value -- "low" if it's at or under that stat's red-shading
+    # threshold, "high" if it's at or over its green-shading threshold,
+    # None either for a value in between or for pass_att/pass_yds itself
+    # being None (not applicable for this position/week). Deliberately NOT
+    # added for rush_att/rush_yards/receptions/receiving_yards -- the
+    # person's own request colors only the passing columns in this
+    # per-week grid (rush/rec already have their own unrelated top-2-share
+    # shading, see shareRankClassName in the frontend). Same thresholds as
+    # TeamStatSummaryRow's own average_tier/median_tier for these two
+    # stats -- see backend/services/game_logs/game_logs_engine.py's
+    # tier_for_stat_value, the single shared source of truth for both.
+    pass_att_tier: Literal["low", "high"] | None
+    pass_yds_tier: Literal["low", "high"] | None
     # DST's own sacks *recorded* -- always None for every other position
     # (same "not applicable" convention as pass_cmp/etc. above for non-QBs).
     # Deliberately its own field rather than reusing pass_sck: that field is
@@ -91,6 +105,65 @@ class GameOption(BaseModel):
     teams: list[str]
 
 
+class StatAverage(BaseModel):
+    """One counting stat's average and median across however many of a
+    team's own per-week totals are included in the summary (see
+    TeamStatSummaryRow.games) -- both None when every one of that team's
+    weeks has this stat's team total as None (nobody on the roster that
+    week had a non-None value for it -- e.g. Pass Yds on a week the team's
+    QB row wasn't found, or a week FantasyData hasn't been scraped for
+    yet), never a silent 0. See backend/services/game_logs/
+    game_logs_engine.py's build_team_stat_summary for how these are
+    computed.
+
+    average_tier/median_tier are this same stat's background-color tier
+    for the average/median value respectively -- "low"/"high" for one of
+    the 4 stats with defined red/green thresholds (Pass Att, Pass Yds,
+    Rush Att, Rush Yds) once that value crosses one, None otherwise
+    (either in between the two thresholds, or a stat with no thresholds
+    at all -- Rec TD, Rush TD, Pass TD, or average/median itself being
+    None). See game_logs_engine.py's tier_for_stat_value for the single
+    shared thresholds table."""
+
+    average: float | None
+    median: float | None
+    average_tier: Literal["low", "high"] | None
+    median_tier: Literal["low", "high"] | None
+
+
+class TeamStatSummaryRow(BaseModel):
+    """One team's own Average/Median over 7 counting stats (Rec TD, Rush
+    Att, Rush Yds, Rush TD, Pass Att, Pass Yds, Pass TD) -- a TEAM total,
+    not a single player's: for each week, every currently-shown player's
+    own value for a stat is summed into that week's team total first, and
+    this row's average/median are computed across those per-week team
+    totals. Covers exactly the weeks already shown in `rows` above (the
+    post-zero-FPTS-filter weeks within the lookback window, per the
+    person's own "only the weeks shown" answer) -- not the raw lookback
+    window, so this always matches what's visibly on screen. `team` is
+    whichever team this row is grouped under -- the roster team itself
+    for Game Logs, or the "Against {team}" panel's own team for Game Logs
+    Against (see each engine's own call site for which).
+
+    Receptions and Receiving Yards were dropped from this summary at the
+    person's own request -- they're still on every per-week GameLogRow/
+    GameLogAgainstRow, just not summarized here."""
+
+    team: str
+    # How many distinct weeks had at least one row to sum into a team
+    # total -- NOT necessarily the full lookback_weeks (a bye week, or
+    # every rostered player having a 0-FPTS week hidden, means fewer weeks
+    # than the lookback window itself).
+    games: int
+    rec_td: StatAverage
+    rush_att: StatAverage
+    rush_yards: StatAverage
+    rush_td: StatAverage
+    pass_att: StatAverage
+    pass_yds: StatAverage
+    pass_td: StatAverage
+
+
 class GameLogsResult(BaseModel):
     season: int
     week: int
@@ -103,3 +176,6 @@ class GameLogsResult(BaseModel):
     lookback_weeks: int
     games: list[GameOption]
     rows: list[GameLogRow]
+    # One entry per distinct team in `rows` -- see TeamStatSummaryRow's own
+    # docstring.
+    team_stat_summary: list[TeamStatSummaryRow]

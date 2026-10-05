@@ -113,6 +113,20 @@ class Settings(BaseSettings):
     # it's actually for.
     mysportsweather_nfl_url: str = "https://mysportsweather.com/nfl"
 
+    # Game Recaps tab's scrape button (backend/services/game_recap/
+    # game_recap_scraper.py) -- walterfootball.com publishes one page per
+    # (season, week) once that week is no longer the current one (e.g.
+    # https://walterfootball.com/nflreview2026_01.php), but the CURRENT
+    # week's recap only ever lives at the bare, un-numbered URL below until
+    # it gets promoted to its own numbered page the following week. No
+    # login required for either -- confirmed live before building the
+    # scraper. The scraper tries the numbered URL first and falls back to
+    # the bare one (verifying the fetched page's own heading actually says
+    # the requested week, so a stale/mismatched bare-page fetch is never
+    # silently saved as the wrong week -- see game_recap_scraper.py).
+    walterfootball_recap_week_url_template: str = "https://walterfootball.com/nflreview{season}_{week:02d}.php"
+    walterfootball_recap_current_url: str = "https://walterfootball.com/nflreview.php"
+
     # DraftKings Main Slate ownership/salary/projections page -- backs the
     # Settings tab's "Scrape from OneWeekSeason" ownership control (backend/
     # services/ownership/main_slate_scraper.py). Also no login required,

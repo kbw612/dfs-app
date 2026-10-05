@@ -23,6 +23,7 @@ import { PlayerSelectionGrid } from "./PlayerSelectionGrid";
 import { ScheduleUpload } from "./ScheduleUpload";
 import { GAME_MATCHUP_NOTES, TALENT_EXPLOSIVENESS_NOTES, VOLUME_OPPORTUNITIES_NOTES } from "./scoringNotes";
 import { WeeklyStatsFileStatusList, WeeklyStatsUpload } from "./WeeklyStatsUpload";
+import { GameRecapFileStatus, GameRecapUpload } from "./GameRecapUpload";
 
 // Mirrors Player Pool's own position filter chips (see PlayerPoolView.tsx's
 // POSITIONS) -- DST is left out since Volume/Talent/DFS Type don't apply
@@ -96,7 +97,7 @@ function inputValueToMultiplier(value: string): number | null {
 }
 
 type AttributeField = "volume" | "talent";
-type DefaultsField = AttributeField | "dfs_type";
+type DefaultsField = AttributeField | "dfs_types";
 type EditValues = Partial<Record<DefaultsField, string>>;
 
 function scoreToInputValue(value: number | null): string {
@@ -111,14 +112,19 @@ function inputValueToScore(value: string | undefined): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-// "None" is a UI-only sentinel for the dropdown (see dfsTypes.ts) --
-// saved as a real null, not the literal string "None".
-function dfsTypeToInputValue(value: string | null): string {
-  return value ?? "None";
+// EditValues stores every field as a plain string (see this file's own
+// string-encoded-edit-values convention) -- dfs_types is encoded as a
+// comma-joined list of tags (e.g. "Boom/Bust,Standalone") since the
+// checkbox group edits a set, not a single value. Tag names themselves
+// never contain commas (see dfsTypes.ts's DFS_TYPE_OPTIONS), so a plain
+// join/split round-trips cleanly.
+function dfsTypesToInputValue(value: string[]): string {
+  return value.join(",");
 }
 
-function inputValueToDfsType(value: string | undefined): string | null {
-  return value === undefined || value === "None" ? null : value;
+function inputValueToDfsTypes(value: string | undefined): string[] {
+  if (value === undefined || value.trim() === "") return [];
+  return value.split(",").filter((tag) => tag !== "");
 }
 
 interface SettingsViewProps {
@@ -139,6 +145,7 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
   const [scheduleRefresh, setScheduleRefresh] = useState(0);
   const [contestStandingsRefresh, setContestStandingsRefresh] = useState(0);
   const [weeklyStatsRefresh, setWeeklyStatsRefresh] = useState(0);
+  const [gameRecapRefresh, setGameRecapRefresh] = useState(0);
   const [ownershipRefresh, setOwnershipRefresh] = useState(0);
   const [defaultsPosition, setDefaultsPosition] = useState<DefaultsPosition>("QB");
 
@@ -229,7 +236,7 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
               next[row.player] = {
                 volume: scoreToInputValue(defaultEntry?.volume ?? null),
                 talent: scoreToInputValue(defaultEntry?.talent ?? null),
-                dfs_type: dfsTypeToInputValue(defaultEntry?.dfs_type ?? null),
+                dfs_types: dfsTypesToInputValue(defaultEntry?.dfs_types ?? []),
               };
             }
           }
@@ -346,7 +353,7 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
         player: key,
         volume: inputValueToScore(values.volume),
         talent: inputValueToScore(values.talent),
-        dfs_type: inputValueToDfsType(values.dfs_type),
+        dfs_types: inputValueToDfsTypes(values.dfs_types),
       });
       setDirtyKeys((prev) => {
         const next = new Set(prev);
@@ -560,6 +567,16 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
       </section>
 
       <section className="ownership-section settings-panel">
+        <h2>Game recaps</h2>
+        <p className="hint">
+          WalterFootball.com's own written recap of each game -- shown verbatim (never summarized) via a "Recap" link
+          next to each team's weekly results on the Game Logs and Game Logs Against tabs.
+        </p>
+        <GameRecapUpload season={season} week={week} onScraped={() => setGameRecapRefresh((n) => n + 1)} />
+        <GameRecapFileStatus season={season} week={week} refreshToken={gameRecapRefresh} />
+      </section>
+
+      <section className="ownership-section settings-panel">
         <h2>Week {week} Player pool</h2>
         <p className="hint">
           Narrow down which QB/RB/WR/TE players from this week's salary file show up in Player Rankings and Salary
@@ -676,16 +693,26 @@ export function SettingsView({ season, week, platform, contest }: SettingsViewPr
                         </td>
                       ))}
                       <td>
-                        <select
-                          value={values.dfs_type ?? "None"}
-                          onChange={(e) => updateCell(key, "dfs_type", e.target.value)}
-                        >
-                          {DFS_TYPE_OPTIONS.map((option) => (
-                            <option key={option} value={option}>
+                        {DFS_TYPE_OPTIONS.map((option) => {
+                          const selected = inputValueToDfsTypes(values.dfs_types);
+                          const checked = selected.includes(option);
+                          return (
+                            <label key={option} className="dfs-type-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={(e) => {
+                                  const next = e.target.checked
+                                    ? [...selected, option]
+                                    : selected.filter((tag) => tag !== option);
+                                  updateCell(key, "dfs_types", dfsTypesToInputValue(next));
+                                  handleCellBlur(key);
+                                }}
+                              />
                               {option}
-                            </option>
-                          ))}
-                        </select>
+                            </label>
+                          );
+                        })}
                       </td>
                     </tr>
                   );

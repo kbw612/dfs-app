@@ -356,6 +356,15 @@ export interface PlayerPoolPlayer {
   // neutral 2.0 with no notable weather this week). See backend
   // PlayerPoolPlayer.weather's docstring.
   weather: number | null;
+  // The *effective* value -- this week's explicit override if saved,
+  // otherwise whether "Standalone" is one of this player's Settings
+  // Default dfs_types, otherwise false (see backend
+  // PlayerPoolPlayer.standalone's docstring). Null unconditionally for
+  // DST (not applicable); always a real true/false for QB/RB/WR/TE. Not
+  // part of `total` -- purely a tag for a future lineup-optimizer
+  // validator that flags a non-Standalone player rostered with nobody
+  // else from their own game.
+  standalone: boolean | null;
   // Player Rankings' "Expected FPTS" column -- resolved Salary Multiplier
   // (Settings, or its computed default) times salary / 1000 -- see
   // backend/services/salary_multiplier/engine.py. Purely informational,
@@ -383,6 +392,11 @@ export interface PlayerPoolEntryInput {
   weather: number | null;
   volume: number | null;
   talent: number | null;
+  // Override only, QB/RB/WR/TE only -- see backend
+  // PlayerPoolEntry.standalone's docstring. Null here means "no explicit
+  // save for this exact week," falling back at read time to the player's
+  // Settings Default dfs_types, then to false.
+  standalone: boolean | null;
 }
 
 // Body sent to PUT /api/my-player-pool/entry -- see
@@ -409,17 +423,20 @@ export interface MyPlayerPoolEntryInput {
 // what Player Pool falls back to when a given week has no explicit save
 // of its own.
 //
-// dfs_type is a separate, unrelated categorization tag on the same
-// record (e.g. "Boom/Bust") -- see frontend/src/dfsTypes.ts for the
-// selectable options and the Boom/Bust Players tab
-// (components/BoomBustView.tsx) that reads it. null means no DFS Type
-// set, same as volume/talent being null.
+// dfs_types is a separate, unrelated set of categorization tags on the
+// same record (e.g. "Boom/Bust", "Standalone") -- see
+// frontend/src/dfsTypes.ts for the selectable options, the Boom/Bust
+// Players tab (components/BoomBustView.tsx) that reads the Boom/Bust tag,
+// and Player Pool's standalone field that derives its own default from
+// the Standalone tag. A player can carry any combination of tags at
+// once; an empty list means no DFS Type set, same as volume/talent being
+// null.
 export interface PlayerDefaultEntryInput {
   season: number;
   player: string;
   volume: number | null;
   talent: number | null;
-  dfs_type: string | null;
+  dfs_types: string[];
 }
 
 // Body sent to/from PUT /api/team-factors/entry and returned by GET
@@ -1179,6 +1196,17 @@ export interface GameLogRow {
   pass_int: number | null;
   pass_sck: number | null;
   pass_rtg: number | null;
+  // Background-color tier for this one week's raw pass_att/pass_yds value
+  // -- "low"/"high" once it crosses the red/green threshold, null
+  // otherwise (in between, or pass_att/pass_yds itself being null).
+  // Computed server-side (same shared thresholds as TeamStatSummaryRow's
+  // own average_tier/median_tier for these two stats, see backend/
+  // services/game_logs/game_logs_engine.py's tier_for_stat_value) --
+  // deliberately not present for rush_att/rush_yards/receptions/
+  // receiving_yards, which keep their own unrelated top-2-share shading
+  // computed client-side (see gameLogsShared.ts's shareRankClassName).
+  pass_att_tier: "low" | "high" | null;
+  pass_yds_tier: "low" | "high" | null;
   // DST's own sacks recorded -- always null for every other position, and
   // deliberately separate from pass_sck (that's sacks *taken* by a QB).
   sacks: number | null;
@@ -1190,6 +1218,52 @@ export interface GameOption {
   teams: string[];
 }
 
+// A team's own average/median for one counting stat, over whatever
+// `games` the owning TeamStatSummaryRow actually covers -- both null when
+// every one of that team's weeks had this stat's team total as null (e.g.
+// Pass Yds on a week its QB row wasn't found), never a silent 0. Computed
+// server-side (backend/services/game_logs/game_logs_engine.py's
+// build_team_stat_summary) -- the frontend only renders these, it never
+// computes them.
+export interface StatAverage {
+  average: number | null;
+  median: number | null;
+  // Background-color tier for `average`/`median` respectively -- "low"/
+  // "high" for one of the 4 stats with defined red/green thresholds
+  // (Pass Att, Pass Yds, Rush Att, Rush Yds) once that value crosses one,
+  // null otherwise (in between the thresholds, or a stat with none
+  // defined at all -- Rec TD, Rush TD, Pass TD -- or the value itself
+  // being null). See backend/services/game_logs/game_logs_engine.py's
+  // tier_for_stat_value, the single shared thresholds table.
+  average_tier: "low" | "high" | null;
+  median_tier: "low" | "high" | null;
+}
+
+// One TEAM's own Average/Median summary over Rec TD/Rush Att/Rush Yds/
+// Rush TD/Pass Att/Pass Yds/Pass TD -- every currently-shown player's own
+// value is summed into a team-week total first, and this row's average/
+// median are computed across those per-week team totals, across exactly
+// the weeks already shown in `rows`
+// (GameLogsResult/GameLogsAgainstResult's own `week`/`lookback_weeks` are
+// NOT the same as this row's `games` -- that's the number of weeks
+// actually summed, which can be fewer than the lookback window). `team`
+// is the roster team itself for Game Logs, or the "Against {team}"
+// panel's own team for Game Logs Against. Receptions/Receiving Yards
+// were dropped from this summary at the person's own request -- they're
+// still on every per-week GameLogRow/GameLogAgainstRow, just not
+// summarized here.
+export interface TeamStatSummaryRow {
+  team: string;
+  games: number;
+  rec_td: StatAverage;
+  rush_att: StatAverage;
+  rush_yards: StatAverage;
+  rush_td: StatAverage;
+  pass_att: StatAverage;
+  pass_yds: StatAverage;
+  pass_td: StatAverage;
+}
+
 export interface GameLogsResult {
   season: number;
   week: number;
@@ -1197,6 +1271,7 @@ export interface GameLogsResult {
   lookback_weeks: number;
   games: GameOption[];
   rows: GameLogRow[];
+  team_stat_summary: TeamStatSummaryRow[];
 }
 
 // Mirrors backend/schemas/multipliers/multipliers.py's TrailingMultiplier --
@@ -1375,11 +1450,56 @@ export interface GamePreviewNarrativeSection {
   entries: string[];
 }
 
+// One played week's worth of a team's own offensive pace -- an entry in
+// GamePreviewPaceTrend.trailing, used to render a weeks-as-columns trend
+// table (the "weeks to show" input controls how many entries land here).
+export interface GamePreviewPaceWeek {
+  week: number;
+  // This team's own opponent that week, from the Schedule file -- null
+  // when no Schedule file covers that team/week.
+  opponent: string | null;
+  // "home" or "away" -- this team's own side of that week's game, from the
+  // Schedule file's own GameLocation column, so the UI can render "vs DEN"
+  // (home) vs. "@ DEN" (away) instead of a location-blind "vs". Null under
+  // the exact same condition as `opponent` (no Schedule coverage).
+  opponent_location: "home" | "away" | null;
+  plays: number;
+  pass_att: number;
+  rush_att: number;
+  pass_rate_pct: number | null;
+  rush_rate_pct: number | null;
+  // vs. the played week immediately before THIS one (not the parent
+  // GamePreviewPaceTrend's own top-level "most recent" comparison) -- null
+  // for the oldest week in `trailing` when there's no earlier played week
+  // to diff against.
+  plays_delta: number | null;
+  pass_rate_delta: number | null;
+  rush_rate_delta: number | null;
+}
+
+// This team's own most-recent-played-week pace snapshot (week/plays/rates
+// plus a one-step delta vs. the week before it), plus `trailing` -- up to
+// window_weeks played weeks of the same numbers, newest first, for a
+// multi-week table. Null when this team has no played week with any stat
+// line yet (week 1, or no weekly stats uploaded).
+export interface GamePreviewPaceTrend {
+  week: number;
+  plays: number;
+  pass_att: number;
+  rush_att: number;
+  pass_rate_pct: number | null;
+  rush_rate_pct: number | null;
+  plays_delta: number | null;
+  pass_rate_delta: number | null;
+  trailing: GamePreviewPaceWeek[];
+}
+
 export interface GamePreviewTeamSide {
   team: string;
   is_home: boolean;
   team_factors: GamePreviewTeamFactors;
   dst_matchup: GamePreviewDstMatchup | null;
+  pace_trend: GamePreviewPaceTrend | null;
   players: GamePreviewPlayer[];
   // Phase D -- this team's own injury summary, one group per position
   // bucket (O-Line/Defensive Front/Defensive Backs depth 1, Skill
@@ -1394,6 +1514,22 @@ export interface GamePreviewTeamSide {
   // this team this week -- see backend GamePreviewTeamSide.projected_ownership_pct's
   // own docstring.
   projected_ownership_pct: number | null;
+  // This team's own Rush/Pass Att/Yds/TD + Rec TD average/median over the
+  // trailing window -- same TeamStatSummaryRow shape (and the same
+  // average_tier/median_tier red/green thresholds) as Game Logs' own
+  // Team Summary (Avg / Median) section. Null under the same "no stat
+  // lines in the window yet" condition as pace_trend being null.
+  stat_summary: TeamStatSummaryRow | null;
+  // Two INDEPENDENT tiers, not a mutually-exclusive pick -- a team can be
+  // "high" on run volume AND "low" on pass volume (or any other
+  // combination) at once. Derived from stat_summary's own tiers (see
+  // backend GamePreviewTeamSide.run_volume_tier/pass_volume_tier's own
+  // docstring). Both null can mean either "no data at all" (stat_summary
+  // itself is null) or "genuinely normal on both sides" (stat_summary
+  // exists, neither stat tripped a threshold) -- check stat_summary
+  // directly to tell those apart (see TeamStatSummaryColumn's own usage).
+  run_volume_tier: "low" | "high" | null;
+  pass_volume_tier: "low" | "high" | null;
 }
 
 export interface GamePreviewGame {
@@ -1476,6 +1612,9 @@ export interface GameLogAgainstRow {
   pass_int: number | null;
   pass_sck: number | null;
   pass_rtg: number | null;
+  // Same field/convention as GameLogRow's own pass_att_tier/pass_yds_tier.
+  pass_att_tier: "low" | "high" | null;
+  pass_yds_tier: "low" | "high" | null;
   sacks: number | null;
 }
 
@@ -1485,6 +1624,10 @@ export interface GameLogsAgainstResult {
   lookback_weeks: number;
   games: GameOption[];
   rows: GameLogAgainstRow[];
+  // Same shape as GameLogsResult's own (see TeamStatSummaryRow) -- `team`
+  // on each entry holds `against_team` here instead of a rostered
+  // player's real team.
+  team_stat_summary: TeamStatSummaryRow[];
 }
 
 // Lineup Scenarios -- mirrors backend/schemas/lineup_scenarios/
@@ -1579,4 +1722,45 @@ export interface LineupScenarioAnalysis {
   results: LineupScenarioResult[];
   unresolved_player_names: string[];
   min_stack_size: number;
+}
+
+// Game Recaps -- walterfootball.com's own per-game recap text, scraped and
+// stored verbatim. away_team/home_team are the REAL home/away split,
+// resolved from the Schedule file server-side (see backend/schemas/
+// game_recap/game_recap.py's own docstring for why the site's own
+// score-line text order can't be trusted for this).
+export interface GameRecapEntry {
+  away_team: string;
+  home_team: string;
+  away_team_score: number;
+  home_team_score: number;
+  recap_text: string;
+}
+
+export interface GameRecapWeekSnapshot {
+  season: number;
+  week: number;
+  scraped_at: string;
+  source_url: string;
+  games: GameRecapEntry[];
+}
+
+// Response from POST /api/game-recap/scrape -- see backend/api/game_recap/
+// scrape.py. `messages` covers any game whose team name(s) didn't resolve
+// to this app's abbreviations (still included in the snapshot, just
+// flagged here too) or that came back with no recap text at all.
+export interface GameRecapScrapeResult {
+  snapshot: GameRecapWeekSnapshot;
+  messages: string[];
+}
+
+// The one game in `snapshot` involving `team` (either side), or null if
+// `snapshot` is null (nothing scraped for this season/week yet) or no game
+// in it mentions `team` (bye week, or an unresolved/misspelled name).
+// Frontend mirror of backend/schemas/game_recap/game_recap.py's own
+// find_team_recap -- kept here rather than imported since the frontend has
+// no access to the Python module.
+export function findTeamRecap(snapshot: GameRecapWeekSnapshot | null, team: string): GameRecapEntry | null {
+  if (snapshot === null) return null;
+  return snapshot.games.find((g) => g.away_team === team || g.home_team === team) ?? null;
 }

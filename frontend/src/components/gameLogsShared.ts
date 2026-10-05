@@ -111,6 +111,21 @@ export function shareRankClassName(rank: 1 | 2 | undefined): string {
   return "";
 }
 
+// "low"/"high"/null (from the backend's tier_for_stat_value) -> the
+// shared darker-red/darker-green CSS classes (.stat-tier-low/-high, see
+// App.css) used for Pass Att/Pass Yds/Rush Att/Rush Yds volume shading --
+// both in the Team Summary (Avg/Median) section's own StatAverage cells
+// (PlayerStatSummaryTable.tsx) and in the per-week grid's own Pass Att/
+// Pass Yds cells (GameLogsView.tsx/GameLogsAgainstView.tsx -- rush/rec
+// keep their own unrelated rankTopSharesByTeamAndWeek shading there
+// instead). All math/thresholds happen server-side; this just maps the
+// tier string to a class name.
+export function statTierClassName(tier: "low" | "high" | null): string {
+  if (tier === "low") return "stat-tier-low";
+  if (tier === "high") return "stat-tier-high";
+  return "";
+}
+
 // "vs CLE" / "@ CLE" / "BYE" / "-" (opponent or game_location missing --
 // no Schedule file uploaded, or no schedule row for this team/week).
 // Game Logs Against has no separate `opponent` field on its own row (the
@@ -121,4 +136,66 @@ export function formatOpponent(opponent: string | null, gameLocation: "Home" | "
   if (opponent === null || gameLocation === null) return "-";
   if (gameLocation === "BYE") return "BYE";
   return gameLocation === "Home" ? `vs ${opponent}` : `@ ${opponent}`;
+}
+
+// Team display order mirrors Game Previews' own: teams grouped by
+// matchup, in the `games` list's own order (already sorted by game
+// label -- "AWAY @ HOME" -- server-side, see build_game_options), each
+// game's own two teams in that GameOption's own `teams` order (e.g. the
+// week's first two games giving ARI, NYG, DAL, HOU rather than a flat
+// alphabetical ARI, DAL, HOU, NYG). Game Logs/Game Logs Against cover
+// every team with any stat history, not just this week's slate (unlike
+// Game Previews), so a team that isn't in any of this week's games (a
+// bye, or no Schedule file yet) has no entry here at all -- callers sort
+// those teams after every known team, alphabetically among themselves,
+// via the Map's own "not found" (undefined) fallback.
+export function buildGameTeamOrder(games: { teams: string[] }[]): Map<string, number> {
+  const order = new Map<string, number>();
+  let index = 0;
+  for (const game of games) {
+    for (const team of game.teams) {
+      if (!order.has(team)) order.set(team, index++);
+    }
+  }
+  return order;
+}
+
+// Sorts team groups by their game order first (teams from the same/
+// earlier game before teams from a later one), falling back to plain
+// alphabetical for any team not in `teamOrder` (see buildGameTeamOrder's
+// own docstring) -- and alphabetical as the tie-break even among ordered
+// teams, so two teams from the same game never swap order on a re-render.
+export function compareTeamsByGameOrder(teamOrder: Map<string, number>): (a: string, b: string) => number {
+  return (a, b) => {
+    const rankA = teamOrder.get(a);
+    const rankB = teamOrder.get(b);
+    if (rankA !== undefined && rankB !== undefined && rankA !== rankB) return rankA - rankB;
+    if (rankA !== undefined && rankB === undefined) return -1;
+    if (rankA === undefined && rankB !== undefined) return 1;
+    return a.localeCompare(b);
+  };
+}
+
+export interface TeamWeekEntry {
+  week: number;
+  game_location: "Home" | "Away" | "BYE" | null;
+  // Game Logs' own rows carry this directly; Game Logs Against's rows
+  // don't (see formatOpponent's own comment) -- TeamRecapTable falls back
+  // to deriving the opponent from a found GameRecapEntry instead when this
+  // is null, so both tabs can share one component.
+  opponent: string | null;
+}
+
+// One entry per distinct week present in `rows` (newest first), each
+// carrying a representative game_location/opponent for that week -- every
+// row sharing a (team, week) pair came from the same game, so the first
+// row's own values are as good as any other's.
+export function distinctTeamWeeks<T extends TeamWeekEntry>(rows: T[]): TeamWeekEntry[] {
+  const byWeek = new Map<number, TeamWeekEntry>();
+  for (const row of rows) {
+    if (!byWeek.has(row.week)) {
+      byWeek.set(row.week, { week: row.week, game_location: row.game_location, opponent: row.opponent });
+    }
+  }
+  return [...byWeek.values()].sort((a, b) => b.week - a.week);
 }

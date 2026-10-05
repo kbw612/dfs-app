@@ -1,0 +1,67 @@
+{
+  "season": 2026,
+  "week": 4,
+  "scraped_at": "2026-10-03T11:11:36-04:00",
+  "games": [
+    {
+      "away_name": "Indianapolis Colts",
+      "home_name": "Washington Commanders",
+      "away_team": "IND",
+      "home_team": "WAS",
+      "game_key": "IND-WAS",
+      "kickoff_label": "9:30 AM ET",
+      "color": "green",
+      "note": "Adding this game to the write-ups specifically because it's in the UK. I think the forecast looks fine, with no rain, mild temps, and light winds."
+    },
+    {
+      "away_name": "Arizona Cardinals",
+      "home_name": "New York Giants",
+      "away_team": "ARI",
+      "home_team": "NYG",
+      "game_key": "ARI-NYG",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "Saturday Update: I do expect we'll see some rain, but it's light and spotty. Off and on light sprinkles and showers, nothing too heavy or overly impactful. Winds remain fairly light."
+    },
+    {
+      "away_name": "Tennessee Titans",
+      "home_name": "Baltimore Ravens",
+      "away_team": "TEN",
+      "home_team": "BAL",
+      "game_key": "BAL-TEN",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Saturday Update: I am less impressed with rain chances in BAL now that we are within high-resolution model range. I'm not going to rule out a chance for rain here, but at the moment it looks mostly (fully?) dry."
+    },
+    {
+      "away_name": "Green Bay Packers",
+      "home_name": "Tampa Bay Buccaneers",
+      "away_team": "GB",
+      "home_team": "TB",
+      "game_key": "GB-TB",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "Saturday Update: Your classic Tampa-area weather pattern, which includes some scattered afternoon storms in the general area, but not necessarily over the stadium. Like we saw in a prior game in Tampa this year, rain tends to be more of a late-afternoon issue rather than early afternoon (2nd half more likely to see rain than the first), and lightning delays are possible if a storm ends up in the wrong spot. My gut read here: assume a dry game, maybe we end up with some rain late-game. I'm going to leave it as YELLOW because of the lightning delay potential, but I wouldn't say I'm expecting it to be a problem."
+    },
+    {
+      "away_name": "Los Angeles Rams",
+      "home_name": "Philadelphia Eagles",
+      "away_team": "LAR",
+      "home_team": "PHI",
+      "game_key": "LAR-PHI",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Saturday Update: A few drops of rain. I'm not currently seeing enough rain to consider this a downgrade to offense. I reserve the right to change that based on how radar looks Sunday, but right now I don't see it as \"impactful\" weather."
+    },
+    {
+      "away_name": "Detroit Lions",
+      "home_name": "Carolina Panthers",
+      "away_team": "DET",
+      "home_team": "CAR",
+      "game_key": "CAR-DET",
+      "kickoff_label": "8:20 PM ET",
+      "color": "yellow",
+      "note": "Saturday Update: Models are coming in more aggressive with rain chances here, and latest high-res models are showing a soaker. Steady, light-to-moderate rain all game long, which would likely create some problems in the passing game. As things currently stand, this is likely to be the biggest \"weather game\" of the weekend. It is important to note that despite the likely rain, winds remain calm all game long."
+    }
+  ]
+}

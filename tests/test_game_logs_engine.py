@@ -1,5 +1,11 @@
 from backend.schemas.dk_players.dk_players import DkPlayerRow
-from backend.services.game_logs.game_logs_engine import build_game_log_rows, build_game_options
+from backend.schemas.game_logs.game_logs import GameLogRow
+from backend.services.game_logs.game_logs_engine import (
+    build_game_log_rows,
+    build_game_options,
+    build_team_stat_summary,
+    tier_for_stat_value,
+)
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 
 SCHEDULE_CSV = (
@@ -533,3 +539,222 @@ def test_build_game_log_rows_shares_none_when_calc_week_points_not_run_yet():
     assert row.target_share_pct is None
     assert row.touch_share_pct is None
     assert row.opp_share_pct is None
+
+
+def _log_row(
+    name,
+    position,
+    team,
+    week,
+    receptions=None,
+    receiving_yards=None,
+    rec_td=None,
+    rush_att=None,
+    rush_yards=None,
+    rush_td=None,
+    pass_att=None,
+    pass_yds=None,
+    pass_td=None,
+):
+    # Minimal GameLogRow for build_player_stat_summary tests -- only the
+    # fields that function actually reads (name/position + the 9 counting
+    # stats) are varied; everything else gets an arbitrary-but-valid value
+    # since the schema requires every field.
+    return GameLogRow(
+        week=week,
+        name=name,
+        position=position,
+        team=team,
+        salary=5000,
+        opponent=None,
+        game_location=None,
+        multiplier=None,
+        fpts=0.0,
+        non_td_fpts=0.0,
+        non_td_fpts_pct=None,
+        td_fpts=0.0,
+        td_fpts_pct=None,
+        touches=None,
+        targets=None,
+        receptions=receptions,
+        receiving_yards=receiving_yards,
+        rec_td=rec_td,
+        rush_att=rush_att,
+        rush_yards=rush_yards,
+        rush_td=rush_td,
+        target_share_pct=None,
+        touch_share_pct=None,
+        opp_share_pct=None,
+        pass_cmp=None,
+        pass_att=pass_att,
+        pass_cmp_pct=None,
+        pass_yds=pass_yds,
+        pass_avg=None,
+        pass_td=pass_td,
+        pass_int=None,
+        pass_sck=None,
+        pass_rtg=None,
+        pass_att_tier=tier_for_stat_value("pass_att", pass_att),
+        pass_yds_tier=tier_for_stat_value("pass_yds", pass_yds),
+        sacks=None,
+    )
+
+
+def test_build_team_stat_summary_sums_players_per_week_then_averages_across_weeks():
+    # Week 1: RB1 60 + RB2 20 = 80 team rush yards. Week 2: RB1 40 + RB2 60
+    # = 100. Average/median are over the two WEEK TOTALS (80, 100), not
+    # over the 4 individual player-week values.
+    rows = [
+        _log_row("RB1", "RB", "ATL", 1, rush_att=10, rush_yards=60),
+        _log_row("RB2", "RB", "ATL", 1, rush_att=5, rush_yards=20),
+        _log_row("RB1", "RB", "ATL", 2, rush_att=8, rush_yards=40),
+        _log_row("RB2", "RB", "ATL", 2, rush_att=12, rush_yards=60),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    assert len(summary) == 1
+    row = summary[0]
+    assert row.team == "ATL"
+    assert row.games == 2
+    assert row.rush_yards.average == 90.0  # (80 + 100) / 2
+    assert row.rush_yards.median == 90.0
+    assert row.rush_att.average == 17.5  # (15 + 20) / 2
+
+
+def test_build_team_stat_summary_median_of_even_count_averages_middle_two():
+    rows = [
+        _log_row("RB1", "RB", "LAR", 1, rush_yards=40),
+        _log_row("RB1", "RB", "LAR", 2, rush_yards=60),
+        _log_row("RB1", "RB", "LAR", 3, rush_yards=80),
+        _log_row("RB1", "RB", "LAR", 4, rush_yards=100),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.rush_yards.average == 70.0
+    assert row.rush_yards.median == 70.0  # (60 + 80) / 2
+
+
+def test_build_team_stat_summary_none_stat_excluded_not_treated_as_zero():
+    # A non-QB row's pass_yds is always None -- it must not drag the team's
+    # own Pass Yds average down as if that player's "share" were a real 0.
+    rows = [
+        _log_row("QB1", "QB", "PHI", 1, pass_yds=300),
+        _log_row("RB1", "RB", "PHI", 1, pass_yds=None, rush_yards=40),
+        _log_row("QB1", "QB", "PHI", 2, pass_yds=250),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.pass_yds.average == 275.0  # (300 + 250) / 2, RB1's None ignored
+    assert row.rush_yards.average == 40.0
+
+
+def test_build_team_stat_summary_week_with_no_value_for_a_stat_excluded_from_that_stats_average():
+    # Week 2 has no QB row at all (e.g. name-match miss) -- Pass Yds has no
+    # team total for week 2, so it's left out of Pass Yds' own
+    # average/median entirely, while `games` (which counts weeks with ANY
+    # row) still reflects both weeks.
+    rows = [
+        _log_row("QB1", "QB", "DAL", 1, pass_yds=300),
+        _log_row("RB1", "RB", "DAL", 1, rush_yards=50),
+        _log_row("RB1", "RB", "DAL", 2, rush_yards=70),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.games == 2
+    assert row.pass_yds.average == 300.0
+    assert row.rush_yards.average == 60.0  # (50 + 70) / 2
+
+
+def test_build_team_stat_summary_all_none_stat_stays_none():
+    rows = [_log_row("K1", "QB", "BAL", 1, pass_yds=None)]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.pass_yds.average is None
+    assert row.pass_yds.median is None
+
+
+def test_build_team_stat_summary_groups_separately_by_team():
+    rows = [
+        _log_row("Josh Jacobs", "RB", "GB", 1, rush_yards=80),
+        _log_row("Josh Jacobs", "RB", "GB", 2, rush_yards=120),
+        _log_row("Zamir White", "RB", "LV", 1, rush_yards=10),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    assert len(summary) == 2
+    gb_row = next(r for r in summary if r.team == "GB")
+    lv_row = next(r for r in summary if r.team == "LV")
+    assert gb_row.games == 2
+    assert gb_row.rush_yards.average == 100.0
+    assert lv_row.games == 1
+    assert lv_row.rush_yards.average == 10.0
+
+
+def test_build_team_stat_summary_get_team_uses_against_team_style_callable():
+    # Mirrors how game_logs_against's own endpoint calls this with
+    # `lambda r: r.against_team` instead of `lambda r: r.team` -- any
+    # callable deriving the grouping key works, not just .team itself.
+    rows = [_log_row("Saquon Barkley", "RB", "NYG", 1, rush_yards=90)]
+    summary = build_team_stat_summary(rows, lambda r: f"vs-{r.team}")
+    assert summary[0].team == "vs-NYG"
+
+
+def test_build_team_stat_summary_sorted_by_team():
+    rows = [
+        _log_row("P1", "WR", "SEA", 1, rush_yards=50),
+        _log_row("P2", "RB", "ATL", 1, rush_yards=50),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    assert [r.team for r in summary] == ["ATL", "SEA"]
+
+
+def test_build_team_stat_summary_no_longer_has_receptions_or_receiving_yards_fields():
+    # Dropped from TeamStatSummaryRow at the person's own request -- still
+    # present on every per-week GameLogRow, just not summarized here.
+    row = build_team_stat_summary([_log_row("P1", "WR", "SEA", 1, receiving_yards=50, receptions=3)], lambda r: r.team)[0]
+    assert not hasattr(row, "receptions")
+    assert not hasattr(row, "receiving_yards")
+
+
+def test_tier_for_stat_value_thresholds():
+    assert tier_for_stat_value("pass_yds", 175) == "low"
+    assert tier_for_stat_value("pass_yds", 176) is None
+    assert tier_for_stat_value("pass_yds", 260) is None
+    assert tier_for_stat_value("pass_yds", 261) == "high"
+    assert tier_for_stat_value("pass_att", 28) == "low"
+    assert tier_for_stat_value("pass_att", 38) == "high"
+    assert tier_for_stat_value("rush_yards", 85) == "low"
+    assert tier_for_stat_value("rush_yards", 141) == "high"
+    assert tier_for_stat_value("rush_att", 21) == "low"
+    assert tier_for_stat_value("rush_att", 30) == "high"
+    assert tier_for_stat_value("pass_yds", None) is None
+    # No thresholds defined for TD stats.
+    assert tier_for_stat_value("pass_td", 5) is None
+
+
+def test_build_team_stat_summary_average_and_median_tiers_computed():
+    rows = [
+        _log_row("QB1", "QB", "DAL", 1, pass_yds=150, pass_att=25),
+        _log_row("QB1", "QB", "DAL", 2, pass_yds=170, pass_att=26),
+    ]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.pass_yds.average == 160.0
+    assert row.pass_yds.average_tier == "low"
+    assert row.pass_yds.median_tier == "low"
+    assert row.pass_att.average_tier == "low"
+
+
+def test_build_team_stat_summary_tier_none_for_td_stats():
+    rows = [_log_row("QB1", "QB", "DAL", 1, pass_td=3)]
+    summary = build_team_stat_summary(rows, lambda r: r.team)
+    row = summary[0]
+    assert row.pass_td.average_tier is None
+    assert row.pass_td.median_tier is None
+
+
+def test_build_game_log_rows_pass_tier_fields_computed():
+    tracker_rows = [_row("QB1", "QB", "DAL", 15, 7000, 20.0, 14.0, 6.0)]
+    stat_lines = {"QB": {("QB1", 15): {"pass_yds": 150, "pass_att": 25}}}
+    rows, _ = build_game_log_rows(tracker_rows, [], stat_lines, week=16, lookback_weeks=6)
+    row = rows[0]
+    assert row.pass_yds_tier == "low"
+    assert row.pass_att_tier == "low"

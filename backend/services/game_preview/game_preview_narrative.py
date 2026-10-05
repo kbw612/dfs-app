@@ -11,9 +11,9 @@ calls out to a model.
 
 A GamePreviewNarrativeSection is either a single flat bullet with no
 heading (label=None -- used only for the Vegas line) or a labeled
-sub-list ("O vs D Line Matchup", "Pace", "Matchup Trends", "Ownership",
-"Plays to consider", "Fade", "Monitor") with one entry per line under that
-heading. Weather is deliberately NOT one of these sections -- it's
+sub-list ("O vs D Line Matchup", "Offensive Pace", "Matchup Trends",
+"Ownership", "Plays to consider", "Fade", "Monitor") with one entry per line
+under that heading. Weather is deliberately NOT one of these sections -- it's
 rendered as its own dedicated final line by the frontend (colored by
 GamePreviewGame.weather.color, same "color column" treatment as the
 Weather tab's own cards), reading straight off GamePreviewGame.weather
@@ -27,9 +27,9 @@ side simply contributes no "Matchup Trends" section at all rather than an
 empty one. Two sections are the exception and always appear once their raw
 data exists at all, not gated behind any notability bar: "O vs D Line
 Matchup" (see _ol_dl_matchup_line's own docstring for why the old
-notability gate was removed) and "Pace" (this now always states both
-teams' current pass/run rate split, only the trend note on top of that is
-gated). A game with no notable signal in any category still gets one real
+notability gate was removed) and "Offensive Pace" (this now always states
+both teams' current pass/run rate split, only the trend note on top of
+that is gated). A game with no notable signal in any category still gets one real
 fallback section (see build_game_narrative's own docstring) rather than an
 empty list, mirroring the player tags' own "no signal, no row" spirit just
 phrased as a single fallback bullet instead of an absent list entry.
@@ -40,20 +40,9 @@ from __future__ import annotations
 from backend.schemas.game_preview.game_preview import (
     GamePreviewDstMatchup,
     GamePreviewNarrativeSection,
-    GamePreviewPaceTrend,
     GamePreviewTeamSide,
     GamePreviewVegas,
 )
-
-# -- Pace trend notability thresholds -- a team's week-over-week plays/pass
-# rate shift is only worth a callout when it moved by at least this much;
-# small week-to-week noise (a couple plays either way) isn't a real pace
-# shift. The current pass/run rate split itself is always stated regardless
-# (see _pace_line) -- only this trend note on top of it is gated. Same
-# 5-point-style "not noise" spirit as game_preview_player_tags.py's own
-# SHARE_TREND_THRESHOLD_PCT.
-NOTABLE_PLAYS_DELTA = 5
-NOTABLE_PASS_RATE_DELTA_PCT = 5.0
 
 # -- Ownership section icons -- a team's own combined projected ownership
 # (see GamePreviewTeamSide.projected_ownership_pct), and separately a whole
@@ -179,45 +168,21 @@ def _ol_dl_matchup_section(away: GamePreviewTeamSide, home: GamePreviewTeamSide)
     return GamePreviewNarrativeSection(label="O vs D Line Matchup", entries=lines)
 
 
-def _pace_line(team: str, pace: GamePreviewPaceTrend | None) -> str | None:
-    """None only when there's no pace trend at all, or this team's most
-    recent played week had zero plays (see GamePreviewPaceTrend's own
-    docstring for when that happens -- both mean pass_rate_pct itself is
-    None). Always states this team's current pass/run rate split -- not
-    gated behind any notability bar, unlike the old version of this
-    function which only ever fired on a notable week-over-week delta and
-    otherwise said nothing about pace at all. A week-over-week trend note
-    is appended on top when it clears NOTABLE_PLAYS_DELTA/
-    NOTABLE_PASS_RATE_DELTA_PCT -- an unremarkable shift isn't worth
-    calling out, even though the raw rates themselves always are."""
-    if pace is None or pace.pass_rate_pct is None or pace.rush_rate_pct is None:
-        return None
-    line = (
-        f"{team} ran {pace.plays} plays at a {pace.pass_rate_pct:.1f}% pass / "
-        f"{pace.rush_rate_pct:.1f}% run rate in week {pace.week}."
-    )
-    if pace.plays_delta is not None and pace.pass_rate_delta is not None:
-        notable = abs(pace.plays_delta) >= NOTABLE_PLAYS_DELTA or abs(pace.pass_rate_delta) >= NOTABLE_PASS_RATE_DELTA_PCT
-        if notable:
-            plays_sign = "+" if pace.plays_delta > 0 else ""
-            rate_sign = "+" if pace.pass_rate_delta > 0 else ""
-            line += (
-                f" ({plays_sign}{pace.plays_delta} plays, {rate_sign}{pace.pass_rate_delta:.1f} pts "
-                "pass rate vs. the week before.)"
-            )
-    return line
-
-
 def _pace_section(away: GamePreviewTeamSide, home: GamePreviewTeamSide) -> GamePreviewNarrativeSection | None:
-    """One "Pace" section holding both sides' own pass/run rate lines (away
-    then home) -- None entirely only when NEITHER side has any pace-trend
-    data at all yet (week 1, or no weekly stats uploaded); once either side
-    has data, its own line always appears (see _pace_line's own docstring
-    for why this isn't gated further)."""
-    lines = [line for line in (_pace_line(away.team, away.pace_trend), _pace_line(home.team, home.pace_trend)) if line]
-    if not lines:
+    """One "Offensive Pace" section -- None entirely only when NEITHER side
+    has any pace-trend data at all yet (week 1, or no weekly stats
+    uploaded). Deliberately carries no text bullets of its own (`entries`
+    is always []) -- this used to state each team's current pass/run rate
+    split in prose, but that's now redundant with the frontend's own
+    weeks-as-columns pace trend table (GamePreviewTeamSide.pace_trend.trailing),
+    which the frontend nests directly under this same heading and which
+    already shows the same numbers (plus every other week in the window,
+    plus each week's own opponent and deltas) in a denser, more scannable
+    form. This function's only remaining job is deciding whether the
+    heading (and therefore the table) should appear at all."""
+    if away.pace_trend is None and home.pace_trend is None:
         return None
-    return GamePreviewNarrativeSection(label="Pace", entries=lines)
+    return GamePreviewNarrativeSection(label="Offensive Pace", entries=[])
 
 
 def _matchup_trends_lines(team: str, opponent: str, side: GamePreviewTeamSide) -> list[str]:

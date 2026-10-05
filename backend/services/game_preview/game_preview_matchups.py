@@ -4,11 +4,13 @@ than living on Game Logs/Game Logs Against (see the "unwind the Game Logs
 Trends work, rebuild it here instead" course-correction this feature took):
 
 1. build_team_pace_trend -- this team's own recent offensive pace (total
-   plays, pass rate) and how it's shifted week-over-week. Genuinely new to
-   Game Preview (the other two trend features the person asked to move here
-   -- player share-trend deltas and Breakout Watch -- already existed on
-   this tab via game_preview_player_tags.py's own _share_trend_tags/
-   _multiplier_tags, so only this one needed building).
+   plays, pass rate) and how it's shifted week-over-week, plus a
+   `window_weeks`-sized trailing history of the same numbers for a
+   weeks-as-columns table view (see GamePreviewPaceTrend.trailing).
+   Genuinely new to Game Preview (the other two trend features the person
+   asked to move here -- player share-trend deltas and Breakout Watch --
+   already existed on this tab via game_preview_player_tags.py's own
+   _share_trend_tags/_multiplier_tags, so only this one needed building).
 
 2. build_positional_matchup_signals -- the NEW signal from this course-
    correction, per Kevin's own framing: "if a team has been giving up FPTS
@@ -44,9 +46,10 @@ tags (see game_preview_player_tags.py's own _ownership_tag).
 from __future__ import annotations
 
 import statistics
+from typing import Literal
 
 from backend.schemas.dk_players.dk_players import DkPlayerRow
-from backend.schemas.game_preview.game_preview import GamePreviewPaceTrend, GamePreviewPositionalMatchup
+from backend.schemas.game_preview.game_preview import GamePreviewPaceTrend, GamePreviewPaceWeek, GamePreviewPositionalMatchup
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.services.game_logs.scoring import multiplier as _multiplier
 from backend.services.ownership.ownership_totals import sum_current_ownership_pct
@@ -102,49 +105,115 @@ HIGH_MULTIPLIER_THRESHOLD = 3.5
 MIN_HIGH_MULTIPLIER_GAMES = 2
 
 
+def _plays_and_rates(entry: dict[str, int]) -> tuple[int, float | None, float | None]:
+    """(plays, pass_rate_pct, rush_rate_pct) from one team_usage_totals()
+    (team, week) aggregate -- the shared arithmetic behind every pace number
+    in this module, so the single-week snapshot, its deltas, and every
+    trailing entry all compute rates identically."""
+    plays = entry["pass_att"] + entry["rush_att"]
+    pass_rate_pct = round(entry["pass_att"] / plays * 100, 1) if plays > 0 else None
+    rush_rate_pct = round(100 - pass_rate_pct, 1) if pass_rate_pct is not None else None
+    return plays, pass_rate_pct, rush_rate_pct
+
+
+def _pace_week(
+    team: str,
+    week: int,
+    totals: dict[tuple[str, int], dict[str, int]],
+    weeks_with_data: list[int],
+    schedule_rows: list[ScheduleRow],
+) -> GamePreviewPaceWeek:
+    """One GamePreviewPaceWeek entry -- this team's own pace for `week`,
+    its opponent that week (from the Schedule file), and its own deltas
+    against the played week immediately before `week` (found in
+    `weeks_with_data`, NOT necessarily the trend object's own top-level
+    "most recent" comparison -- see GamePreviewPaceWeek's own docstring).
+    Shares its plays/rate arithmetic with the single-week snapshot via
+    _plays_and_rates so the two never compute pass/rush rate slightly
+    differently."""
+    plays, pass_rate_pct, rush_rate_pct = _plays_and_rates(totals[(team, week)])
+    schedule_entry = opponent_and_location(schedule_rows, team, week)
+    opponent = schedule_entry[0] if schedule_entry is not None else None
+    opponent_location: Literal["home", "away"] | None = None
+    if schedule_entry is not None and schedule_entry[1] in ("Home", "Away"):
+        opponent_location = "home" if schedule_entry[1] == "Home" else "away"
+
+    plays_delta: int | None = None
+    pass_rate_delta: float | None = None
+    rush_rate_delta: float | None = None
+    prior_weeks = [w for w in weeks_with_data if w < week]
+    if prior_weeks:
+        prior_plays, prior_pass_rate_pct, prior_rush_rate_pct = _plays_and_rates(totals[(team, prior_weeks[-1])])
+        plays_delta = plays - prior_plays
+        if pass_rate_pct is not None and prior_pass_rate_pct is not None:
+            pass_rate_delta = round(pass_rate_pct - prior_pass_rate_pct, 1)
+        if rush_rate_pct is not None and prior_rush_rate_pct is not None:
+            rush_rate_delta = round(rush_rate_pct - prior_rush_rate_pct, 1)
+
+    return GamePreviewPaceWeek(
+        week=week,
+        opponent=opponent,
+        opponent_location=opponent_location,
+        plays=plays,
+        pass_att=totals[(team, week)]["pass_att"],
+        rush_att=totals[(team, week)]["rush_att"],
+        pass_rate_pct=pass_rate_pct,
+        rush_rate_pct=rush_rate_pct,
+        plays_delta=plays_delta,
+        pass_rate_delta=pass_rate_delta,
+        rush_rate_delta=rush_rate_delta,
+    )
+
+
 def build_team_pace_trend(
     team: str,
     week: int,
+    window_weeks: int,
     stat_lines_by_position: dict[str, dict[tuple[str, int], dict[str, int | float | str]]],
+    schedule_rows: list[ScheduleRow],
 ) -> GamePreviewPaceTrend | None:
     """This team's own total plays/pass rate for the most recently PLAYED
     week strictly before `week` (skips bye weeks and weeks with no
     FantasyData stat lines at all -- the search just looks at whichever
     weeks `team_usage_totals` actually has an entry for), plus the same
-    numbers for the played week before THAT one, if any. None when this
-    team has no played week at all yet (week 1 of the season, or no weekly
-    stats files ever uploaded)."""
+    numbers for the played week before THAT one, if any, PLUS up to
+    `window_weeks` played weeks' worth of the same numbers (each with its
+    own opponent and its own week-over-week deltas) in `trailing` (newest
+    first, capped by however many played weeks actually exist -- see
+    GamePreviewPaceTrend.trailing's own docstring) for a caller that wants
+    to render a multi-week table rather than just the latest snapshot. None
+    when this team has no played week at all yet (week 1 of the season, or
+    no weekly stats files ever uploaded)."""
     totals = team_usage_totals(stat_lines_by_position)
     weeks_with_data = sorted(w for (t, w) in totals if t == team and w < week)
     if not weeks_with_data:
         return None
 
     recent_week = weeks_with_data[-1]
-    recent = totals[(team, recent_week)]
-    plays = recent["pass_att"] + recent["rush_att"]
-    pass_rate_pct = round(recent["pass_att"] / plays * 100, 1) if plays > 0 else None
-    rush_rate_pct = round(100 - pass_rate_pct, 1) if pass_rate_pct is not None else None
+    plays, pass_rate_pct, rush_rate_pct = _plays_and_rates(totals[(team, recent_week)])
 
     plays_delta: int | None = None
     pass_rate_delta: float | None = None
     prior_weeks = [w for w in weeks_with_data if w < recent_week]
     if prior_weeks:
-        prior = totals[(team, prior_weeks[-1])]
-        prior_plays = prior["pass_att"] + prior["rush_att"]
+        prior_plays, prior_pass_rate_pct, _prior_rush_rate_pct = _plays_and_rates(totals[(team, prior_weeks[-1])])
         plays_delta = plays - prior_plays
-        if plays > 0 and prior_plays > 0 and pass_rate_pct is not None:
-            prior_pass_rate_pct = prior["pass_att"] / prior_plays * 100
+        if pass_rate_pct is not None and prior_pass_rate_pct is not None:
             pass_rate_delta = round(pass_rate_pct - prior_pass_rate_pct, 1)
+
+    trailing_weeks = list(reversed(weeks_with_data[-window_weeks:]))
+    trailing = [_pace_week(team, w, totals, weeks_with_data, schedule_rows) for w in trailing_weeks]
 
     return GamePreviewPaceTrend(
         week=recent_week,
         plays=plays,
-        pass_att=recent["pass_att"],
-        rush_att=recent["rush_att"],
+        pass_att=totals[(team, recent_week)]["pass_att"],
+        rush_att=totals[(team, recent_week)]["rush_att"],
         pass_rate_pct=pass_rate_pct,
         rush_rate_pct=rush_rate_pct,
         plays_delta=plays_delta,
         pass_rate_delta=pass_rate_delta,
+        trailing=trailing,
     )
 
 

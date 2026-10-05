@@ -182,7 +182,7 @@ def test_positional_matchup_skips_rows_outside_window():
 
 
 def test_pace_trend_none_when_no_played_week():
-    result = build_team_pace_trend("LAC", 1, {})
+    result = build_team_pace_trend("LAC", 1, 5, {}, _schedule_rows())
     assert result is None
 
 
@@ -191,7 +191,7 @@ def test_pace_trend_computes_plays_and_pass_rate_for_most_recent_week():
         "QB": {("LAC QB", 10): {"team": "LAC", "pass_att": 30}},
         "RB": {("LAC RB", 10): {"team": "LAC", "rush_att": 20}},
     }
-    result = build_team_pace_trend("LAC", 11, stat_lines_by_position)
+    result = build_team_pace_trend("LAC", 11, 5, stat_lines_by_position, _schedule_rows())
     assert result is not None
     assert result.week == 10
     assert result.plays == 50
@@ -215,7 +215,7 @@ def test_pace_trend_computes_deltas_against_prior_played_week():
             ("LAC RB", 9): {"team": "LAC", "rush_att": 30},
         },
     }
-    result = build_team_pace_trend("LAC", 11, stat_lines_by_position)
+    result = build_team_pace_trend("LAC", 11, 5, stat_lines_by_position, _schedule_rows())
     assert result is not None
     assert result.week == 10
     assert result.plays == 50
@@ -223,6 +223,81 @@ def test_pace_trend_computes_deltas_against_prior_played_week():
     assert result.plays_delta == 0
     # Prior pass rate: 20/50 = 40%. Current: 30/50 = 60%. Delta = +20.0.
     assert result.pass_rate_delta == 20.0
+
+
+def test_pace_trend_trailing_is_newest_first_and_capped_by_window_weeks():
+    stat_lines_by_position = {
+        "QB": {
+            ("LAC QB", 10): {"team": "LAC", "pass_att": 30},
+            ("LAC QB", 9): {"team": "LAC", "pass_att": 20},
+            ("LAC QB", 8): {"team": "LAC", "pass_att": 25},
+        },
+        "RB": {
+            ("LAC RB", 10): {"team": "LAC", "rush_att": 20},
+            ("LAC RB", 9): {"team": "LAC", "rush_att": 30},
+            ("LAC RB", 8): {"team": "LAC", "rush_att": 15},
+        },
+    }
+    # window_weeks=2 caps trailing at the 2 most recent played weeks (10, 9)
+    # even though a 3rd played week (8) exists in the data.
+    result = build_team_pace_trend("LAC", 11, 2, stat_lines_by_position, _schedule_rows())
+    assert result is not None
+    assert [w.week for w in result.trailing] == [10, 9]
+    assert result.trailing[0].plays == 50
+    assert result.trailing[0].pass_rate_pct == 60.0
+    assert result.trailing[1].plays == 50
+    assert result.trailing[1].pass_rate_pct == 40.0
+    # LAC's own schedule fixture: DEN in week 10, KC in week 9.
+    assert result.trailing[0].opponent == "DEN"
+    assert result.trailing[1].opponent == "KC"
+    # LAC is Away in week 10 (vs DEN) and Home in week 9 (vs KC) per the
+    # SCHEDULE_CSV fixture -- opponent_location mirrors GameLocation.
+    assert result.trailing[0].opponent_location == "away"
+    assert result.trailing[1].opponent_location == "home"
+    # Week 10 vs. week 9 (the played week right before it): 50 vs 50 plays
+    # (no delta); pass rate 60% vs 40% (+20.0). Week 9 has a played week (8)
+    # before it too, in this same fixture's stat lines, so it ALSO gets its
+    # own delta -- not just the newest column.
+    assert result.trailing[0].plays_delta == 0
+    assert result.trailing[0].pass_rate_delta == 20.0
+    assert result.trailing[0].rush_rate_delta == -20.0
+    # Week 9: 50 plays (20 pass + 30 rush, rate 40%) vs. week 8's 40 plays
+    # (25 pass + 15 rush, rate 62.5%) -- delta = 50-40=+10 plays, pass rate
+    # 40 - 62.5 = -22.5.
+    assert result.trailing[1].plays_delta == 10
+    assert result.trailing[1].pass_rate_delta == -22.5
+    assert result.trailing[1].rush_rate_delta == 22.5
+
+
+def test_pace_trend_trailing_shorter_than_window_weeks_when_fewer_played_weeks_exist():
+    stat_lines_by_position = {
+        "QB": {("LAC QB", 10): {"team": "LAC", "pass_att": 30}},
+        "RB": {("LAC RB", 10): {"team": "LAC", "rush_att": 20}},
+    }
+    # Only one played week exists at all, even though window_weeks asks for 5.
+    result = build_team_pace_trend("LAC", 11, 5, stat_lines_by_position, _schedule_rows())
+    assert result is not None
+    assert [w.week for w in result.trailing] == [10]
+    # No played week before it in this fixture's stat lines -- no delta.
+    assert result.trailing[0].plays_delta is None
+    assert result.trailing[0].pass_rate_delta is None
+    assert result.trailing[0].rush_rate_delta is None
+
+
+def test_pace_trend_trailing_opponent_none_without_a_schedule_row():
+    stat_lines_by_position = {
+        "QB": {("LAC QB", 10): {"team": "LAC", "pass_att": 30}},
+        "RB": {("LAC RB", 10): {"team": "LAC", "rush_att": 20}},
+    }
+    result = build_team_pace_trend("LAC", 11, 5, stat_lines_by_position, [])
+    assert result is not None
+    assert result.trailing[0].opponent is None
+    assert result.trailing[0].opponent_location is None
+
+
+def test_pace_trend_trailing_empty_when_no_played_week():
+    result = build_team_pace_trend("LAC", 1, 5, {}, _schedule_rows())
+    assert result is None
 
 
 # -- team_projected_ownership_pct / combined_projected_ownership_pct --
@@ -339,7 +414,7 @@ def test_pace_trend_skips_bye_week_gap_to_find_most_recent_played_week():
         "QB": {("LAC QB", 9): {"team": "LAC", "pass_att": 25}},
         "RB": {("LAC RB", 9): {"team": "LAC", "rush_att": 25}},
     }
-    result = build_team_pace_trend("LAC", 11, stat_lines_by_position)
+    result = build_team_pace_trend("LAC", 11, 5, stat_lines_by_position, _schedule_rows())
     assert result is not None
     assert result.week == 9
     assert result.plays == 50

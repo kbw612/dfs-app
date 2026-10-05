@@ -103,6 +103,17 @@ class PlayerPoolEntry(BaseModel):
     # earlier week's save.
     volume: _Score = _score_field()
     talent: _Score = _score_field()
+    # Override only, QB/RB/WR/TE only (None unconditionally for DST, same
+    # "doesn't apply to this position" convention as volume/talent -- see
+    # services/player_pool/engine.py's _fields_for_position). None here
+    # means "no explicit save for this exact week" -- falls back to
+    # whether "Standalone" is one of that player's Settings Default
+    # dfs_types (backend/schemas/player_defaults/player_defaults.py),
+    # then to False if they have no Default tag either. Unlike
+    # volume/talent, never summed into PlayerPoolPlayer.total -- this is a
+    # flag, not a judgment-call score (see PlayerPoolPlayer.standalone's
+    # own docstring for its intended future use).
+    standalone: Optional[bool] = None
 
 
 class PlayerPoolPlayer(BaseModel):
@@ -165,6 +176,16 @@ class PlayerPoolPlayer(BaseModel):
     # neutral 2.0 with no notable weather). See PlayerPoolEntry.weather's
     # own docstring.
     weather: _Score = None
+    # The *effective* value -- this week's explicit override if saved,
+    # otherwise whether "Standalone" is one of this player's Settings
+    # Default dfs_types, otherwise False (see PlayerPoolEntry.standalone's
+    # own docstring). None unconditionally for DST (not applicable, same
+    # convention as volume/talent) -- always a real True/False for
+    # QB/RB/WR/TE, never left unresolved the way game_environment never
+    # is. Not part of `total`; purely a tag for a future lineup-optimizer
+    # validator that flags a non-Standalone player rostered with nobody
+    # else from their own game.
+    standalone: Optional[bool] = None
 
     # Player Rankings' "Expected FPTS" column -- multiplier * salary / 1000
     # (see backend/services/salary_multiplier/engine.py), using whichever

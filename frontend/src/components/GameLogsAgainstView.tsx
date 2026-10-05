@@ -1,8 +1,23 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { fetchGameLogsAgainst } from "../api";
-import type { GameLogAgainstRow, GameOption } from "../types";
+import { fetchGameLogsAgainst, fetchGameRecaps } from "../api";
+import type {
+  GameLogAgainstRow,
+  GameOption,
+  GameRecapEntry,
+  GameRecapWeekSnapshot,
+  TeamStatSummaryRow,
+} from "../types";
+import { ChipMultiSelect } from "./ChipMultiSelect";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { GameRecapModal } from "./GameRecapModal";
+import { HeaderInfoPopover } from "./HeaderInfoPopover";
+import { PlayerStatSummaryTable } from "./PlayerStatSummaryTable";
+import { MULTIPLIER_TIER_NOTES, SHARE_RANK_NOTES, statTierNotes } from "./scoringNotes";
+import { TeamRecapTable } from "./TeamRecapTable";
 import {
+  buildGameTeamOrder,
+  compareTeamsByGameOrder,
+  distinctTeamWeeks,
   formatCount,
   formatDecimal,
   formatMultiplier,
@@ -13,6 +28,7 @@ import {
   positionRank,
   rankTopSharesByTeamAndWeek,
   shareRankClassName,
+  statTierClassName,
   tierClassName,
 } from "./gameLogsShared";
 
@@ -36,19 +52,22 @@ interface AgainstGroup {
   rows: GameLogAgainstRow[];
 }
 
-// Against-team (alphabetical) > Position (QB/RB/WR/TE/DST order) > week
-// descending, then FPTS descending within that week -- same layout
-// convention as Game Logs' own groupByTeamAndPosition, just grouped by
-// `against_team` (the team being evaluated as an opponent) instead of
-// the rostered player's own team.
-function groupByAgainstTeamAndPosition(rows: GameLogAgainstRow[]): AgainstGroup[] {
+// Against-team (by this week's own game matchups, same order as Game
+// Previews/Game Logs -- see buildGameTeamOrder/compareTeamsByGameOrder)
+// > Position (QB/RB/WR/TE/DST order) > week descending, then FPTS
+// descending within that week -- same layout convention as Game Logs'
+// own groupByTeamAndPosition, just grouped by `against_team` (the team
+// being evaluated as an opponent) instead of the rostered player's own
+// team.
+function groupByAgainstTeamAndPosition(rows: GameLogAgainstRow[], teamOrder: Map<string, number>): AgainstGroup[] {
   const byTeam = new Map<string, GameLogAgainstRow[]>();
   for (const row of rows) {
     if (!byTeam.has(row.against_team)) byTeam.set(row.against_team, []);
     byTeam.get(row.against_team)!.push(row);
   }
+  const compareTeams = compareTeamsByGameOrder(teamOrder);
   return [...byTeam.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([a], [b]) => compareTeams(a, b))
     .map(([team, teamRows]) => ({
       team,
       rows: [...teamRows].sort((a, b) => {
@@ -76,6 +95,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
 
   const [games, setGames] = useState<GameOption[]>([]);
   const [rows, setRows] = useState<GameLogAgainstRow[] | null>(null);
+  const [teamStatSummary, setTeamStatSummary] = useState<TeamStatSummaryRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,6 +104,18 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
   // "Game filter shows both teams" decision), since each row already
   // carries its own against_team to filter/group on.
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
+  // Multi-select, independent of the Game filter above -- same
+  // ChipMultiSelect used by Game Logs' own Team filter, just keyed on
+  // against_team instead of team.
+  const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
+
+  // Game Recaps -- same pattern as Game Logs' own (see GameLogsView.tsx):
+  // one fetch per distinct week present in the currently loaded rows,
+  // shared across every "Against {team}" panel's own TeamRecapTable below
+  // via findTeamRecap. null = fetched, nothing scraped yet for that week;
+  // absent from the map = not fetched yet.
+  const [recapsByWeek, setRecapsByWeek] = useState<Map<number, GameRecapWeekSnapshot | null>>(new Map());
+  const [openRecap, setOpenRecap] = useState<{ entry: GameRecapEntry; sourceUrl: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -92,14 +124,42 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
       .then((result) => {
         setRows(result.rows);
         setGames(result.games);
+        setTeamStatSummary(result.team_stat_summary);
       })
       .catch((err) => {
         setRows(null);
         setGames([]);
+        setTeamStatSummary([]);
         setError(err instanceof Error ? err.message : "Failed to load game logs against");
       })
       .finally(() => setLoading(false));
   }, [season, week, platform, contest, lookbackWeeks]);
+
+  // Fetches Game Recaps for every distinct week present in `rows`, once
+  // per week -- same logic as GameLogsView.tsx's own effect.
+  useEffect(() => {
+    const weeks = new Set((rows ?? []).map((r) => r.week));
+    const toFetch = [...weeks].filter((w) => !recapsByWeek.has(w));
+    if (toFetch.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      toFetch.map((w) =>
+        fetchGameRecaps(season, w)
+          .then((snapshot): [number, GameRecapWeekSnapshot | null] => [w, snapshot])
+          .catch((): [number, GameRecapWeekSnapshot | null] => [w, null])
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      setRecapsByWeek((prev) => {
+        const next = new Map(prev);
+        for (const [w, snapshot] of results) next.set(w, snapshot);
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rows, season, recapsByWeek]);
 
   useEffect(() => {
     const timer = lookbackDebounce;
@@ -136,15 +196,26 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
 
   const gameByKey = useMemo(() => new Map(games.map((g) => [g.key, g])), [games]);
 
+  // Deliberately built from the full unfiltered row set, not narrowed by
+  // whichever Game is currently selected -- same "independent filters"
+  // convention as Game Logs' own teamOptions.
+  const teamOptions = useMemo(() => {
+    const teams = new Set<string>();
+    for (const row of rows ?? []) teams.add(row.against_team);
+    return [...teams].sort();
+  }, [rows]);
+
   const filteredRows = useMemo(() => {
     const selectedGameTeams = selectedGame ? (gameByKey.get(selectedGame)?.teams ?? []) : null;
     return (rows ?? []).filter((row) => {
       if (selectedGameTeams && !selectedGameTeams.includes(row.against_team)) return false;
+      if (selectedTeams.size > 0 && !selectedTeams.has(row.against_team)) return false;
       return true;
     });
-  }, [rows, selectedGame, gameByKey]);
+  }, [rows, selectedGame, selectedTeams, gameByKey]);
 
-  const groups = useMemo(() => groupByAgainstTeamAndPosition(filteredRows), [filteredRows]);
+  const teamOrder = useMemo(() => buildGameTeamOrder(games), [games]);
+  const groups = useMemo(() => groupByAgainstTeamAndPosition(filteredRows, teamOrder), [filteredRows, teamOrder]);
 
   // Same top-2-per-team-per-week highlighting as Game Logs' own -- keyed
   // by `against_team` rather than a `team` field (GameLogAgainstRow has no
@@ -165,6 +236,17 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
     () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.against_team, (r) => r.touch_share_pct),
     [filteredRows]
   );
+  // Same Rush Yds/Rec Yds top-2 shading as Game Logs' own (see that
+  // view's own comment) -- keyed by `against_team`, same reasoning as the
+  // Share ranks above.
+  const rushYardsRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.against_team, (r) => r.rush_yards),
+    [filteredRows]
+  );
+  const receivingYardsRanks = useMemo(
+    () => rankTopSharesByTeamAndWeek(filteredRows, (r) => r.against_team, (r) => r.receiving_yards),
+    [filteredRows]
+  );
 
   const isNotFound = error !== null && error.includes("No DK Players tracker started yet");
 
@@ -183,6 +265,11 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
           "Opp Share is (carries + targets) divided by (team carries + team targets).",
           "The 9 Pass columns are QB-only.",
           "Weeks with 0 FPTS are hidden except for DST, which always shows.",
+          `The Team Summary (Avg / Median) table under each panel's own game outcomes sums every currently-shown
+          player's own Rec/Rec Yds/Rec TD/Rush Att/Rush Yds/Rush TD/Pass Att/Pass Yds/Pass TD into a team-week
+          total, then averages/medians those team totals over exactly the weeks shown below it -- a team-level
+          number, not a per-player one. Computed server-side, not recomputed in the browser.`,
+          "Rush Yds and Rec Yds each highlight that panel's own top 2 values for the week, same green shading as Tgt/Touch Share.",
         ]}
       />
 
@@ -211,6 +298,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
             ))}
           </div>
         </div>
+        <ChipMultiSelect label="Team" options={teamOptions} selected={selectedTeams} onChange={setSelectedTeams} />
         <label className="game-logs-lookback-field">
           Weeks of history
           <input
@@ -237,6 +325,13 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
         groups.map((group) => (
           <section className="ownership-section" key={group.team}>
             <h2>Against {group.team}</h2>
+            <TeamRecapTable
+              team={group.team}
+              weeks={distinctTeamWeeks(group.rows.map((r) => ({ ...r, opponent: null })))}
+              recapsByWeek={recapsByWeek}
+              onOpenRecap={(entry, sourceUrl) => setOpenRecap({ entry, sourceUrl })}
+            />
+            <PlayerStatSummaryTable rows={teamStatSummary.filter((r) => r.team === group.team)} />
             <div className="player-pool-grid-wrap ownership-summary-grid-wrap">
               <table className="player-pool-grid ownership-summary-grid">
                 <tbody>
@@ -257,7 +352,10 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                             <th>{row.position}</th>
                             <th>Salary</th>
                             <th>GameLoc</th>
-                            <th>Multiplier</th>
+                            <th>
+                              Multiplier
+                              <HeaderInfoPopover title="Multiplier" lines={MULTIPLIER_TIER_NOTES} />
+                            </th>
                             <th>FPTS</th>
                             <th>
                               Non-TD
@@ -284,16 +382,21 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                               Tgt
                               <br />
                               Share
+                              <HeaderInfoPopover title="Tgt Share" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>
                               Touch
                               <br />
                               Share
+                              <HeaderInfoPopover title="Touch Share" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>Touches</th>
                             <th>Tgts</th>
                             <th>Rec</th>
-                            <th>Rec Yds</th>
+                            <th>
+                              Rec Yds
+                              <HeaderInfoPopover title="Rec Yds" lines={SHARE_RANK_NOTES} />
+                            </th>
                             <th>
                               Rec
                               <br />
@@ -308,6 +411,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                               Rush
                               <br />
                               Yds
+                              <HeaderInfoPopover title="Rush Yds" lines={SHARE_RANK_NOTES} />
                             </th>
                             <th>
                               Rush
@@ -323,6 +427,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                               Pass
                               <br />
                               Att
+                              <HeaderInfoPopover title="Pass Att" lines={statTierNotes(28, 38)} />
                             </th>
                             <th>
                               Pass
@@ -333,6 +438,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                               Pass
                               <br />
                               Yds
+                              <HeaderInfoPopover title="Pass Yds" lines={statTierNotes(175, 261)} />
                             </th>
                             <th>
                               Pass
@@ -390,15 +496,23 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
                           <td className="player-pool-grid-num">{formatCount(row.touches)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.targets)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.receptions)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.receiving_yards)}</td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(receivingYardsRanks.get(row))}`}>
+                            {formatCount(row.receiving_yards)}
+                          </td>
                           <td className="player-pool-grid-num">{formatCount(row.rec_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_att)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.rush_yards)}</td>
+                          <td className={`player-pool-grid-num ${shareRankClassName(rushYardsRanks.get(row))}`}>
+                            {formatCount(row.rush_yards)}
+                          </td>
                           <td className="player-pool-grid-num">{formatCount(row.rush_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_cmp)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.pass_att)}</td>
+                          <td className={`player-pool-grid-num ${statTierClassName(row.pass_att_tier)}`}>
+                            {formatCount(row.pass_att)}
+                          </td>
                           <td className="player-pool-grid-num">{formatPct(row.pass_cmp_pct)}</td>
-                          <td className="player-pool-grid-num">{formatCount(row.pass_yds)}</td>
+                          <td className={`player-pool-grid-num ${statTierClassName(row.pass_yds_tier)}`}>
+                            {formatCount(row.pass_yds)}
+                          </td>
                           <td className="player-pool-grid-num">{formatDecimal(row.pass_avg)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_td)}</td>
                           <td className="player-pool-grid-num">{formatCount(row.pass_int)}</td>
@@ -413,6 +527,9 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
             </div>
           </section>
         ))}
+      {openRecap && (
+        <GameRecapModal entry={openRecap.entry} sourceUrl={openRecap.sourceUrl} onClose={() => setOpenRecap(null)} />
+      )}
     </>
   );
 }
