@@ -294,6 +294,9 @@ def build_game_preview(
         window_weeks,
         name_aliases=name_aliases,
         contest_teams=contest_teams,
+        # A team on a bye last week has no rows in the reference week, so
+        # without this its whole Team Volume section comes back empty.
+        include_bye_teams=True,
     )
 
     # Team pace trend + the new positional-matchup signal (see

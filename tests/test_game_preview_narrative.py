@@ -402,13 +402,64 @@ def test_play_fade_monitor_each_get_own_labeled_section():
     sections = build_game_narrative(LABEL, away, home, None)
 
     play_section = _section(sections, "Plays to consider")
-    assert play_section.entries == ["Breakout WR (Breakout Watch)"]
+    assert play_section.entries == ["Breakout WR -- Breakout Watch"]
 
     fade_section = _section(sections, "Fade")
     assert fade_section.entries == ["Cooling RB (Repeat Performer)"]
 
     monitor_section = _section(sections, "Monitor")
-    assert monitor_section.entries == ["Uncertain TE (Falling target share)"]
+    assert monitor_section.entries == ["Uncertain TE -- Falling target share"]
+
+
+def _tag(kind, signal, detail, magnitude):
+    return GamePreviewPlayerTag(kind=kind, reason=detail, signal=signal, detail=detail, magnitude=magnitude)
+
+
+def test_player_tags_merge_into_one_row_ranked_by_signal_count_then_usage():
+    away_players = [
+        GamePreviewPlayer(name="Matchup Only", position="WR", team="LAC", tags=[_tag("play", "matchup", "DEN vs WR", 6.2)]),
+        GamePreviewPlayer(
+            name="Both Signals",
+            position="WR",
+            team="LAC",
+            tags=[_tag("play", "matchup", "DEN vs WR", 6.2), _tag("play", "usage", "Rising touch share 5.9% to 16.9% (+11.0)", 11.0)],
+        ),
+        GamePreviewPlayer(name="Big Usage", position="RB", team="LAC", tags=[_tag("play", "usage", "Rising opp share 32.7% to 45.3% (+12.6)", 12.6)]),
+        GamePreviewPlayer(name="Small Usage", position="RB", team="LAC", tags=[_tag("play", "usage", "Rising opp share 28.6% to 34.2% (+5.6)", 5.6)]),
+    ]
+    sections = build_game_narrative(LABEL, _side("LAC", False, players=away_players), _side("DEN", True), None)
+    assert _section(sections, "Plays to consider").entries == [
+        "Both Signals (usage, matchup) -- Rising touch share 5.9% to 16.9% (+11.0); DEN vs WR",
+        "Big Usage (usage) -- Rising opp share 32.7% to 45.3% (+12.6)",
+        "Small Usage (usage) -- Rising opp share 28.6% to 34.2% (+5.6)",
+        "Matchup Only (matchup) -- DEN vs WR",
+    ]
+
+
+def test_player_with_play_and_monitor_goes_only_to_mixed_section():
+    players = [
+        GamePreviewPlayer(
+            name="Conflicted TE",
+            position="TE",
+            team="LAC",
+            tags=[_tag("play", "matchup", "DEN vs TE", 4.0), _tag("monitor", "usage", "Falling opp share 20.4% to 9.4% (-11.0)", 11.0)],
+        ),
+    ]
+    sections = build_game_narrative(LABEL, _side("LAC", False, players=players), _side("DEN", True), None)
+    assert _section(sections, "Mixed (signals conflict)").entries == [
+        "Conflicted TE -- for: DEN vs TE; against: Falling opp share 20.4% to 9.4% (-11.0)"
+    ]
+    assert all(s.label not in ("Plays to consider", "Monitor") for s in sections)
+
+
+def test_monitor_rows_ranked_by_size_of_drop():
+    players = [
+        GamePreviewPlayer(name="Small Drop", position="WR", team="LAC", tags=[_tag("monitor", "usage", "Falling target share 18.8% to 9.1% (-9.7)", 9.7)]),
+        GamePreviewPlayer(name="Big Drop", position="WR", team="LAC", tags=[_tag("monitor", "usage", "Falling target share 35.7% to 21.2% (-14.5)", 14.5)]),
+    ]
+    sections = build_game_narrative(LABEL, _side("LAC", False, players=players), _side("DEN", True), None)
+    names = [e.split(" (")[0] for e in _section(sections, "Monitor").entries]
+    assert names == ["Big Drop", "Small Drop"]
 
 
 def test_leverage_and_chalk_tags_are_not_narrated():

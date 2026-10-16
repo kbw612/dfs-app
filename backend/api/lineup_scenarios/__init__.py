@@ -15,8 +15,10 @@ docstring for the exact satisfaction rule.
 from fastapi import APIRouter
 
 from backend.api.lineup_scenarios.evaluate import router as evaluate_router
+from backend.api.lineup_scenarios.top_patterns import router as top_patterns_router
 from backend.api.lineup_scenarios.upload_csv import router as upload_csv_router
 
 router = APIRouter(prefix="/lineup-scenarios")
+router.include_router(top_patterns_router)
 router.include_router(upload_csv_router)
 router.include_router(evaluate_router)

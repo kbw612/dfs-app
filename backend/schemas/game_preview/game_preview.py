@@ -194,6 +194,25 @@ class GamePreviewPositionalMatchup(BaseModel):
 class GamePreviewPlayerTag(BaseModel):
     kind: Literal["play", "fade", "monitor", "leverage", "chalk"]
     reason: str
+    # What KIND of evidence fired this tag -- "usage" (share trend, usage
+    # bump), "matchup" (opponent defense soft vs this position), or
+    # "breakout" (Breakout Watch). Lets the narrative's Plays to consider/
+    # Monitor sections merge one player's several tags into a single row
+    # naming each signal, and separate a player whose play and monitor
+    # signals conflict (see game_preview_narrative.py's _signal_sections).
+    # None for kinds that aren't narrated that way (fade/leverage/chalk).
+    signal: Literal["usage", "matchup", "breakout"] | None = None
+    # Short form of `reason` used inside that merged row (the full `reason`
+    # stays on each player's own tag list unchanged). E.g. "Rising touch
+    # share 5.9% to 16.9% (+11.0)" or "NYG vs WR" (the matchup's own
+    # numbers live once in the Matchup Trends section, not per player).
+    detail: str | None = None
+    # Size of the signal, used only to rank rows within a section: the
+    # absolute percentage-point share move for a usage tag, or FPTS allowed
+    # minus league average for a matchup tag. Not comparable across signal
+    # kinds -- the narrative ranks by signal count first, then by usage
+    # magnitude, then matchup magnitude.
+    magnitude: float | None = None
 
 
 # Only players with at least one fired tag appear in GamePreviewTeamSide's

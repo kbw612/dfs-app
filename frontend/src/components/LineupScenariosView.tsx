@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { evaluateLineupScenarios, fetchScheduleGames, uploadLineupScenarioCsv } from "../api";
 import type { GameOption, LineupScenarioAnalysis, LineupScenarioDefinition, LineupScenarioTeamFlag, ScenarioRole } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { TopLineupPatternsSection } from "./TopLineupPatternsSection";
 
 interface LineupScenariosViewProps {
   season: number;
@@ -387,6 +388,8 @@ export function LineupScenariosView({ season, week, platform, contest }: LineupS
           </table>
         </div>
       )}
+
+      <TopLineupPatternsSection season={season} platform={platform} contest={contest} />
     </div>
   );
 }

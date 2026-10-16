@@ -1563,12 +1563,68 @@ export interface GamePreviewGame {
   low_over_under: boolean;
 }
 
+// QB passing-yards panel -- mirrors backend/schemas/game_logs_summary/
+// game_logs_summary.py's QbPassing* models.
+export interface QbPassingGame {
+  week: number;
+  opponent: string;
+  // True = the QB's team was at home ("vs"), false = away ("@"), null = unknown.
+  is_home: boolean | null;
+  pass_yds: number;
+}
+
+export interface QbPassingAllowedGame {
+  week: number;
+  passer: string;
+  passer_team: string;
+  // True = the DEFENSE was at home that week ("vs {passer_team}"), false = away ("@ ...").
+  defense_is_home: boolean | null;
+  pass_yds: number;
+}
+
+export interface QbPassingRow {
+  name: string;
+  team: string;
+  status: string | null;
+  opponent: string;
+  over_300: QbPassingGame[];
+  // 265-299 only -- 300+ games are not repeated here.
+  range_265_299: QbPassingGame[];
+  // Every 265+ game (300+ included) the opponent's defense allowed.
+  opponent_allowed: QbPassingAllowedGame[];
+}
+
+export interface QbPassingSetup {
+  name: string;
+  opponent: string;
+  allowed_count: number;
+}
+
+export interface QbPassingSummary {
+  first_week: number;
+  through_week: number;
+  qb_games_300: number;
+  qb_games_265_299: number;
+  defense_allowed_300: number;
+  defense_allowed_265_299: number;
+  best_setups: QbPassingSetup[];
+  rows: QbPassingRow[];
+}
+
 export interface GamePreviewResult {
   season: number;
   week: number;
   through_week: number;
   window_weeks: number;
   games: GamePreviewGame[];
+}
+
+// Game Logs Summary tab -- see backend/api/game_logs_summary/.
+export interface GameLogsSummaryResult {
+  season: number;
+  week: number;
+  window_weeks: number;
+  qb_passing: QbPassingSummary | null;
 }
 
 // Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the
@@ -1722,6 +1778,39 @@ export interface LineupScenarioAnalysis {
   results: LineupScenarioResult[];
   unresolved_player_names: string[];
   min_stack_size: number;
+}
+
+// Top Lineup Patterns -- see backend/services/lineup_scenarios/
+// top_lineup_patterns.py. Generic (position-structure only) patterns
+// counted across the top finishing lineups of several past weeks.
+export interface TopLineupPatternStat {
+  pattern: string;
+  count: number;
+  pct_of_lineups: number;
+  // Week number (as a string key, JSON object keys) -> lineups that week.
+  by_week: Record<string, number>;
+  // Null when the pattern has no member players or no ownership data.
+  avg_ownership_pct: number | null;
+  avg_salary_total: number | null;
+  avg_points: number;
+}
+
+export interface TopLineupPatternCategory {
+  key: string;
+  label: string;
+  description: string;
+  distinct_patterns: number;
+  patterns: TopLineupPatternStat[];
+}
+
+export interface TopLineupPatternsResult {
+  top_n: number;
+  weeks_included: number[];
+  weeks_missing: number[];
+  lineups_analyzed: number;
+  lineups_by_week: Record<string, number>;
+  lineups_skipped: number;
+  categories: TopLineupPatternCategory[];
 }
 
 // Game Recaps -- walterfootball.com's own per-game recap text, scraped and

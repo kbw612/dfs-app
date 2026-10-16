@@ -9,6 +9,7 @@ import { DkPlayersView } from "./components/DkPlayersView";
 import { DstTrendsView } from "./components/DstTrendsView";
 import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
 import { GameLogsView } from "./components/GameLogsView";
+import { GameLogsSummaryView } from "./components/GameLogsSummaryView";
 import { GamePreviewView } from "./components/GamePreviewView";
 import { HeaderSettingsPopover } from "./components/HeaderSettingsPopover";
 import { MultipliersView } from "./components/MultipliersView";
@@ -48,6 +49,7 @@ type View =
   | "multipliers"
   | "dstTrends"
   | "gamePreview"
+  | "gameLogsSummary"
   | "usageBumpPlayers"
   | "lineupScenarios";
 
@@ -266,6 +268,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "gameLogsSummary" ? " selected" : ""}`}
+          aria-pressed={view === "gameLogsSummary"}
+          onClick={() => requestViewChange("gameLogsSummary")}
+        >
+          Game Logs Summary
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "gameLogs" ? " selected" : ""}`}
           aria-pressed={view === "gameLogs"}
           onClick={() => requestViewChange("gameLogs")}
@@ -414,6 +424,9 @@ function App() {
       )}
       {view === "gamePreview" && (
         <GamePreviewView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "gameLogsSummary" && (
+        <GameLogsSummaryView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "gameLogs" && <GameLogsView season={season} week={week} platform={platform} contest={contest} />}
       {view === "gameLogsAgainst" && (

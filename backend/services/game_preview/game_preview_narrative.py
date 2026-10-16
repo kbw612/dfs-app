@@ -40,6 +40,8 @@ from __future__ import annotations
 from backend.schemas.game_preview.game_preview import (
     GamePreviewDstMatchup,
     GamePreviewNarrativeSection,
+    GamePreviewPlayer,
+    GamePreviewPlayerTag,
     GamePreviewTeamSide,
     GamePreviewVegas,
 )
@@ -66,16 +68,11 @@ HIGH_OWNERSHIP_ICON = "\U0001f4c8"  # 📈
 HIGH_OVER_UNDER_FLAG_LINE = "\U0001f525 High O/U"  # 🔥 High O/U
 LOW_OVER_UNDER_FLAG_LINE = "❄️ Low O/U"  # ❄️ Low O/U
 
-# Which tag kinds get their own narrative section, in this order, and the
-# label each one is introduced with. "leverage"/"chalk" are deliberately
-# left out of the narrative itself (they're ownership-only signals, not a
-# play/fade/monitor call) -- they still show on each player's own tag list
-# in the Phase B player view, just not narrated here.
-_NARRATED_TAG_KINDS = (
-    ("play", "Plays to consider"),
-    ("fade", "Fade"),
-    ("monitor", "Monitor"),
-)
+# "leverage"/"chalk" are deliberately left out of the narrative itself
+# (they're ownership-only signals, not a play/fade/monitor call) -- they
+# still show on each player's own tag list in the Phase B player view, just
+# not narrated here. Play/Mixed/Monitor are built together per player (see
+# _signal_sections); Fade keeps the simple one-line-per-tag _tag_section.
 
 
 def _format_number(value: float) -> str:
@@ -231,6 +228,92 @@ def _tag_section(kind: str, label: str, away: GamePreviewTeamSide, home: GamePre
     if not entries:
         return None
     return GamePreviewNarrativeSection(label=label, entries=entries)
+
+
+_SIGNAL_ORDER = ("usage", "matchup", "breakout")
+
+
+def _signal_names(tags: list[GamePreviewPlayerTag]) -> str:
+    """Distinct signal kinds among `tags`, in fixed usage/matchup/breakout
+    order (not tag-firing order) so every row reads the same way."""
+    present = {t.signal for t in tags if t.signal is not None}
+    return ", ".join(s for s in _SIGNAL_ORDER if s in present)
+
+
+def _tag_details(tags: list[GamePreviewPlayerTag]) -> str:
+    """The short `detail` of each tag, "; "-joined, falling back to the full
+    reason for a tag with no detail. Ordered usage, matchup, breakout (tags
+    with no signal last) so a row reads the same however its tags fired."""
+    ordered = sorted(tags, key=lambda t: _SIGNAL_ORDER.index(t.signal) if t.signal in _SIGNAL_ORDER else len(_SIGNAL_ORDER))
+    return "; ".join(t.detail if t.detail is not None else t.reason for t in ordered)
+
+
+def _magnitude(tags: list[GamePreviewPlayerTag], signal: str) -> float:
+    return max((t.magnitude or 0.0 for t in tags if t.signal == signal), default=0.0)
+
+
+def _signal_sections(away: GamePreviewTeamSide, home: GamePreviewTeamSide) -> list[GamePreviewNarrativeSection]:
+    """"Plays to consider", "Mixed" and "Monitor" sections, built from one
+    row PER PLAYER rather than one per tag, so noise drops and signal count
+    shows:
+
+    - A player's "play" tags merge into one row naming each signal kind
+      (e.g. "Michael Wilson (usage, matchup) -- Rising touch share ...;
+      NYG vs WR"). A matchup's own numbers appear once in the Matchup
+      Trends section, not repeated on every player it covers.
+    - Plays are ranked by signal count (more independent signals first),
+      then usage magnitude, then matchup magnitude, then name.
+    - A player with both a "play" and a "monitor" tag is conflicted: he
+      goes only in "Mixed", showing the for/against evidence, and is
+      removed from the other two sections.
+    - Monitor rows rank by size of the drop.
+
+    Sections with no rows are omitted. Fade is unchanged (see _tag_section).
+    """
+    plays: list[tuple[GamePreviewPlayer, list[GamePreviewPlayerTag]]] = []
+    monitors: list[tuple[GamePreviewPlayer, list[GamePreviewPlayerTag]]] = []
+    mixed: list[tuple[GamePreviewPlayer, list[GamePreviewPlayerTag], list[GamePreviewPlayerTag]]] = []
+    for side in (away, home):
+        for player in side.players:
+            play_tags = [t for t in player.tags if t.kind == "play"]
+            monitor_tags = [t for t in player.tags if t.kind == "monitor"]
+            if play_tags and monitor_tags:
+                mixed.append((player, play_tags, monitor_tags))
+            elif play_tags:
+                plays.append((player, play_tags))
+            elif monitor_tags:
+                monitors.append((player, monitor_tags))
+
+    plays.sort(
+        key=lambda item: (
+            -len({t.signal for t in item[1]}),
+            -_magnitude(item[1], "usage"),
+            -_magnitude(item[1], "matchup"),
+            item[0].name,
+        )
+    )
+    monitors.sort(key=lambda item: (-_magnitude(item[1], "usage"), item[0].name))
+    mixed.sort(key=lambda item: item[0].name)
+
+    def row(player: GamePreviewPlayer, tags: list[GamePreviewPlayerTag]) -> str:
+        names = _signal_names(tags)
+        prefix = f"{player.name} ({names})" if names else player.name
+        return f"{prefix} -- {_tag_details(tags)}"
+
+    sections: list[GamePreviewNarrativeSection] = []
+    if plays:
+        entries = [row(p, tags) for p, tags in plays]
+        sections.append(GamePreviewNarrativeSection(label="Plays to consider", entries=entries))
+    if mixed:
+        entries = [
+            f"{p.name} -- for: {_tag_details(play_tags)}; against: {_tag_details(monitor_tags)}"
+            for p, play_tags, monitor_tags in mixed
+        ]
+        sections.append(GamePreviewNarrativeSection(label="Mixed (signals conflict)", entries=entries))
+    if monitors:
+        entries = [row(p, tags) for p, tags in monitors]
+        sections.append(GamePreviewNarrativeSection(label="Monitor", entries=entries))
+    return sections
 
 
 def _ownership_icon_for_flag(flag: str | None) -> str:
@@ -435,10 +518,11 @@ def build_game_narrative(
     if matchup_trends_section is not None:
         sections.append(matchup_trends_section)
 
-    for kind, tag_label in _NARRATED_TAG_KINDS:
-        tag_section = _tag_section(kind, tag_label, away, home)
-        if tag_section is not None:
-            sections.append(tag_section)
+    sections.extend(_signal_sections(away, home))
+
+    fade_section = _tag_section("fade", "Fade", away, home)
+    if fade_section is not None:
+        sections.append(fade_section)
 
     if not sections:
         return [

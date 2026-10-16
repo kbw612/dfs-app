@@ -283,7 +283,7 @@ def test_scrape_auto_mode_falls_back_to_current_url_on_404():
         mod, "load_schedule_csv", return_value=None
     ):
         games, messages, source_url = scrape(2026, 3)
-    assert source_url == mod.settings.walterfootball_recap_current_url
+    assert source_url == mod.build_recap_url(2026, 3)
     assert len(games) == 1
 
 
@@ -313,7 +313,7 @@ def test_scrape_current_page_mode_does_not_try_numbered_url():
         mod, "load_schedule_csv", return_value=None
     ):
         games, messages, source_url = scrape(2026, 3, url_mode="current_page")
-    assert source_url == mod.settings.walterfootball_recap_current_url
+    assert source_url == mod.build_recap_url(2026, 3)
     fetch_mock.assert_called_once_with(mod.settings.walterfootball_recap_current_url)
     assert len(games) == 1
 

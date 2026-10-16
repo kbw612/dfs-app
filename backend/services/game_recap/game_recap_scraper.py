@@ -463,4 +463,13 @@ def scrape(season: int, week: int, url_mode: UrlMode = "auto") -> tuple[list[Res
             )
         )
 
+    # A page fetched from the bare current-week URL was just validated (by
+    # its <title>) as this exact (season, week), but nflreview.php moves on
+    # to the next week later, so a link back to it would eventually show the
+    # wrong week. Record the week's own numbered URL instead -- it's the
+    # permanent address the site promotes this page to once it archives it
+    # (the Source link in the recap popover points at it).
+    if source_url == settings.walterfootball_recap_current_url:
+        source_url = build_recap_url(season, week)
+
     return resolved_games, messages, source_url

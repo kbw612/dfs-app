@@ -601,3 +601,36 @@ def test_build_game_preview_stat_summary_includes_td_stats():
     # TD stats have no defined thresholds -- always untiered.
     assert away.stat_summary.rush_td.average_tier is None
     assert away.stat_summary.rush_td.median_tier is None
+
+
+def test_build_game_preview_stat_summary_covers_bye_team():
+    # LAC only has a tracker row in week 1; DEN has one in week 2, which
+    # makes week 2 the reference week -- LAC (on a bye in week 2) has no
+    # row there, so without include_bye_teams its whole history would drop
+    # out and Team Volume would come back empty.
+    tracker_rows = [
+        _tracker_row("LAC QB1", "QB", "LAC", 1, fpts=20.0),
+        _tracker_row("LAC RB1", "RB", "LAC", 1, fpts=15.0),
+        _tracker_row("DEN QB1", "QB", "DEN", 2, fpts=18.0),
+    ]
+    stat_lines_by_position = {
+        "QB": {("LAC QB1", 1): {"pass_att": 40, "pass_yds": 280}},
+        "RB": {("LAC RB1", 1): {"rush_att": 22, "rush_yards": 100}},
+    }
+    result = build_game_preview(
+        2026,
+        3,
+        _schedule_rows(),
+        {},
+        None,
+        None,
+        {},
+        tracker_rows=tracker_rows,
+        stat_lines_by_position=stat_lines_by_position,
+    )
+    away = result.games[0].away
+    assert away.team == "LAC"
+    assert away.stat_summary is not None
+    assert away.stat_summary.games == 1
+    assert away.stat_summary.pass_att.average == 40.0
+    assert away.pass_volume_tier == "high"

@@ -37,6 +37,7 @@ from backend.api.dst_trends import router as dst_trends_router
 from backend.api.game_preview import router as game_preview_router
 from backend.api.game_logs import router as game_logs_router
 from backend.api.game_logs_against import router as game_logs_against_router
+from backend.api.game_logs_summary import router as game_logs_summary_router
 from backend.api.injury_report import router as injury_report_router
 from backend.api.lineup_scenarios import router as lineup_scenarios_router
 from backend.api.multipliers import router as multipliers_router
@@ -87,6 +88,7 @@ app.include_router(name_aliases_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(game_logs_router, prefix="/api")
 app.include_router(game_logs_against_router, prefix="/api")
+app.include_router(game_logs_summary_router, prefix="/api")
 app.include_router(team_factors_router, prefix="/api")
 app.include_router(multipliers_router, prefix="/api")
 app.include_router(dst_trends_router, prefix="/api")

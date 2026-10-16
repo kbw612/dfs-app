@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { fetchGameRecaps, scrapeGameRecaps } from "../api";
+import { fetchGameRecapLinks, fetchGameRecaps, scrapeGameRecaps } from "../api";
 import type { GameRecapWeekSnapshot } from "../types";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -28,7 +28,28 @@ interface GameRecapUploadProps {
   onScraped: () => void;
 }
 
+const RECAP_SITE_CURRENT_URL = "https://walterfootball.com/nflreview.php";
+
 export function GameRecapUpload({ season, week, onScraped }: GameRecapUploadProps) {
+  // The page that really has this week's recaps -- resolved server-side
+  // because the numbered page doesn't exist until the site archives the
+  // week (see backend/api/game_recap/links.py). undefined = still checking.
+  const [weekLink, setWeekLink] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    setWeekLink(undefined);
+    fetchGameRecapLinks(season, week)
+      .then((result) => {
+        if (!cancelled) setWeekLink(result.url);
+      })
+      .catch(() => {
+        if (!cancelled) setWeekLink(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [season, week]);
+
   const [scraping, setScraping] = useState(false);
   const [scrapeMessage, setScrapeMessage] = useState<string | null>(null);
   const [urlMode, setUrlMode] = useState<"week_page" | "current_page">("week_page");
@@ -94,6 +115,20 @@ export function GameRecapUpload({ season, week, onScraped }: GameRecapUploadProp
           Current week page (nflreview.php) -- for whatever week the site currently has up
         </label>
       </div>
+      <p className="hint game-recap-browse-links">
+        Browse WalterFootball recaps:{" "}
+        {weekLink ? (
+          <a href={weekLink} target="_blank" rel="noopener noreferrer">
+            Week {week} page
+          </a>
+        ) : (
+          <span>{weekLink === undefined ? "Week page: checking…" : `Week ${week} page: not published yet`}</span>
+        )}
+        {" · "}
+        <a href={RECAP_SITE_CURRENT_URL} target="_blank" rel="noopener noreferrer">
+          Current week page
+        </a>
+      </p>
       <div className="weekly-stats-scrape-row">
         <button type="button" className="player-pool-save-button" disabled={scraping} onClick={handleScrape}>
           {scraping ? "Scraping…" : "Scrape Game Recaps"}
@@ -146,9 +181,16 @@ export function GameRecapFileStatus({ season, week, refreshToken }: GameRecapFil
       <li>
         Week {week}, {season}:{" "}
         {snapshot
-          ? `${snapshot.games.length} game${snapshot.games.length === 1 ? "" : "s"} saved (last scraped ${new Date(
-              snapshot.scraped_at,
-            ).toLocaleString()} from ${snapshot.source_url})`
+          ? (
+              <>
+                {snapshot.games.length} game{snapshot.games.length === 1 ? "" : "s"} saved (last scraped{" "}
+                {new Date(snapshot.scraped_at).toLocaleString()} from{" "}
+                <a href={snapshot.source_url} target="_blank" rel="noopener noreferrer">
+                  {snapshot.source_url}
+                </a>
+                )
+              </>
+            )
           : "not scraped yet"}
       </li>
     </ul>

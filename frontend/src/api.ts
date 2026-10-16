@@ -24,6 +24,8 @@ import type {
   LineupScenarioAnalysis,
   LineupScenarioDefinition,
   LineupScenarioUploadResult,
+  GameLogsSummaryResult,
+  TopLineupPatternsResult,
   MatchupResetResult,
   MultipliersResult,
   MyPlayerPoolEntryInput,
@@ -803,6 +805,17 @@ export function fetchGameRecaps(season: number, week: number): Promise<GameRecap
   return apiGet<GameRecapWeekSnapshot>(`/api/game-recap/latest?${params.toString()}`);
 }
 
+// The one WalterFootball page that actually has this week's recaps (numbered
+// archive page, else the bare current-week page), or null url if neither
+// does yet -- see backend/api/game_recap/links.py.
+export function fetchGameRecapLinks(
+  season: number,
+  week: number,
+): Promise<{ url: string | null; kind: "week_page" | "current_page" | null; current_url: string }> {
+  const params = new URLSearchParams({ season: String(season), week: String(week) });
+  return apiGet(`/api/game-recap/links?${params.toString()}`);
+}
+
 // Scrapes walterfootball.com's public recap page and fully replaces
 // whatever Game Recaps already has saved for this (season, week) -- no
 // merge step, same as scrapeWeather (see GameRecapWeekSnapshot's own
@@ -976,6 +989,46 @@ export function uploadLineupScenarioCsv(
   const formData = new FormData();
   formData.append("file", file);
   return apiPostForm<LineupScenarioUploadResult>(`/api/lineup-scenarios/upload?${params.toString()}`, formData);
+}
+
+// Game Logs Summary tab -- slate-wide roll-ups (QB passing yards) over the
+// last `windowWeeks` completed weeks; see backend/api/game_logs_summary/.
+export function fetchGameLogsSummary(
+  season: number,
+  week: number,
+  windowWeeks: number,
+  platform: string,
+  contest: string
+): Promise<GameLogsSummaryResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    window_weeks: String(windowWeeks),
+    platform,
+    contest,
+  });
+  return apiGet<GameLogsSummaryResult>(`/api/game-logs-summary?${params.toString()}`);
+}
+
+// Generic stack/flex/DST/salary patterns across the top `topN` finishing
+// lineups of each week's contest standings -- see backend/api/
+// lineup_scenarios/top_patterns.py. A week missing its standings or salary
+// file is skipped and reported in `weeks_missing`.
+export function fetchTopLineupPatterns(
+  season: number,
+  weeks: number[],
+  platform: string,
+  contest: string,
+  topN: number
+): Promise<TopLineupPatternsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    weeks: weeks.join(","),
+    platform,
+    contest,
+    top_n: String(topN),
+  });
+  return apiGet<TopLineupPatternsResult>(`/api/lineup-scenarios/top-patterns?${params.toString()}`);
 }
 
 // Scores every caller-built scenario against every uploaded lineup --

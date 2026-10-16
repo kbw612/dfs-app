@@ -138,8 +138,20 @@ def build_game_log_rows(
     lookback_weeks: int,
     name_aliases: dict[str, str] | None = None,
     contest_teams: set[str] | None = None,
+    include_bye_teams: bool = False,
 ) -> tuple[list[GameLogRow], int]:
     """Returns (rows, reference_week).
+
+    `include_bye_teams` (default False, so Game Logs/Game Logs Against are
+    unchanged) fills a gap in the "currently rostered" set: a team on a
+    bye in reference_week has NO tracker rows that week (DK doesn't salary
+    a team that isn't playing), so none of its players are "rostered" and
+    the team vanishes from the history entirely -- even though it has a full
+    window of earlier games. When True, any team with no rows in
+    reference_week is rostered from its own most recent earlier tracker week
+    instead, so its history still shows. Game Previews uses this so a bye
+    team's Team Volume (Avg / Median) is computed from the weeks it did
+    play rather than coming back empty.
 
     `contest_teams` (optional) restricts the "currently rostered" set to
     just the teams on the currently-selected Contest's own DK salary slate
@@ -199,6 +211,20 @@ def build_game_log_rows(
         and r.position in ROSTER_POSITIONS
         and (contest_teams is None or r.team in contest_teams)
     }
+
+    if include_bye_teams:
+        present_teams = {r.team for r in tracker_rows if r.week == reference_week}
+        latest_week_by_team: dict[str, int] = {}
+        for r in tracker_rows:
+            if r.week < reference_week and r.position in ROSTER_POSITIONS and r.team not in present_teams:
+                latest_week_by_team[r.team] = max(latest_week_by_team.get(r.team, 0), r.week)
+        for r in tracker_rows:
+            if (
+                latest_week_by_team.get(r.team) == r.week
+                and r.position in ROSTER_POSITIONS
+                and (contest_teams is None or r.team in contest_teams)
+            ):
+                roster.add((r.name, r.position, r.team))
 
     rows: list[GameLogRow] = []
     for name, position, _current_team in roster:

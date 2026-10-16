@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49600,
+      "total_fpts": 284.76,
+      "salary_leftover": 400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Packers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 284.76,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jets",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 16.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 282.76,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Mike Evans",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 29.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 281.96,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Williams",
+          "position": "WR",
+          "salary": 3100,
+          "fpts": 18.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 48800,
+      "total_fpts": 281.36,
+      "salary_leftover": 1200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Williams",
+          "position": "WR",
+          "salary": 3100,
+          "fpts": 18.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Packers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49100,
+      "total_fpts": 281.36,
+      "salary_leftover": 900
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Kyle Williams",
+          "position": "WR",
+          "salary": 3100,
+          "fpts": 18.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49200,
+      "total_fpts": 280.36,
+      "salary_leftover": 800
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Kyle Williams",
+          "position": "WR",
+          "salary": 3100,
+          "fpts": 18.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Packers",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49500,
+      "total_fpts": 280.36,
+      "salary_leftover": 500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6300,
+          "fpts": 32.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Williams",
+          "position": "WR",
+          "salary": 3100,
+          "fpts": 18.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jets",
+          "position": "DST",
+          "salary": 2700,
+          "fpts": 16.0
+        }
+      ],
+      "total_salary": 49100,
+      "total_fpts": 279.36,
+      "salary_leftover": 900
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 42.46
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jahmyr Gibbs",
+          "position": "RB",
+          "salary": 9800,
+          "fpts": 40.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jaylen Warren",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 39.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Garrett Wilson",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 26.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 6400,
+          "fpts": 35.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "DeMario Douglas",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 22.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4300,
+          "fpts": 32.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Pat Freiermuth",
+          "position": "TE",
+          "salary": 3900,
+          "fpts": 21.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 279.06,
+      "salary_leftover": 100
+    }
+  ]
+}

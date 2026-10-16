@@ -3665,6 +3665,28 @@ table.contest-results-grid {
   margin-bottom: 16px;
 }
 
+/* Top Lineup Patterns section -- reuses .lineup-scenarios-table for the
+   per-category tables; only spacing and numeric alignment are its own. */
+.top-lineup-patterns {
+  margin-top: 28px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd;
+}
+
+.top-lineup-patterns-category {
+  margin-bottom: 18px;
+}
+
+.top-lineup-patterns-category h4 {
+  margin: 12px 0 2px;
+  font-size: 0.9rem;
+}
+
+.top-lineup-patterns-table td:not(:first-child),
+.top-lineup-patterns-table th:not(:first-child) {
+  text-align: right;
+}
+
 .lineup-scenarios-error {
   color: #b3261e;
 }
@@ -3879,4 +3901,108 @@ table.contest-results-grid {
   color: #8a8a8a;
   background: #efefef;
   border: 1px solid #cfcfcf;
+}
+
+/* Game Previews QB passing-yards panel (QbPassingPanel.tsx) -- slate-wide,
+   sits above the game cards. Each game line never wraps so the yards stay
+   on the same line as the week. */
+.qb-passing-panel {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.qb-passing-panel h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.qb-passing-summary {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.qb-passing-table-wrap {
+  overflow-x: auto;
+  margin-top: 8px;
+}
+
+.qb-passing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.qb-passing-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: #666;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.qb-passing-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+
+.qb-passing-count {
+  font-weight: 600;
+}
+
+.qb-passing-count.zero {
+  color: #aaa;
+  font-weight: 400;
+}
+
+.qb-passing-line {
+  font-size: 0.75rem;
+  color: #555;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.qb-passing-team {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.qb-passing-status {
+  color: #b3261e;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.qb-passing-badge {
+  display: inline-block;
+  margin-bottom: 2px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #c6f6d5;
+  border: 1px solid #6aa84f;
+  color: #22543d;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.qb-passing-toggle {
+  margin-top: 6px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  /* Explicit so the app's global button text color (white) can't make the
+     label unreadable on this light background. */
+  color: #222;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.qb-passing-toggle:hover {
+  background: #f0f0f0;
+  color: #222;
 }

@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6000,
+          "fpts": 28.16
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8200,
+          "fpts": 33.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 280.86,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Kirk Cousins",
+          "position": "QB",
+          "salary": 5100,
+          "fpts": 26.6
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8200,
+          "fpts": 33.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 48900,
+      "total_fpts": 279.3,
+      "salary_leftover": 1100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6800,
+          "fpts": 28.72
+        },
+        {
+          "roster_position": "RB",
+          "player": "Javonte Williams",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 31.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49000,
+      "total_fpts": 278.82,
+      "salary_leftover": 1000
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5700,
+          "fpts": 26.08
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8200,
+          "fpts": 33.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49500,
+      "total_fpts": 278.78,
+      "salary_leftover": 500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6000,
+          "fpts": 28.16
+        },
+        {
+          "roster_position": "RB",
+          "player": "Javonte Williams",
+          "position": "RB",
+          "salary": 6600,
+          "fpts": 31.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 48200,
+      "total_fpts": 278.26,
+      "salary_leftover": 1800
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6800,
+          "fpts": 28.72
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 7500,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 278.21999999999997,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Drake Maye",
+          "position": "QB",
+          "salary": 6000,
+          "fpts": 28.16
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 7500,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49100,
+      "total_fpts": 277.65999999999997,
+      "salary_leftover": 900
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6800,
+          "fpts": 28.72
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8200,
+          "fpts": 33.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6100,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 49500,
+      "total_fpts": 277.32,
+      "salary_leftover": 500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Kirk Cousins",
+          "position": "QB",
+          "salary": 5100,
+          "fpts": 26.6
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8200,
+          "fpts": 33.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Seahawks",
+          "position": "DST",
+          "salary": 3500,
+          "fpts": 12.0
+        }
+      ],
+      "total_salary": 49300,
+      "total_fpts": 277.3,
+      "salary_leftover": 700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6800,
+          "fpts": 28.72
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyren Williams",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 36.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kyle Monangai",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 31.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 44.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Nico Collins",
+          "position": "WR",
+          "salary": 7200,
+          "fpts": 33.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6100,
+          "fpts": 29.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "T.J. Hockenson",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 27.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyquan Thornton",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 3100,
+          "fpts": 14.0
+        }
+      ],
+      "total_salary": 48500,
+      "total_fpts": 277.21999999999997,
+      "salary_leftover": 1500
+    }
+  ]
+}

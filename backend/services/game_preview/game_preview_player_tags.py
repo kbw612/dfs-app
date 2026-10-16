@@ -129,6 +129,9 @@ def _multiplier_tags(row: MultiplierRow) -> list[GamePreviewPlayerTag]:
                     f"{BREAKOUT_WATCH_NON_TD_MULT_MIN}-{BREAKOUT_WATCH_NON_TD_MULT_MAX_EXCLUSIVE} non-TD "
                     "multiplier and 0 TD FPTS that week -- real volume that hasn't paid off with a TD yet"
                 ),
+                signal="breakout",
+                detail=f"Breakout Watch, {high_breakout_weeks} wks without a TD",
+                magnitude=float(high_breakout_weeks),
             )
         )
 
@@ -172,20 +175,26 @@ def _share_trend_tags(
     tags: list[GamePreviewPlayerTag] = []
     biggest_rise = max(deltas, key=lambda d: d[3])
     if biggest_rise[3] >= SHARE_TREND_THRESHOLD_PCT:
-        field, prior_val, current_val, _ = biggest_rise
+        field, prior_val, current_val, rise = biggest_rise
         tags.append(
             GamePreviewPlayerTag(
                 kind="play",
                 reason=f"Rising {_SHARE_FIELD_LABELS[field]} -- {prior_val:.1f}% to {current_val:.1f}% week-over-week",
+                signal="usage",
+                detail=f"Rising {_SHARE_FIELD_LABELS[field]} {prior_val:.1f}% to {current_val:.1f}% ({rise:+.1f})",
+                magnitude=abs(rise),
             )
         )
     biggest_fall = min(deltas, key=lambda d: d[3])
     if biggest_fall[3] <= -SHARE_TREND_THRESHOLD_PCT:
-        field, prior_val, current_val, _ = biggest_fall
+        field, prior_val, current_val, fall = biggest_fall
         tags.append(
             GamePreviewPlayerTag(
                 kind="monitor",
                 reason=f"Falling {_SHARE_FIELD_LABELS[field]} -- {prior_val:.1f}% to {current_val:.1f}% week-over-week",
+                signal="usage",
+                detail=f"Falling {_SHARE_FIELD_LABELS[field]} {prior_val:.1f}% to {current_val:.1f}% ({fall:+.1f})",
+                magnitude=abs(fall),
             )
         )
     return tags
@@ -208,7 +217,13 @@ def _usage_bump_tag(bump: UsageBump) -> GamePreviewPlayerTag:
         reason = f"Usage bump with {trigger.player} ({trigger.status}) out{extra} -- extra volume likely"
     else:
         reason = f"Usage bump if {trigger.player} ({trigger.status}) sits{extra} -- extra volume likely"
-    return GamePreviewPlayerTag(kind="play", reason=reason)
+    return GamePreviewPlayerTag(
+        kind="play",
+        reason=reason,
+        signal="usage",
+        detail=f"Usage bump (+{trigger.player} {trigger.status})",
+        magnitude=float(bump.bump_score),
+    )
 
 
 def _positional_matchup_tag(
@@ -229,6 +244,9 @@ def _positional_matchup_tag(
                     f"{signal.league_avg_fpts:.1f}) with {signal.high_multiplier_games} high-multiplier games over "
                     f"the last {signal.games} games"
                 ),
+                signal="matchup",
+                detail=f"{opponent} vs {position}",
+                magnitude=signal.avg_fpts_allowed - signal.league_avg_fpts,
             )
     return None
 
