@@ -95,8 +95,19 @@ def game_logs_endpoint(
         salary_snapshot, _messages = parse_dk_salary_csv(salary_csv, season, week)
         contest_teams = {p.team for p in salary_snapshot.players}
 
+    # include_bye_teams: a team on a bye last week has no tracker rows in the
+    # reference week, so without this it drops off the tab entirely even
+    # though it has a full window of earlier games -- see build_game_log_rows'
+    # own docstring.
     rows, reference_week = build_game_log_rows(
-        tracker_rows, schedule_rows, stat_lines_by_position, week, lookback_weeks, name_aliases, contest_teams
+        tracker_rows,
+        schedule_rows,
+        stat_lines_by_position,
+        week,
+        lookback_weeks,
+        name_aliases,
+        contest_teams,
+        include_bye_teams=True,
     )
     games = build_game_options(schedule_rows, week, contest_teams)
     team_stat_summary = build_team_stat_summary(rows, lambda r: r.team)

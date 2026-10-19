@@ -3,6 +3,8 @@ import { fetchGameLogsSummary } from "../api";
 import type { GameLogsSummaryResult } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
 import { QbPassingPanel } from "./QbPassingPanel";
+import { RbReceivingPanel } from "./RbReceivingPanel";
+import { RbRushingPanel } from "./RbRushingPanel";
 
 // Game Logs Summary -- slate-wide roll-ups over the last "Weeks to show"
 // completed weeks. Today that is the QB passing-yards panel; the summary
@@ -88,6 +90,9 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
         items={[
           `Slate-wide roll-ups over the last ${windowWeeks} completed week${windowWeeks === 1 ? "" : "s"} before week ${week}, narrowed to this contest's own slate.`,
           "QB passing yards: games of 300+ and 265-299 passing yards by QBs, and the same games grouped by the defense that allowed them. The 265-299 counts exclude the 300+ games.",
+          "RB rushing yards: games of 100+ and 75-99 rushing yards by RBs (fullbacks included), and the games defenses have allowed. A defense's games add up all of a team's RBs; each back's own yards are listed beside the total.",
+          "TD columns: games with 3+ passing TDs (QBs) or 1+ rushing/receiving TDs (RBs), beside the same games defenses have allowed.",
+          "RB receiving: games of 50+ receiving yards by RBs, and the games defenses have allowed to a team's RBs combined.",
           "The table lists QBs playing this week who have a 265+ game of their own, or who are their team's primary QB facing a defense that has allowed one. Opp D allowed 265+ includes 300+ games.",
         ]}
       />
@@ -108,12 +113,19 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
 
       {loading && <p className="hint">Loading…</p>}
       {!loading && error && <p className="error">{error}</p>}
-      {!loading && !error && result !== null && result.qb_passing === null && (
+      {!loading &&
+        !error &&
+        result !== null &&
+        result.qb_passing === null &&
+        result.rb_rushing === null &&
+        result.rb_receiving === null && (
         <p className="hint">
-          No QB stat lines in the last {windowWeeks} week{windowWeeks === 1 ? "" : "s"} before week {week} yet.
+          No QB or RB stat lines in the last {windowWeeks} week{windowWeeks === 1 ? "" : "s"} before week {week} yet.
         </p>
       )}
       {!loading && !error && result?.qb_passing && <QbPassingPanel data={result.qb_passing} />}
+      {!loading && !error && result?.rb_rushing && <RbRushingPanel data={result.rb_rushing} />}
+      {!loading && !error && result?.rb_receiving && <RbReceivingPanel data={result.rb_receiving} />}
     </>
   );
 }

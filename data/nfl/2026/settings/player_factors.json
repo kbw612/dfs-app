@@ -221,9 +221,11 @@
       ]
     },
     "Isaiah Likely": {
-      "volume": 2.0,
-      "talent": 2.0,
-      "dfs_type": "Boom/Bust"
+      "volume": 3.0,
+      "talent": 3.0,
+      "dfs_types": [
+        "Boom/Bust"
+      ]
     },
     "Juwan Johnson": {
       "volume": 3.0,

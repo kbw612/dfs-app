@@ -1,0 +1,27 @@
+{
+  "season": 2026,
+  "week": 6,
+  "scraped_at": "2026-10-16T20:21:20-04:00",
+  "games": [
+    {
+      "away_name": "Houston Texans",
+      "home_name": "Jacksonville Jaguars",
+      "away_team": "HOU",
+      "home_team": "JAX",
+      "game_key": "HOU-JAX",
+      "kickoff_label": "9:30 AM ET",
+      "color": "yellow",
+      "note": "A chance for some showers at Wembley Stadium in the UK. I don't have much in the way of specifics beyond that right now."
+    },
+    {
+      "away_name": "Pittsburgh Steelers",
+      "home_name": "Tampa Bay Buccaneers",
+      "away_team": "PIT",
+      "home_team": "TB",
+      "game_key": "PIT-TB",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "For now the only game this week where I see the weather as a potential factor. Winds look to be a bit over 15mph sustained, gusting between 25-30mph. I could see that impacting long FG's, maybe a deep throw or two, but I think most of the game plays without wind impacting the outcome."
+    }
+  ]
+}

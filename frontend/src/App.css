@@ -3966,6 +3966,17 @@ table.contest-results-grid {
   white-space: nowrap;
 }
 
+/* Per-back yards under an RB Opp D game line: indented and allowed to wrap so
+   the Opp D columns stay about 170px wide instead of scrolling sideways. */
+.qb-passing-rushers {
+  font-size: 0.75rem;
+  color: #555;
+  line-height: 1.4;
+  padding-left: 0.75rem;
+  max-width: 10.5rem;
+  white-space: normal;
+}
+
 .qb-passing-team {
   color: #999;
   font-size: 0.75rem;
@@ -3975,6 +3986,12 @@ table.contest-results-grid {
   color: #b3261e;
   font-size: 0.75rem;
   font-weight: 600;
+}
+
+.qb-passing-badge.blue {
+  background: #d7ecf5;
+  border-color: #7fb8d1;
+  color: #0b4f6c;
 }
 
 .qb-passing-badge {

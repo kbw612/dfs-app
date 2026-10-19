@@ -1592,6 +1592,24 @@ export interface QbPassingRow {
   range_265_299: QbPassingGame[];
   // Every 265+ game (300+ included) the opponent's defense allowed.
   opponent_allowed: QbPassingAllowedGame[];
+  // His own 3+ passing-TD games, and the 3+ TD games the opponent allowed.
+  td_games: QbTdGame[];
+  opponent_allowed_td: QbAllowedTdGame[];
+}
+
+export interface QbTdGame {
+  week: number;
+  opponent: string;
+  is_home: boolean | null;
+  pass_td: number;
+}
+
+export interface QbAllowedTdGame {
+  week: number;
+  passer: string;
+  passer_team: string;
+  defense_is_home: boolean | null;
+  pass_td: number;
 }
 
 export interface QbPassingSetup {
@@ -1607,6 +1625,8 @@ export interface QbPassingSummary {
   qb_games_265_299: number;
   defense_allowed_300: number;
   defense_allowed_265_299: number;
+  qb_games_td3: number;
+  defense_allowed_td3: number;
   best_setups: QbPassingSetup[];
   rows: QbPassingRow[];
 }
@@ -1619,12 +1639,141 @@ export interface GamePreviewResult {
   games: GamePreviewGame[];
 }
 
+// RB rushing panel -- mirrors backend/schemas/game_logs_summary/
+// game_logs_summary.py's Rb* models.
+export interface RbRushingGame {
+  week: number;
+  opponent: string;
+  // True = the RB's team was at home ("vs"), false = away ("@"), null = unknown.
+  is_home: boolean | null;
+  rush_yds: number;
+}
+
+export interface RbRusher {
+  name: string;
+  team: string;
+  rush_yds: number;
+}
+
+// One game where a defense allowed 75+ COMBINED rushing yards to an
+// offense's running backs; `rushers` lists each back's own yards.
+export interface RbRushingAllowedGame {
+  week: number;
+  team: string;
+  // True = the DEFENSE was at home ("vs {team}"), false = away ("@ {team}").
+  defense_is_home: boolean | null;
+  total_yds: number;
+  rushers: RbRusher[];
+}
+
+export interface RbRushingRow {
+  name: string;
+  team: string;
+  status: string | null;
+  opponent: string;
+  over_100: RbRushingGame[];
+  // 75-99 only -- 100+ games are not repeated here.
+  range_75_99: RbRushingGame[];
+  opponent_allowed: RbRushingAllowedGame[];
+  // His own 1+ rushing-TD games, and games the opponent allowed 1+ rushing
+  // TD to a team's RBs combined.
+  td_games: RbTdGame[];
+  opponent_allowed_td: RbAllowedTdGame[];
+}
+
+// Used by both the rushing and receiving panels (TD type depends on the panel).
+export interface RbTdGame {
+  week: number;
+  opponent: string;
+  is_home: boolean | null;
+  td: number;
+}
+
+export interface RbTdScorer {
+  name: string;
+  team: string;
+  td: number;
+}
+
+export interface RbAllowedTdGame {
+  week: number;
+  team: string;
+  defense_is_home: boolean | null;
+  total_td: number;
+  scorers: RbTdScorer[];
+}
+
+export interface RbRushingSetup {
+  name: string;
+  opponent: string;
+  allowed_count: number;
+}
+
+export interface RbRushingSummary {
+  first_week: number;
+  through_week: number;
+  rb_games_100: number;
+  rb_games_75_99: number;
+  defense_allowed_100: number;
+  defense_allowed_75_99: number;
+  rb_games_td: number;
+  defense_allowed_td: number;
+  best_setups: RbRushingSetup[];
+  rows: RbRushingRow[];
+}
+
+// RB receiving panel -- mirrors RbReceiving* in game_logs_summary.py.
+export interface RbReceivingGame {
+  week: number;
+  opponent: string;
+  is_home: boolean | null;
+  rec_yds: number;
+}
+
+export interface RbReceiver {
+  name: string;
+  team: string;
+  rec_yds: number;
+}
+
+export interface RbReceivingAllowedGame {
+  week: number;
+  team: string;
+  defense_is_home: boolean | null;
+  total_yds: number;
+  receivers: RbReceiver[];
+}
+
+export interface RbReceivingRow {
+  name: string;
+  team: string;
+  status: string | null;
+  opponent: string;
+  games_50: RbReceivingGame[];
+  opponent_allowed: RbReceivingAllowedGame[];
+  td_games: RbTdGame[];
+  opponent_allowed_td: RbAllowedTdGame[];
+}
+
+export interface RbReceivingSummary {
+  first_week: number;
+  through_week: number;
+  rb_games_50: number;
+  defense_allowed_50: number;
+  rb_games_td: number;
+  defense_allowed_td: number;
+  best_setups: RbRushingSetup[];
+  rows: RbReceivingRow[];
+}
+
 // Game Logs Summary tab -- see backend/api/game_logs_summary/.
 export interface GameLogsSummaryResult {
   season: number;
   week: number;
   window_weeks: number;
   qb_passing: QbPassingSummary | null;
+  rb_rushing: RbRushingSummary | null;
+  rb_receiving: RbReceivingSummary | null;
 }
 
 // Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the

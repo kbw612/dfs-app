@@ -26,37 +26,23 @@ from __future__ import annotations
 
 from backend.schemas.depth_charts.snapshot import Snapshot
 from backend.schemas.game_logs_summary.game_logs_summary import (
+    QbAllowedTdGame,
     QbPassingAllowedGame,
     QbPassingGame,
     QbPassingSummary,
     QbPassingRow,
     QbPassingSetup,
+    QbTdGame,
 )
+from backend.services.game_logs_summary.shared import depth_status, is_home
 from backend.services.schedule.schedule_loader import ScheduleRow, opponent_and_location
 
 PASS_YDS_HIGH = 300
 PASS_YDS_MID = 265
+# A "TD game" is 3+ passing TDs by one QB.
+PASS_TD_BAR = 3
 # A defense needs this many 265+ games allowed to appear in "best setups".
 BEST_SETUP_MIN_ALLOWED = 2
-
-
-def _is_home(schedule_rows: list[ScheduleRow], team: str, week: int) -> bool | None:
-    entry = opponent_and_location(schedule_rows, team, week)
-    if entry is None or entry[1] not in ("Home", "Away"):
-        return None
-    return entry[1] == "Home"
-
-
-def _qb_status(snapshot: Snapshot | None, team: str, name: str) -> str | None:
-    if snapshot is None:
-        return None
-    team_row = next((t for t in snapshot.teams if t.team_abbrev == team), None)
-    if team_row is None:
-        return None
-    for player in team_row.positions.get("QB", []):
-        if player.player == name:
-            return player.status
-    return None
 
 
 def build_qb_passing(
@@ -76,6 +62,8 @@ def build_qb_passing(
     # (name, week, team, opponent, yards) for every usable line in the window.
     lines: list[tuple[str, int, str, str, int]] = []
     attempts: dict[str, float] = {}
+    # (name, week) -> passing TDs that game.
+    pass_tds: dict[tuple[str, int], int] = {}
     for (name, line_week), line in qb_stat_lines.items():
         if not (min_week <= line_week < week):
             continue
@@ -85,6 +73,8 @@ def build_qb_passing(
         if not team or not opponent or not isinstance(yards, (int, float)):
             continue
         lines.append((name, line_week, team, opponent, int(yards)))
+        td = line.get("pass_td")
+        pass_tds[(name, line_week)] = int(td) if isinstance(td, (int, float)) else 0
         att = line.get("pass_att")
         attempts[name] = attempts.get(name, 0.0) + (float(att) if isinstance(att, (int, float)) else 0.0)
     if not lines:
@@ -105,8 +95,25 @@ def build_qb_passing(
                     week=line_week,
                     passer=name,
                     passer_team=team,
-                    defense_is_home=_is_home(schedule_rows, opponent, line_week),
+                    defense_is_home=is_home(schedule_rows, opponent, line_week),
                     pass_yds=yards,
+                )
+            )
+
+    # 3+ passing-TD games: slate-wide counts, and the per-defense allowed list.
+    qb_td3 = sum(1 for n, w, team, _, _ in lines if on_slate(team) and pass_tds[(n, w)] >= PASS_TD_BAR)
+    def_td3 = sum(1 for n, w, _, opp, _ in lines if on_slate(opp) and pass_tds[(n, w)] >= PASS_TD_BAR)
+    allowed_td_by_defense: dict[str, list[QbAllowedTdGame]] = {}
+    for name, line_week, team, opponent, _ in sorted(lines, key=lambda l: (l[1], l[0])):
+        tds = pass_tds[(name, line_week)]
+        if tds >= PASS_TD_BAR and on_slate(opponent):
+            allowed_td_by_defense.setdefault(opponent, []).append(
+                QbAllowedTdGame(
+                    week=line_week,
+                    passer=name,
+                    passer_team=team,
+                    defense_is_home=is_home(schedule_rows, opponent, line_week),
+                    pass_td=tds,
                 )
             )
 
@@ -139,28 +146,38 @@ def build_qb_passing(
             (l for l in lines if l[0] == name and l[4] >= PASS_YDS_MID), key=lambda l: l[1]
         )
         over_300 = [
-            QbPassingGame(week=w, opponent=opp, is_home=_is_home(schedule_rows, t, w), pass_yds=y)
+            QbPassingGame(week=w, opponent=opp, is_home=is_home(schedule_rows, t, w), pass_yds=y)
             for _, w, t, opp, y in own_games
             if y >= PASS_YDS_HIGH
         ]
         mid = [
-            QbPassingGame(week=w, opponent=opp, is_home=_is_home(schedule_rows, t, w), pass_yds=y)
+            QbPassingGame(week=w, opponent=opp, is_home=is_home(schedule_rows, t, w), pass_yds=y)
             for _, w, t, opp, y in own_games
             if y < PASS_YDS_HIGH
         ]
         allowed = allowed_by_defense.get(opponent, [])
+        allowed_td = allowed_td_by_defense.get(opponent, [])
+        td_games = [
+            QbTdGame(week=w, opponent=opp, is_home=is_home(schedule_rows, t, w), pass_td=pass_tds[(n, w)])
+            for n, w, t, opp, _ in sorted((l for l in lines if l[0] == name), key=lambda l: l[1])
+            if pass_tds[(n, w)] >= PASS_TD_BAR
+        ]
         is_primary = primary_qb.get(team) == name
-        if not over_300 and not mid and not (is_primary and allowed):
+        # Row rule: a 265+ or 3+ TD game of his own, or primary QB facing a
+        # defense that allowed either.
+        if not over_300 and not mid and not td_games and not (is_primary and (allowed or allowed_td)):
             continue
         rows.append(
             QbPassingRow(
                 name=name,
                 team=team,
-                status=_qb_status(depth_chart_snapshot, team, name),
+                status=depth_status(depth_chart_snapshot, team, "QB", name),
                 opponent=opponent,
                 over_300=over_300,
                 range_265_299=mid,
                 opponent_allowed=allowed,
+                td_games=td_games,
+                opponent_allowed_td=allowed_td,
             )
         )
 
@@ -178,6 +195,8 @@ def build_qb_passing(
         qb_games_265_299=qb_mid,
         defense_allowed_300=def_300,
         defense_allowed_265_299=def_mid,
+        qb_games_td3=qb_td3,
+        defense_allowed_td3=def_td3,
         best_setups=best_setups,
         rows=rows,
     )

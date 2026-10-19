@@ -1,11 +1,11 @@
 """
 GET /game-logs-summary?season=&week=&window_weeks=&platform=&contest=
 (mounted at /api/game-logs-summary). Backs the Game Logs Summary tab: slate-
-wide roll-ups over the last `window_weeks` completed weeks -- currently the
-QB passing-yards panel (see backend/services/game_logs_summary/
-qb_passing.py for exactly what is counted).
+wide roll-ups over the last `window_weeks` completed weeks -- the QB
+passing-yards panel (qb_passing.py) and the RB rushing-yards panel
+(rb_rushing.py), both under backend/services/game_logs_summary/.
 
-Needs only the QB weekly stats file and the Schedule file. Both degrade
+Needs only the QB and RB weekly stats files and the Schedule file. Both degrade
 gracefully rather than 404ing: no QB file means `qb_passing` is None, and no
 Schedule file just means no home/away markers and no QB gets a row (rows are
 this week's matchups). `contest` narrows QBs and defenses to the selected
@@ -27,6 +27,8 @@ from backend.schemas.game_logs_summary.game_logs_summary import GameLogsSummaryR
 from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lines
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.game_logs_summary.qb_passing import build_qb_passing
+from backend.services.game_logs_summary.rb_receiving import build_rb_receiving
+from backend.services.game_logs_summary.rb_rushing import build_rb_rushing
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 
 router = APIRouter()
@@ -48,6 +50,9 @@ def game_logs_summary_endpoint(
     qb_csv = load_weekly_stats_csv(settings.nfl_data_dir, season, "QB")
     qb_stat_lines = load_weekly_stat_lines(qb_csv) if qb_csv is not None else {}
 
+    rb_csv = load_weekly_stats_csv(settings.nfl_data_dir, season, "RB")
+    rb_stat_lines = load_weekly_stat_lines(rb_csv) if rb_csv is not None else {}
+
     snapshot_path = find_latest_snapshot(settings.snapshots_dir)
     depth_chart_snapshot = load_snapshot(snapshot_path) if snapshot_path is not None else None
 
@@ -57,6 +62,22 @@ def game_logs_summary_endpoint(
         window_weeks=window_weeks,
         qb_passing=build_qb_passing(
             qb_stat_lines,
+            schedule_rows,
+            week,
+            window_weeks,
+            contest_teams=contest_teams,
+            depth_chart_snapshot=depth_chart_snapshot,
+        ),
+        rb_rushing=build_rb_rushing(
+            rb_stat_lines,
+            schedule_rows,
+            week,
+            window_weeks,
+            contest_teams=contest_teams,
+            depth_chart_snapshot=depth_chart_snapshot,
+        ),
+        rb_receiving=build_rb_receiving(
+            rb_stat_lines,
             schedule_rows,
             week,
             window_weeks,
