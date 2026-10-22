@@ -3459,6 +3459,15 @@ table.contest-results-grid {
   background: #fafafa;
 }
 
+/* Team record lines under the team abbrev in the pace table. */
+.game-preview-pace-record {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #555;
+  white-space: nowrap;
+}
+
 .game-preview-pace-cell {
   display: flex;
   flex-direction: column;
@@ -4022,4 +4031,26 @@ table.contest-results-grid {
 .qb-passing-toggle:hover {
   background: #f0f0f0;
   color: #222;
+}
+
+/* Group header row in the multiplier panels: one per opposing defense. */
+.qb-passing-group-row td {
+  background: #f1f4f8;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* Banner above the Game / Team filters when the contest has no salary file
+   for the week (see ContestFileNotice.tsx). Gold warning palette. */
+.contest-file-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border: 1px solid #e3c36a;
+  border-radius: 6px;
+  background: #fdf5dc;
+  color: #7a5a00;
+  font-size: 0.85rem;
 }

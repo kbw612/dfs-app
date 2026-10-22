@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "James Cook III",
+          "position": "RB",
+          "salary": 7400,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 47600,
+      "total_fpts": 236.26,
+      "salary_leftover": 2400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "James Cook III",
+          "position": "RB",
+          "salary": 7400,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Kyle Pitts Sr.",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 46500,
+      "total_fpts": 235.36,
+      "salary_leftover": 3500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 46900,
+      "total_fpts": 234.96,
+      "salary_leftover": 3100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Chuba Hubbard",
+          "position": "RB",
+          "salary": 6300,
+          "fpts": 22.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 46500,
+      "total_fpts": 234.06,
+      "salary_leftover": 3500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "D'Andre Swift",
+          "position": "RB",
+          "salary": 6700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Kyle Pitts Sr.",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 45800,
+      "total_fpts": 234.06,
+      "salary_leftover": 4200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonathan Taylor",
+          "position": "RB",
+          "salary": 8000,
+          "fpts": 22.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 48200,
+      "total_fpts": 234.06,
+      "salary_leftover": 1800
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "James Cook III",
+          "position": "RB",
+          "salary": 7400,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Pitts Sr.",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 47500,
+      "total_fpts": 233.96,
+      "salary_leftover": 2500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "James Cook III",
+          "position": "RB",
+          "salary": 7400,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kyle Pitts Sr.",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 47300,
+      "total_fpts": 233.56,
+      "salary_leftover": 2700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Michael Penix Jr.",
+          "position": "QB",
+          "salary": 5000,
+          "fpts": 24.1
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "James Cook III",
+          "position": "RB",
+          "salary": 7400,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Isaiah Likely",
+          "position": "TE",
+          "salary": 4800,
+          "fpts": 23.9
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 47000,
+      "total_fpts": 233.4,
+      "salary_leftover": 3000
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Tyler Shough",
+          "position": "QB",
+          "salary": 5600,
+          "fpts": 26.96
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 8500,
+          "fpts": 30.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Chuba Hubbard",
+          "position": "RB",
+          "salary": 6300,
+          "fpts": 22.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Malik Nabers",
+          "position": "WR",
+          "salary": 6500,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 4700,
+          "fpts": 26.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Germie Bernard",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 25.7
+        },
+        {
+          "roster_position": "TE",
+          "player": "Kyle Pitts Sr.",
+          "position": "TE",
+          "salary": 3700,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 3800,
+          "fpts": 25.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Titans",
+          "position": "DST",
+          "salary": 2300,
+          "fpts": 21.0
+        }
+      ],
+      "total_salary": 45400,
+      "total_fpts": 233.16,
+      "salary_leftover": 4600
+    }
+  ]
+}

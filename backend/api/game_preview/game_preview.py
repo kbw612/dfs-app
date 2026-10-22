@@ -139,7 +139,7 @@ def game_preview_endpoint(
     # nobody's ever starred a player yet, never a missing-file error).
     star_players = load_star_players(settings.star_players_json)
 
-    return build_game_preview(
+    result = build_game_preview(
         season,
         week,
         schedule_rows,
@@ -157,3 +157,7 @@ def game_preview_endpoint(
         contest_teams=contest_teams,
         name_aliases=name_aliases,
     )
+    # No salary file for this contest/week: the slate couldn't be narrowed, so
+    # every league game is shown -- the frontend shows a notice.
+    result.contest_salary_file_missing = contest_teams is None
+    return result

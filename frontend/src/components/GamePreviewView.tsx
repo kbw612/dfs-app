@@ -15,6 +15,7 @@ import type {
 } from "../types";
 import { findTeamRecap } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { ContestFileNotice } from "./ContestFileNotice";
 import { GameRecapModal } from "./GameRecapModal";
 import { statTierClassName } from "./gameLogsShared";
 import { STATUS_FILTER_GROUPS, isMultiWeekOut } from "../statusCodes";
@@ -27,6 +28,29 @@ import { STATUS_FILTER_GROUPS, isMultiWeekOut } from "../statusCodes";
 interface RecapLookup {
   recapsByWeek: Map<number, GameRecapWeekSnapshot | null>;
   onOpenRecap: (entry: GameRecapEntry, sourceUrl: string) => void;
+  // Every played week before the selected one (1..through_week) -- the
+  // "overall" record in the pace table's team cell counts all of these, not
+  // just the "Weeks to show" window.
+  overallWeeks: number[];
+}
+
+// W-L(-T) from recap scores for `team` over `weeks`. A week with no recap
+// (bye, not scraped yet) adds nothing, so the record can lag the real one
+// until every week's recap has been scraped.
+function recordFromRecaps(team: string, weeks: number[], recapsByWeek: Map<number, GameRecapWeekSnapshot | null>): string {
+  let wins = 0;
+  let losses = 0;
+  let ties = 0;
+  for (const w of weeks) {
+    const entry = findTeamRecap(recapsByWeek.get(w) ?? null, team);
+    if (!entry) continue;
+    const mine = entry.away_team === team ? entry.away_team_score : entry.home_team_score;
+    const theirs = entry.away_team === team ? entry.home_team_score : entry.away_team_score;
+    if (mine > theirs) wins += 1;
+    else if (mine < theirs) losses += 1;
+    else ties += 1;
+  }
+  return ties > 0 ? `${wins}-${losses}-${ties}` : `${wins}-${losses}`;
 }
 
 // Same red/green volume-tier thresholds the backend's own
@@ -546,7 +570,22 @@ function PaceTrendTable({
       <tbody>
         {[away, home].map((side) => (
           <tr key={side.team}>
-            <th scope="row">{side.team}</th>
+            <th scope="row">
+              {side.team}
+              {/* Record over the weeks shown (this team's own columns), then
+                  over every played week this season. */}
+              <span className="game-preview-pace-record">
+                Last {side.pace_trend?.trailing.length ?? 0}:{" "}
+                {recordFromRecaps(
+                  side.team,
+                  (side.pace_trend?.trailing ?? []).map((t) => t.week),
+                  recaps.recapsByWeek
+                )}
+              </span>
+              <span className="game-preview-pace-record">
+                Overall: {recordFromRecaps(side.team, recaps.overallWeeks, recaps.recapsByWeek)}
+              </span>
+            </th>
             {weeks.map((w) => (
               <td key={w}>
                 <PaceTrendCell trend={side.pace_trend} week={w} team={side.team} recaps={recaps} />
@@ -643,6 +682,7 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
 
   const [games, setGames] = useState<GamePreviewGame[] | null>(null);
   const [throughWeek, setThroughWeek] = useState<number | null>(null);
+  const [salaryFileMissing, setSalaryFileMissing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -666,10 +706,12 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
       .then((result) => {
         setGames(result.games);
         setThroughWeek(result.through_week);
+        setSalaryFileMissing(result.contest_salary_file_missing);
       })
       .catch((err) => {
         setGames(null);
         setThroughWeek(null);
+        setSalaryFileMissing(false);
         setError(err instanceof Error ? err.message : "Failed to load Game Preview");
       })
       .finally(() => setLoading(false));
@@ -686,6 +728,8 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
       for (const entry of game.away.pace_trend?.trailing ?? []) weeks.add(entry.week);
       for (const entry of game.home.pace_trend?.trailing ?? []) weeks.add(entry.week);
     }
+    // The overall record needs every earlier week's recap too.
+    for (let w = 1; w <= (throughWeek ?? 0); w++) weeks.add(w);
     const toFetch = [...weeks].filter((w) => !recapsByWeek.has(w));
     if (toFetch.length === 0) return;
     let cancelled = false;
@@ -706,7 +750,7 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
     return () => {
       cancelled = true;
     };
-  }, [games, season, recapsByWeek]);
+  }, [games, throughWeek, season, recapsByWeek]);
 
   useEffect(() => {
     // Reset back to "All" whenever the underlying game list changes out
@@ -766,6 +810,8 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
         ]}
       />
 
+      <ContestFileNotice missing={salaryFileMissing} contest={contest} week={week} />
+
       <div className="filters">
         <div className="chip-filter">
           <span className="filter-label">Game</span>
@@ -818,7 +864,11 @@ export function GamePreviewView({ season, week, platform, contest }: GamePreview
             <GameCard
               key={game.key}
               game={game}
-              recaps={{ recapsByWeek, onOpenRecap: (entry, sourceUrl) => setOpenRecap({ entry, sourceUrl }) }}
+              recaps={{
+                recapsByWeek,
+                onOpenRecap: (entry, sourceUrl) => setOpenRecap({ entry, sourceUrl }),
+                overallWeeks: Array.from({ length: throughWeek ?? 0 }, (_, i) => i + 1),
+              }}
             />
           ))}
         </ul>

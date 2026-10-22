@@ -9,6 +9,7 @@ import type {
 } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { ContestFileNotice } from "./ContestFileNotice";
 import { GameRecapModal } from "./GameRecapModal";
 import { HeaderInfoPopover } from "./HeaderInfoPopover";
 import { PlayerStatSummaryTable } from "./PlayerStatSummaryTable";
@@ -94,6 +95,7 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
   const lookbackDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [games, setGames] = useState<GameOption[]>([]);
+  const [salaryFileMissing, setSalaryFileMissing] = useState(false);
   const [rows, setRows] = useState<GameLogAgainstRow[] | null>(null);
   const [teamStatSummary, setTeamStatSummary] = useState<TeamStatSummaryRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -124,11 +126,13 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
       .then((result) => {
         setRows(result.rows);
         setGames(result.games);
+        setSalaryFileMissing(result.contest_salary_file_missing);
         setTeamStatSummary(result.team_stat_summary);
       })
       .catch((err) => {
         setRows(null);
         setGames([]);
+        setSalaryFileMissing(false);
         setTeamStatSummary([]);
         setError(err instanceof Error ? err.message : "Failed to load game logs against");
       })
@@ -272,6 +276,8 @@ export function GameLogsAgainstView({ season, week, platform, contest }: GameLog
           "Rush Yds and Rec Yds each highlight that panel's own top 2 values for the week, same green shading as Tgt/Touch Share.",
         ]}
       />
+
+      <ContestFileNotice missing={salaryFileMissing} contest={contest} week={week} />
 
       <div className="filters">
         <div className="chip-filter">

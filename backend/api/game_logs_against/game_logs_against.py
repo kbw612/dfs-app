@@ -109,6 +109,7 @@ def game_logs_against_endpoint(
         week=week,
         lookback_weeks=lookback_weeks,
         games=games,
+        contest_salary_file_missing=contest_teams is None,
         rows=rows,
         team_stat_summary=team_stat_summary,
     )

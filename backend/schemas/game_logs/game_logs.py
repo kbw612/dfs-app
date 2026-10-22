@@ -175,6 +175,10 @@ class GameLogsResult(BaseModel):
     reference_week: int
     lookback_weeks: int
     games: list[GameOption]
+    # True when the selected contest has no DK salary file for this week yet,
+    # so the slate could not be narrowed and every league game is shown. The
+    # frontend uses it to show a "showing all games" notice.
+    contest_salary_file_missing: bool = False
     rows: list[GameLogRow]
     # One entry per distinct team in `rows` -- see TeamStatSummaryRow's own
     # docstring.

@@ -410,4 +410,7 @@ class GamePreviewResult(BaseModel):
     # through_week field.
     through_week: int
     window_weeks: int
+    # True when the selected contest has no DK salary file for this week yet,
+    # so every league game is shown (see the other game-logs endpoints).
+    contest_salary_file_missing: bool = False
     games: list[GamePreviewGame] = Field(default_factory=list)

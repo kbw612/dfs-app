@@ -27,6 +27,10 @@ from backend.schemas.game_logs_summary.game_logs_summary import GameLogsSummaryR
 from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lines
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.game_logs_summary.qb_passing import build_qb_passing
+from backend.repositories.dk_players.dk_players_repo import load_dk_players_csv
+from backend.services.dk_players.dk_players_csv import parse_dk_players_csv
+from backend.services.game_logs.game_logs_engine import build_game_options
+from backend.services.game_logs_summary.position_multipliers import build_position_multipliers
 from backend.services.game_logs_summary.rb_receiving import build_rb_receiving
 from backend.services.game_logs_summary.rb_rushing import build_rb_rushing
 from backend.services.schedule.schedule_loader import parse_schedule_csv
@@ -53,6 +57,9 @@ def game_logs_summary_endpoint(
     rb_csv = load_weekly_stats_csv(settings.nfl_data_dir, season, "RB")
     rb_stat_lines = load_weekly_stat_lines(rb_csv) if rb_csv is not None else {}
 
+    tracker_csv = load_dk_players_csv(settings.nfl_data_dir, season, platform)
+    tracker_rows = parse_dk_players_csv(tracker_csv) if tracker_csv is not None else []
+
     snapshot_path = find_latest_snapshot(settings.snapshots_dir)
     depth_chart_snapshot = load_snapshot(snapshot_path) if snapshot_path is not None else None
 
@@ -60,6 +67,8 @@ def game_logs_summary_endpoint(
         season=season,
         week=week,
         window_weeks=window_weeks,
+        games=build_game_options(schedule_rows, week, contest_teams),
+        contest_salary_file_missing=contest_teams is None,
         qb_passing=build_qb_passing(
             qb_stat_lines,
             schedule_rows,
@@ -84,4 +93,16 @@ def game_logs_summary_endpoint(
             contest_teams=contest_teams,
             depth_chart_snapshot=depth_chart_snapshot,
         ),
+        **{
+            f"{pos.lower()}_multipliers": build_position_multipliers(
+                tracker_rows,
+                schedule_rows,
+                week,
+                window_weeks,
+                contest_teams=contest_teams,
+                depth_chart_snapshot=depth_chart_snapshot,
+                position=pos,
+            )
+            for pos in ("QB", "RB", "WR", "TE")
+        },
     )

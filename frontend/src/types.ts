@@ -1270,6 +1270,8 @@ export interface GameLogsResult {
   reference_week: number;
   lookback_weeks: number;
   games: GameOption[];
+  // True when the contest has no salary file for the week (all games shown).
+  contest_salary_file_missing: boolean;
   rows: GameLogRow[];
   team_stat_summary: TeamStatSummaryRow[];
 }
@@ -1636,6 +1638,7 @@ export interface GamePreviewResult {
   week: number;
   through_week: number;
   window_weeks: number;
+  contest_salary_file_missing: boolean;
   games: GamePreviewGame[];
 }
 
@@ -1766,14 +1769,69 @@ export interface RbReceivingSummary {
   rows: RbReceivingRow[];
 }
 
+// RB salary-multiplier panel -- mirrors PositionMultiplier* in game_logs_summary.py.
+export interface PositionMultiplierGame {
+  week: number;
+  opponent: string;
+  is_home: boolean | null;
+  multiplier: number;
+  // That week's DK salary.
+  salary: number;
+}
+
+export interface PositionMultiplierAllowedGame {
+  week: number;
+  player: string;
+  player_team: string;
+  defense_is_home: boolean | null;
+  multiplier: number;
+  salary: number;
+}
+
+export interface PositionMultiplierRow {
+  name: string;
+  team: string;
+  status: string | null;
+  opponent: string;
+  over_4x: PositionMultiplierGame[];
+  // 3-3.99x only -- 4x+ games are not repeated here.
+  range_3x_399: PositionMultiplierGame[];
+  non_td_2_5x: PositionMultiplierGame[];
+  // 3x+ (4x+ included) and non-TD 2.5x+ games the opponent allowed.
+  opponent_allowed: PositionMultiplierAllowedGame[];
+  opponent_allowed_non_td: PositionMultiplierAllowedGame[];
+}
+
+export interface PositionMultiplierSummary {
+  // QB, RB, WR or TE.
+  position: string;
+  first_week: number;
+  through_week: number;
+  player_games_4x: number;
+  player_games_3x_399: number;
+  player_games_non_td_2_5x: number;
+  defense_allowed_4x: number;
+  defense_allowed_3x_399: number;
+  defense_allowed_non_td_2_5x: number;
+  best_setups: RbRushingSetup[];
+  rows: PositionMultiplierRow[];
+}
+
 // Game Logs Summary tab -- see backend/api/game_logs_summary/.
 export interface GameLogsSummaryResult {
   season: number;
   week: number;
   window_weeks: number;
+  // This week's slate games -- feeds the Game / Team chip filters.
+  games: GameOption[];
+  contest_salary_file_missing: boolean;
   qb_passing: QbPassingSummary | null;
   rb_rushing: RbRushingSummary | null;
   rb_receiving: RbReceivingSummary | null;
+  qb_multipliers: PositionMultiplierSummary | null;
+  rb_multipliers: PositionMultiplierSummary | null;
+  wr_multipliers: PositionMultiplierSummary | null;
+  te_multipliers: PositionMultiplierSummary | null;
 }
 
 // Mirrors backend/schemas/game_logs/game_logs_against.py exactly -- the
@@ -1828,6 +1886,7 @@ export interface GameLogsAgainstResult {
   week: number;
   lookback_weeks: number;
   games: GameOption[];
+  contest_salary_file_missing: boolean;
   rows: GameLogAgainstRow[];
   // Same shape as GameLogsResult's own (see TeamStatSummaryRow) -- `team`
   // on each entry holds `against_team` here instead of a rostered

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from backend.schemas.game_logs.game_logs import GameOption
+
 
 # QB passing-yards panel (see backend/services/game_logs_summary/
 # qb_passing.py for exactly what is counted). One of a QB's
@@ -251,13 +253,89 @@ class RbReceivingSummary(BaseModel):
     rows: list[RbReceivingRow] = Field(default_factory=list)
 
 
+# -- Salary-multiplier panels, one per QB/RB/WR/TE (see backend/services/game_logs_summary/position_multipliers.py) --
+
+
+class PositionMultiplierGame(BaseModel):
+    """One of a player's own games that cleared a multiplier bar. `multiplier` is
+    FPTS / (salary / 1000) for the 3x+ buckets and non-TD FPTS / (salary /
+    1000) for the non-TD column."""
+
+    week: int
+    opponent: str
+    is_home: bool | None = None
+    multiplier: float
+    # That week's DK salary.
+    salary: int = 0
+
+
+class PositionMultiplierAllowedGame(BaseModel):
+    """One player game a defense allowed in a bucket (one line per player
+    game, not combined across a team's players)."""
+
+    week: int
+    player: str
+    player_team: str
+    # True when the DEFENSE was at home ("vs {player_team}"), False when away.
+    defense_is_home: bool | None = None
+    multiplier: float
+    # That week's DK salary for the player.
+    salary: int = 0
+
+
+class PositionMultiplierRow(BaseModel):
+    name: str
+    team: str
+    status: str | None = None
+    opponent: str
+    # His own 4x+ games and 3-3.99x games (no overlap), oldest first.
+    over_4x: list[PositionMultiplierGame] = Field(default_factory=list)
+    range_3x_399: list[PositionMultiplierGame] = Field(default_factory=list)
+    # His own games with a non-TD multiplier of 2.5x+ that are NOT in the two
+    # lists above (total multiplier under 3x).
+    non_td_2_5x: list[PositionMultiplierGame] = Field(default_factory=list)
+    # Opponent's allowed games at this position: 3x+ (4x+ included), then non-TD 2.5x+ (excluding games already in the 3x+ list).
+    opponent_allowed: list[PositionMultiplierAllowedGame] = Field(default_factory=list)
+    opponent_allowed_non_td: list[PositionMultiplierAllowedGame] = Field(default_factory=list)
+
+
+class PositionMultiplierSummary(BaseModel):
+    first_week: int
+    through_week: int
+    # QB, RB, WR or TE -- which position this panel covers.
+    position: str
+    # Player games on slate teams / allowed by slate defenses (each player
+    # game is one count; 3x_399 excludes the 4x+ games).
+    player_games_4x: int
+    player_games_3x_399: int
+    player_games_non_td_2_5x: int
+    defense_allowed_4x: int
+    defense_allowed_3x_399: int
+    defense_allowed_non_td_2_5x: int
+    best_setups: list[RbRushingSetup] = Field(default_factory=list)
+    rows: list[PositionMultiplierRow] = Field(default_factory=list)
+
+
 class GameLogsSummaryResult(BaseModel):
     season: int
     week: int
     window_weeks: int
+    # This week's games on the contest's slate -- feeds the Game / Team chip
+    # filters (same shape and source as Game Logs' own `games`).
+    games: list[GameOption] = Field(default_factory=list)
+    # True when the selected contest has no DK salary file for this week yet,
+    # so the slate could not be narrowed and every league game is shown. The
+    # frontend uses it to show a "showing all games" notice.
+    contest_salary_file_missing: bool = False
     # None when there are no QB stat lines in the window at all.
     qb_passing: QbPassingSummary | None = None
     # None when there are no RB stat lines in the window at all.
     rb_rushing: RbRushingSummary | None = None
     # None when there are no RB stat lines in the window at all.
     rb_receiving: RbReceivingSummary | None = None
+    # Salary-multiplier panels, one per position; each None when the DK Players
+    # tracker has no priced rows for that position in the window.
+    qb_multipliers: PositionMultiplierSummary | None = None
+    rb_multipliers: PositionMultiplierSummary | None = None
+    wr_multipliers: PositionMultiplierSummary | None = None
+    te_multipliers: PositionMultiplierSummary | None = None
