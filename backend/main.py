@@ -39,6 +39,7 @@ from backend.api.game_logs import router as game_logs_router
 from backend.api.game_logs_against import router as game_logs_against_router
 from backend.api.game_logs_summary import router as game_logs_summary_router
 from backend.api.injury_report import router as injury_report_router
+from backend.api.lineup_analyzer import router as lineup_analyzer_router
 from backend.api.lineup_scenarios import router as lineup_scenarios_router
 from backend.api.multipliers import router as multipliers_router
 from backend.api.my_player_pool import router as my_player_pool_router
@@ -54,6 +55,7 @@ from backend.api.star_players import router as star_players_router
 from backend.api.team_factors import router as team_factors_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.api.usage_bump.players import router as usage_bump_players_router
+from backend.api.contest_tracker import router as contest_tracker_router
 from backend.api.vegas_lines import router as vegas_lines_router
 from backend.api.game_recap import router as game_recap_router
 from backend.api.weather import router as weather_router
@@ -80,6 +82,7 @@ app.include_router(player_defaults_router, prefix="/api")
 app.include_router(platform_settings_router, prefix="/api")
 app.include_router(player_selection_router, prefix="/api")
 app.include_router(vegas_lines_router, prefix="/api")
+app.include_router(contest_tracker_router, prefix="/api")
 app.include_router(my_player_pool_router, prefix="/api")
 app.include_router(salary_multiplier_router, prefix="/api")
 app.include_router(contest_results_router, prefix="/api")
@@ -97,6 +100,7 @@ app.include_router(weather_router, prefix="/api")
 app.include_router(star_players_router, prefix="/api")
 app.include_router(injury_report_router, prefix="/api")
 app.include_router(lineup_scenarios_router, prefix="/api")
+app.include_router(lineup_analyzer_router, prefix="/api")
 app.include_router(game_recap_router, prefix="/api")
 
 

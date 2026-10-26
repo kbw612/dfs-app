@@ -127,7 +127,48 @@ function blockKey(block: BlockLike): string {
   return block.players.map((p) => p.player).join("|");
 }
 
-type SortDirection = "desc" | "asc";
+// Block sort: by combined salary or combined projected ownership, each high
+// to low or low to high. Single-select (one of the four chips below).
+const SORT_OPTIONS = [
+  { id: "salary_desc", label: "Block salary high" },
+  { id: "salary_asc", label: "Block salary low" },
+  { id: "own_desc", label: "Block own high" },
+  { id: "own_asc", label: "Block own low" },
+] as const;
+type SortOption = (typeof SORT_OPTIONS)[number]["id"];
+
+// Combined projected ownership of a block: the sum of its players' projected
+// ownership. Players without a projection yet are skipped, so `partial` is
+// true when any player is missing one; `total` is null when none have one.
+function blockOwnership(block: BlockLike): { total: number | null; partial: boolean } {
+  const known = block.players.filter((p) => p.ownership_pct !== null);
+  if (known.length === 0) return { total: null, partial: block.players.length > 0 };
+  return {
+    total: known.reduce((sum, p) => sum + (p.ownership_pct as number), 0),
+    partial: known.length < block.players.length,
+  };
+}
+
+// Low / medium / high combined-ownership tier, cut at the 33rd and 67th
+// percentile of the blocks currently loaded, so "high" always means high for
+// this slate and filter combination rather than a fixed number.
+type OwnershipTier = "low" | "medium" | "high";
+function ownershipTierCutoffs(blocks: BlockLike[]): { low: number; high: number } | null {
+  const totals = blocks
+    .map((b) => blockOwnership(b).total)
+    .filter((t): t is number => t !== null)
+    .sort((a, b) => a - b);
+  if (totals.length < 3) return null;
+  return { low: totals[Math.floor(totals.length / 3)], high: totals[Math.floor((totals.length * 2) / 3)] };
+}
+function ownershipTier(total: number, cutoffs: { low: number; high: number }): OwnershipTier {
+  return total < cutoffs.low ? "low" : total >= cutoffs.high ? "high" : "medium";
+}
+
+// One decimal, no padding: "24.1%".
+function formatOwn(pct: number): string {
+  return `${pct.toFixed(1)}%`;
+}
 
 // Every distinct player name appearing across the currently-fetched
 // blocks (i.e. after the server-side team/game/salary-bucket/scope
@@ -190,7 +231,7 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
   const [gameData, setGameData] = useState<GameBlocksResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [sortOption, setSortOption] = useState<SortOption>("salary_desc");
   const [playerFilter, setPlayerFilter] = useState<Set<string>>(new Set());
   const [expandedBlocks, setExpandedBlocks] = useState<Set<string>>(new Set());
 
@@ -309,9 +350,23 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
   // these only reorder/narrow a result set already small enough to have
   // been returned, so there's no need for a round-trip.
   const playerOptions = playersInBlocks(blocks);
+  const tierCutoffs = ownershipTierCutoffs(blocks);
   const displayedBlocks = [...blocks]
     .filter((block) => playerFilter.size === 0 || block.players.some((p) => playerFilter.has(p.player)))
-    .sort((a, b) => (sortDirection === "desc" ? b.total_salary - a.total_salary : a.total_salary - b.total_salary));
+    .sort((a, b) => {
+      if (sortOption === "salary_desc") return b.total_salary - a.total_salary;
+      if (sortOption === "salary_asc") return a.total_salary - b.total_salary;
+      const ownA = blockOwnership(a).total;
+      const ownB = blockOwnership(b).total;
+      // Blocks with no ownership projection at all sort last either way,
+      // then fall back to salary (high to low) to keep the order stable.
+      if (ownA === null || ownB === null) {
+        if (ownA === ownB) return b.total_salary - a.total_salary;
+        return ownA === null ? 1 : -1;
+      }
+      if (ownA === ownB) return b.total_salary - a.total_salary;
+      return sortOption === "own_desc" ? ownB - ownA : ownA - ownB;
+    });
 
   useEffect(() => {
     setLoading(true);
@@ -585,24 +640,19 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
         <PlayerSearchSelect label="Filter by player" options={playerOptions} selected={playerFilter} onChange={setPlayerFilter} />
 
         <div className="chip-filter">
-          <span className="filter-label">Sort by salary</span>
+          <span className="filter-label">Sort by</span>
           <div className="chip-row">
-            <button
-              type="button"
-              className={`chip${sortDirection === "desc" ? " selected" : ""}`}
-              aria-pressed={sortDirection === "desc"}
-              onClick={() => setSortDirection("desc")}
-            >
-              High to low
-            </button>
-            <button
-              type="button"
-              className={`chip${sortDirection === "asc" ? " selected" : ""}`}
-              aria-pressed={sortDirection === "asc"}
-              onClick={() => setSortDirection("asc")}
-            >
-              Low to high
-            </button>
+            {SORT_OPTIONS.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                className={`chip${sortOption === o.id ? " selected" : ""}`}
+                aria-pressed={sortOption === o.id}
+                onClick={() => setSortOption(o.id)}
+              >
+                {o.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -641,6 +691,7 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
                   .map(
                     (p) =>
                       `${p.player} ${roleLabel(p)} ${p.team} ${formatSalary(p.salary)}` +
+                      (p.ownership_pct !== null ? ` ${formatOwn(p.ownership_pct)}` : "") +
                       (p.expected_fpts !== null ? ` (${formatExpectedFpts(p.expected_fpts)} FPTS)` : "")
                   )
                   .join(" / ");
@@ -665,6 +716,20 @@ export function SalaryBlocksView({ season, week, platform, contest }: SalaryBloc
                           <span className="block-expected-fpts"> ({formatExpectedFpts(block.total_expected_fpts)} FPTS)</span>
                         )}
                       </span>
+                      {(() => {
+                        const own = blockOwnership(block);
+                        if (own.total === null) return null;
+                        const tier = tierCutoffs ? ownershipTier(own.total, tierCutoffs) : null;
+                        return (
+                          <span
+                            className={`block-own-badge${tier ? ` ${tier}` : ""}`}
+                            title={own.partial ? "Some players have no ownership projection yet" : undefined}
+                          >
+                            {tier ? `${tier[0].toUpperCase()}${tier.slice(1)} own` : "Own"} · {formatOwn(own.total)}
+                            {own.partial ? " partial" : ""}
+                          </span>
+                        );
+                      })()}
                       {gameBlock &&
                         (() => {
                           const remainingSalary = cap - block.total_salary;

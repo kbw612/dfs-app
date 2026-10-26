@@ -1,6 +1,27 @@
 {
   "season": 2026,
   "week": 7,
-  "scraped_at": "2026-10-21T22:03:49-04:00",
-  "games": []
+  "scraped_at": "2026-10-23T22:29:19-04:00",
+  "games": [
+    {
+      "away_name": "Pittsburgh Steelers",
+      "home_name": "New Orleans Saints",
+      "away_team": "PIT",
+      "home_team": "NO",
+      "game_key": "NO-PIT",
+      "kickoff_label": "9:30 AM ET",
+      "color": "green",
+      "note": "In Paris: Winds are around 15mph sustained, but the design of the stadium looks mostly closed with an open roof, and I find it difficult to believe the wind will make it down to field level."
+    },
+    {
+      "away_name": "Kansas City Chiefs",
+      "home_name": "Seattle Seahawks",
+      "away_team": "KC",
+      "home_team": "SEA",
+      "game_key": "KC-SEA",
+      "kickoff_label": "8:20 PM ET",
+      "color": "yellow",
+      "note": "A chance for some showers. I'll have more details as we get closer to kickoff, but my current concern is low."
+    }
+  ]
 }

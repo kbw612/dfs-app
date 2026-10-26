@@ -1,0 +1,32 @@
+{
+ "features": [
+  "own_sum",
+  "log_own_prod",
+  "max_own",
+  "n_chalk",
+  "n_low",
+  "qb_own",
+  "unused_k",
+  "n_stars",
+  "n_punts",
+  "qb_mates",
+  "bringback",
+  "game_stack",
+  "dst_conflict"
+ ],
+ "weights": [
+  0.3869,
+  0.0569,
+  -0.3504,
+  0.0621,
+  -0.1215,
+  -0.2717,
+  -1.9023,
+  -0.1069,
+  0.0333,
+  0.9593,
+  0.3318,
+  0.0652,
+  -0.6912
+ ]
+}

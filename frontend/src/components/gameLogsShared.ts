@@ -57,6 +57,28 @@ export function multiplierTier(value: number | null): MultiplierTier {
   return null;
 }
 
+// FPTS background bands per position, same four colors as the multiplier
+// column. Each entry is the minimum FPTS for [dark green, light green, dark
+// gold, light gold]; cutoffs are percentile cuts (~top 10% / next 15% / next
+// 25% / next 25%) of tracker games with at least 3 FPTS.
+const FPTS_BANDS: Record<string, [number, number, number, number]> = {
+  QB: [27, 22, 16, 11],
+  RB: [23, 16, 10, 6],
+  WR: [21, 15, 9, 5.5],
+  TE: [18, 12, 8, 5],
+  DST: [14, 10, 7, 5],
+};
+
+export function fptsTier(position: string, fpts: number): MultiplierTier {
+  const bands = FPTS_BANDS[position];
+  if (!bands) return null;
+  if (fpts >= bands[0]) return "green-dark";
+  if (fpts >= bands[1]) return "green-light";
+  if (fpts >= bands[2]) return "yellow-dark";
+  if (fpts >= bands[3]) return "yellow-light";
+  return null;
+}
+
 export function tierClassName(tier: MultiplierTier): string | undefined {
   return tier ? `game-logs-tier-${tier}` : undefined;
 }

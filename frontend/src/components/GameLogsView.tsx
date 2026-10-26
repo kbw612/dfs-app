@@ -19,6 +19,7 @@ import {
   formatOpponent,
   formatPct,
   formatSalary,
+  fptsTier,
   multiplierTier,
   positionRank,
   rankTopSharesByTeamAndWeek,
@@ -78,7 +79,7 @@ function groupByTeamAndPosition(rows: GameLogRow[], teamOrder: Map<string, numbe
     }));
 }
 
-// Week, Name, Pos, Salary, Opp, Multiplier, FPTS, Non-TD FPTS, Non-TD %,
+// Week, Name, Pos, Salary, Opp, FPTS, Multiplier, Non-TD FPTS, Non-TD %,
 // TD FPTS, TD %, Opp Share, Tgt Share, Touch Share, Touches, Tgts, Rec,
 // Rec Yds, Rec TD, Rush Att, Rush Yds, Rush TD, Pass Cmp, Pass Att, Pass
 // Cmp%, Pass Yds, Pass Avg, Pass TD, Pass Int, Pass Sck, Pass Rtg. DST's
@@ -268,6 +269,7 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
           `Any of those show "-" until the relevant Settings scrape exists (or, for Pass/Share columns, until Calc
           Week Points has run, or for Pass columns, for every non-QB row).`,
           "Weeks with 0 FPTS are hidden except for DST, which always shows.",
+          "FPTS is shaded by position (dark green to light gold): QB 27/22/16/11+, RB 23/16/10/6+, WR 21/15/9/5.5+, TE 18/12/8/5+, DST 14/10/7/5+.",
           `The Team Summary (Avg / Median) table under each team's own game outcomes sums every currently-shown
           player's own Rec/Rec Yds/Rec TD/Rush Att/Rush Yds/Rush TD/Pass Att/Pass Yds/Pass TD into a team-week
           total, then averages/medians those team totals over exactly the weeks shown below it -- a team-level
@@ -367,11 +369,11 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                             <th>{row.position}</th>
                             <th>Salary</th>
                             <th>Opp</th>
+                            <th>FPTS</th>
                             <th>
                               Multiplier
                               <HeaderInfoPopover title="Multiplier" lines={MULTIPLIER_TIER_NOTES} />
                             </th>
-                            <th>FPTS</th>
                             <th>
                               Non-TD
                               <br />
@@ -488,10 +490,12 @@ export function GameLogsView({ season, week, platform, contest }: GameLogsViewPr
                           <td></td>
                           <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
                           <td>{formatOpponent(row.opponent, row.game_location)}</td>
+                          <td className={`player-pool-grid-num ${tierClassName(fptsTier(row.position, row.fpts)) ?? ""}`}>
+                            {row.fpts.toFixed(1)}
+                          </td>
                           <td className={`player-pool-grid-num ${tierClassName(multiplierTier(row.multiplier)) ?? ""}`}>
                             {formatMultiplier(row.multiplier)}
                           </td>
-                          <td className="player-pool-grid-num">{row.fpts.toFixed(1)}</td>
                           <td className="player-pool-grid-num">{row.non_td_fpts.toFixed(1)}</td>
                           <td className="player-pool-grid-num">{formatPct(row.non_td_fpts_pct)}</td>
                           <td className="player-pool-grid-num">{row.td_fpts.toFixed(1)}</td>

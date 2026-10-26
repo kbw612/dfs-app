@@ -23,6 +23,8 @@ import { UsageBumpPlayersView } from "./components/UsageBumpPlayersView";
 import { UsageBumpView } from "./components/UsageBumpView";
 import { DepthChartsView } from "./components/DepthChartsView";
 import { InjuryReportView } from "./components/InjuryReportView";
+import { ContestTrackerView } from "./components/ContestTrackerView";
+import { LineupAnalyzerView } from "./components/LineupAnalyzerView";
 import { LineupScenariosView } from "./components/LineupScenariosView";
 import { VegasLinesView } from "./components/VegasLinesView";
 import { WeatherView } from "./components/WeatherView";
@@ -51,7 +53,9 @@ type View =
   | "gamePreview"
   | "gameLogsSummary"
   | "usageBumpPlayers"
-  | "lineupScenarios";
+  | "lineupScenarios"
+  | "lineupAnalyzer"
+  | "contestTracker";
 
 // How long to wait after the last edit before persisting season/week to
 // the backend (see backend/api/current_week) -- avoids a PUT on every
@@ -260,6 +264,22 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "lineupAnalyzer" ? " selected" : ""}`}
+          aria-pressed={view === "lineupAnalyzer"}
+          onClick={() => requestViewChange("lineupAnalyzer")}
+        >
+          Lineup Analyzer
+        </button>
+        <button
+          type="button"
+          className={`view-tab${view === "contestTracker" ? " selected" : ""}`}
+          aria-pressed={view === "contestTracker"}
+          onClick={() => requestViewChange("contestTracker")}
+        >
+          Results Tracker
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "gamePreview" ? " selected" : ""}`}
           aria-pressed={view === "gamePreview"}
           onClick={() => requestViewChange("gamePreview")}
@@ -421,6 +441,10 @@ function App() {
       {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
       {view === "lineupScenarios" && (
         <LineupScenariosView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "contestTracker" && <ContestTrackerView season={season} />}
+      {view === "lineupAnalyzer" && (
+        <LineupAnalyzerView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "gamePreview" && (
         <GamePreviewView season={season} week={week} platform={platform} contest={contest} />

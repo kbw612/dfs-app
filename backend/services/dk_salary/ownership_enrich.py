@@ -21,9 +21,27 @@ naming mismatch entirely.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Optional
 
+from backend.repositories.ownership.projections_repo import load_projections_csv
 from backend.schemas.ownership.ownership import OwnershipPlayer
+from backend.services.ownership.csv_loader import parse_ownership_projections_csv
+
+
+def load_projected_ownership_players(
+    nfl_data_dir: Path, season: int, week: int, platform: str
+) -> Optional[list[OwnershipPlayer]]:
+    """The players in the uploaded ownership projections file (Settings tab,
+    the file behind the Ownership Summary tab) for this season/week/platform,
+    or None when nothing has been uploaded. This is the *projected* ownership
+    Salary Blocks shows; callers fall back to the older scraped snapshot only
+    when this is None."""
+    csv_text = load_projections_csv(nfl_data_dir, season, week, platform)
+    if csv_text is None:
+        return None
+    players, _messages = parse_ownership_projections_csv(csv_text)
+    return players or None
 
 
 def enrich_with_ownership_pct(

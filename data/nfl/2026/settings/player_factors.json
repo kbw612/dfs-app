@@ -557,9 +557,9 @@
       "dfs_type": null
     },
     "Chuba Hubbard": {
-      "volume": 2.0,
+      "volume": 3.0,
       "talent": 2.0,
-      "dfs_type": null
+      "dfs_types": []
     },
     "D'Andre Swift": {
       "volume": 2.0,

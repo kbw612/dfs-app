@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6900,
+          "fpts": 28.88
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "KC Concepcion Jr.",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 4100,
+          "fpts": 25.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 264.68,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6900,
+          "fpts": 28.88
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "KC Concepcion Jr.",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Mason Taylor",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 25.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 48600,
+      "total_fpts": 264.38,
+      "salary_leftover": 1400
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6900,
+          "fpts": 28.88
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jameson Williams",
+          "position": "WR",
+          "salary": 5800,
+          "fpts": 26.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Mason Taylor",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 25.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 50000,
+      "total_fpts": 264.28,
+      "salary_leftover": 0
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6900,
+          "fpts": 28.88
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 4100,
+          "fpts": 25.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Mason Taylor",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 25.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 48300,
+      "total_fpts": 263.68,
+      "salary_leftover": 1700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bo Nix",
+          "position": "QB",
+          "salary": 5000,
+          "fpts": 26.18
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jameson Williams",
+          "position": "WR",
+          "salary": 5800,
+          "fpts": 26.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "KC Concepcion Jr.",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 262.58,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Malik Willis",
+          "position": "QB",
+          "salary": 4700,
+          "fpts": 26.02
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Amon-Ra St. Brown",
+          "position": "WR",
+          "salary": 7800,
+          "fpts": 27.2
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Mason Taylor",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 25.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 262.52,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 6900,
+          "fpts": 28.88
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tre Tucker",
+          "position": "WR",
+          "salary": 5200,
+          "fpts": 24.3
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Mason Taylor",
+          "position": "TE",
+          "salary": 2800,
+          "fpts": 25.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49400,
+      "total_fpts": 262.48,
+      "salary_leftover": 600
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Malik Willis",
+          "position": "QB",
+          "salary": 4700,
+          "fpts": 26.02
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jameson Williams",
+          "position": "WR",
+          "salary": 5800,
+          "fpts": 26.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "KC Concepcion Jr.",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49400,
+      "total_fpts": 262.42,
+      "salary_leftover": 600
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bo Nix",
+          "position": "QB",
+          "salary": 5000,
+          "fpts": 26.18
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "KC Concepcion Jr.",
+          "position": "WR",
+          "salary": 4400,
+          "fpts": 26.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 4100,
+          "fpts": 25.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 48000,
+      "total_fpts": 261.98,
+      "salary_leftover": 2000
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Bo Nix",
+          "position": "QB",
+          "salary": 5000,
+          "fpts": 26.18
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bucky Irving",
+          "position": "RB",
+          "salary": 6100,
+          "fpts": 27.0
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 39.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Zay Flowers",
+          "position": "WR",
+          "salary": 6900,
+          "fpts": 30.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6600,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Jameson Williams",
+          "position": "WR",
+          "salary": 5800,
+          "fpts": 26.1
+        },
+        {
+          "roster_position": "TE",
+          "player": "Trey McBride",
+          "position": "TE",
+          "salary": 7400,
+          "fpts": 30.1
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Omar Cooper Jr.",
+          "position": "WR",
+          "salary": 4100,
+          "fpts": 25.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2200,
+          "fpts": 27.0
+        }
+      ],
+      "total_salary": 49400,
+      "total_fpts": 261.88,
+      "salary_leftover": 600
+    }
+  ]
+}

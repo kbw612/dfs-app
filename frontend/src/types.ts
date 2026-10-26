@@ -2061,3 +2061,105 @@ export function findTeamRecap(snapshot: GameRecapWeekSnapshot | null, team: stri
   if (snapshot === null) return null;
   return snapshot.games.find((g) => g.away_team === team || g.home_team === team) ?? null;
 }
+
+// Lineup Analyzer -- see backend/api/lineup_analyzer/__init__.py.
+export interface LineupAnalyzerFileSummary {
+  name: string;
+  rows: number;
+  new_unique: number;
+}
+
+export interface LineupAnalyzerInfo {
+  slate_signature: string;
+  lineup_count: number;
+  files: LineupAnalyzerFileSummary[];
+  feature_names: string[];
+  default_weights: Record<string, number>;
+}
+
+export interface LineupAnalyzerPlayer {
+  slot: string;
+  name: string;
+  dk_id: string;
+  position: string;
+  team: string;
+  salary: number;
+  own: number;
+}
+
+export interface LineupAnalyzerRow {
+  rank: number;
+  score: number;
+  percentile: number;
+  tier: string;
+  salary: number;
+  unused: number;
+  own_sum: number;
+  players: LineupAnalyzerPlayer[];
+  contributions: Record<string, number>;
+  features: Record<string, number>;
+}
+
+export interface LineupAnalyzerResult {
+  slate_signature: string;
+  total: number;
+  unresolved: number;
+  weights: Record<string, number>;
+  field_size: number;
+  top_1pct_entries: number;
+  warnings: string[];
+  tier_counts: Record<string, number>;
+  rows: LineupAnalyzerRow[];
+  portfolio: LineupAnalyzerRow[] | null;
+}
+
+export interface LineupAnalyzerPortfolioRequest {
+  size: number;
+  max_exposure_pct: number;
+  max_overlap: number;
+}
+
+export interface LineupAnalyzerSaved {
+  saved_at: string;
+  request: {
+    field_size: number;
+    weights: Record<string, number> | null;
+    portfolio: LineupAnalyzerPortfolioRequest | null;
+  };
+  result: LineupAnalyzerResult;
+}
+
+// Results Tracker -- see backend/api/contest_tracker/__init__.py.
+export interface TrackerTopFinish {
+  place: number;
+  payout: number;
+}
+
+export interface TrackerEntry {
+  contest_id: string;
+  week: number;
+  cost: number;
+  won: number;
+  top_finishes: TrackerTopFinish[];
+}
+
+export interface TrackerContestSummary {
+  id: string;
+  name: string;
+  entries: TrackerEntry[];
+  cost: number;
+  won: number;
+  roi_pct: number | null;
+  played: number;
+}
+
+export interface ContestTrackerResult {
+  season: number;
+  weeks_elapsed: number;
+  contests: TrackerContestSummary[];
+  week_net: Record<string, number>;
+  total_cost: number;
+  total_won: number;
+  total_roi_pct: number | null;
+  net: number;
+}

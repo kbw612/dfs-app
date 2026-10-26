@@ -1,0 +1,141 @@
+{
+  "season": 2026,
+  "contests": [
+    {
+      "id": "minimax",
+      "name": "mini-Max (.50)"
+    },
+    {
+      "id": "dailydollar",
+      "name": "Daily Dollar (SE)"
+    },
+    {
+      "id": "singleback",
+      "name": "Singleback (5 entry)"
+    }
+  ],
+  "entries": [
+    {
+      "contest_id": "minimax",
+      "week": 1,
+      "cost": 50.0,
+      "won": 49.5,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "minimax",
+      "week": 2,
+      "cost": 50.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "minimax",
+      "week": 3,
+      "cost": 50.0,
+      "won": 55.0,
+      "top_finishes": [
+        {
+          "place": 151,
+          "payout": 30.0
+        },
+        {
+          "place": 575,
+          "payout": 8.0
+        }
+      ]
+    },
+    {
+      "contest_id": "minimax",
+      "week": 4,
+      "cost": 50.0,
+      "won": 88.0,
+      "top_finishes": [
+        {
+          "place": 1551,
+          "payout": 5.0
+        }
+      ]
+    },
+    {
+      "contest_id": "minimax",
+      "week": 6,
+      "cost": 55.0,
+      "won": 37.5,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "minimax",
+      "week": 7,
+      "cost": 50.0,
+      "won": 65.5,
+      "top_finishes": [
+        {
+          "place": 242,
+          "payout": 15.0
+        }
+      ]
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 1,
+      "cost": 1.0,
+      "won": 4.0,
+      "top_finishes": [
+        {
+          "place": 497,
+          "payout": 4.0
+        }
+      ]
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 2,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 3,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 4,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 5,
+      "cost": 1.0,
+      "won": 2.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 6,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 7,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "singleback",
+      "week": 5,
+      "cost": 5.0,
+      "won": 1.5,
+      "top_finishes": []
+    }
+  ]
+}

@@ -24,6 +24,12 @@ import type {
   LineupScenarioAnalysis,
   LineupScenarioDefinition,
   LineupScenarioUploadResult,
+  LineupAnalyzerInfo,
+  LineupAnalyzerPortfolioRequest,
+  LineupAnalyzerResult,
+  LineupAnalyzerSaved,
+  ContestTrackerResult,
+  TrackerEntry,
   GameLogsSummaryResult,
   TopLineupPatternsResult,
   MatchupResetResult,
@@ -99,6 +105,18 @@ async function apiPost<T>(path: string): Promise<T> {
 
 async function apiPostForm<T>(path: string, formData: FormData): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, { method: "POST", body: formData });
+  if (!response.ok) {
+    throw new ApiError(await parseErrorDetail(response));
+  }
+  return (await response.json()) as T;
+}
+
+async function apiSend<T>(method: "PATCH" | "DELETE", path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method,
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
   if (!response.ok) {
     throw new ApiError(await parseErrorDetail(response));
   }
@@ -1051,4 +1069,87 @@ export function evaluateLineupScenarios(
     min_stack_size: String(minStackSize),
   });
   return apiPostJson<LineupScenarioAnalysis>(`/api/lineup-scenarios/evaluate?${params.toString()}`, { scenarios });
+}
+
+// Lineup Analyzer tab -- see backend/api/lineup_analyzer/__init__.py.
+export function fetchLineupAnalyzerInfo(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string
+): Promise<LineupAnalyzerInfo> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiGet<LineupAnalyzerInfo>(`/api/lineup-analyzer/info?${params.toString()}`);
+}
+
+export function uploadLineupAnalyzerFiles(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  files: File[],
+  replace: boolean
+): Promise<LineupAnalyzerInfo> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    contest,
+    replace: String(replace),
+  });
+  const formData = new FormData();
+  files.forEach((f) => formData.append("files", f));
+  return apiPostForm<LineupAnalyzerInfo>(`/api/lineup-analyzer/upload?${params.toString()}`, formData);
+}
+
+export function analyzeLineups(body: {
+  season: number;
+  week: number;
+  platform: string;
+  contest: string;
+  field_size: number;
+  weights: Record<string, number>;
+  limit: number;
+  portfolio: LineupAnalyzerPortfolioRequest | null;
+}): Promise<LineupAnalyzerResult> {
+  return apiPostJson<LineupAnalyzerResult>("/api/lineup-analyzer/analyze", body);
+}
+
+// The last saved analysis for this week/contest (null if none) -- lets the
+// Lineup Analyzer show earlier weeks' results without re-analyzing.
+export function fetchLineupAnalyzerSaved(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string
+): Promise<LineupAnalyzerSaved | null> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+  return apiGet<LineupAnalyzerSaved | null>(`/api/lineup-analyzer/result?${params.toString()}`);
+}
+
+// Results Tracker tab -- see backend/api/contest_tracker/__init__.py. Every
+// write returns the whole refreshed grid.
+export function fetchContestTracker(season: number): Promise<ContestTrackerResult> {
+  return apiGet<ContestTrackerResult>(`/api/contest-tracker?season=${season}`);
+}
+
+export function addTrackerContest(season: number, name: string): Promise<ContestTrackerResult> {
+  return apiPostJson<ContestTrackerResult>(`/api/contest-tracker/contests?season=${season}`, { name });
+}
+
+export function renameTrackerContest(season: number, id: string, name: string): Promise<ContestTrackerResult> {
+  return apiSend<ContestTrackerResult>("PATCH", `/api/contest-tracker/contests/${id}?season=${season}`, { name });
+}
+
+export function deleteTrackerContest(season: number, id: string): Promise<ContestTrackerResult> {
+  return apiSend<ContestTrackerResult>("DELETE", `/api/contest-tracker/contests/${id}?season=${season}`);
+}
+
+export function putTrackerEntry(season: number, entry: TrackerEntry): Promise<ContestTrackerResult> {
+  return apiPut<ContestTrackerResult>(`/api/contest-tracker/entries?season=${season}`, entry);
+}
+
+export function deleteTrackerEntry(season: number, contestId: string, week: number): Promise<ContestTrackerResult> {
+  const params = new URLSearchParams({ season: String(season), contest_id: contestId, week: String(week) });
+  return apiSend<ContestTrackerResult>("DELETE", `/api/contest-tracker/entries?${params.toString()}`);
 }

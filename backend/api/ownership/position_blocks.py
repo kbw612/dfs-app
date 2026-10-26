@@ -82,7 +82,7 @@ from backend.repositories.player_selection.player_selection_repo import load_ove
 from backend.repositories.salary_multiplier.salary_multiplier_repo import load_multipliers
 from backend.schemas.ownership.ownership import PositionBlock
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
-from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
+from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct, load_projected_ownership_players
 from backend.services.my_player_pool.engine import in_my_player_pool
 from backend.services.ownership.position_blocks import (
     SALARY_CAPS,
@@ -165,7 +165,11 @@ def position_blocks_endpoint(
     max_block_salary = cap - min(dst_salaries) if dst_salaries else None
 
     ownership_snapshot_path = find_latest_ownership_snapshot(settings.ownership_snapshots_dir, season=season, week=week)
-    ownership_players = load_ownership_snapshot(ownership_snapshot_path).players if ownership_snapshot_path else None
+    # Projected ownership comes from the uploaded projections file first; the
+    # older scraped snapshot is only a fallback when none is uploaded.
+    ownership_players = load_projected_ownership_players(settings.nfl_data_dir, season, week, platform) or (
+        load_ownership_snapshot(ownership_snapshot_path).players if ownership_snapshot_path else None
+    )
     players = enrich_with_ownership_pct(salary_snapshot.players, ownership_players)
 
     multiplier = resolve_multiplier(platform, load_multipliers(settings.salary_multiplier_dir).get(platform))

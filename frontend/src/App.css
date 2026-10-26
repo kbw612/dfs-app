@@ -4054,3 +4054,87 @@ table.contest-results-grid {
   color: #7a5a00;
   font-size: 0.85rem;
 }
+
+/* Combined projected-ownership badge in a Salary Blocks row header: tinted by
+   the block's low / medium / high tier within the loaded blocks. */
+.block-own-badge {
+  flex: 0 0 auto;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #e8ecf1;
+  color: #333;
+}
+
+.block-own-badge.low {
+  background: #dff3e3;
+  color: #14532d;
+}
+
+.block-own-badge.medium {
+  background: #fdf0c8;
+  color: #7a5a00;
+}
+
+.block-own-badge.high {
+  background: #fbdada;
+  color: #8a1c1c;
+}
+
+/* Lineup Analyzer */
+.lineup-analyzer-section { margin: 16px 0; padding-top: 12px; border-top: 1px solid #ddd; }
+.lineup-analyzer-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 10px; }
+.lineup-analyzer-controls input[type="number"] { width: 70px; }
+.lineup-analyzer-note { font-size: 0.85rem; color: #555; }
+.lineup-analyzer-error { color: #b3261e; }
+.lineup-analyzer-weights { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin: 8px 0; }
+.lineup-analyzer-weights label { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; }
+.lineup-analyzer-weights input { width: 70px; }
+.lineup-analyzer-table-wrap { overflow-x: auto; }
+.lineup-analyzer-table { border-collapse: collapse; font-size: 0.8rem; width: 100%; }
+.lineup-analyzer-table th, .lineup-analyzer-table td { padding: 4px 6px; border-bottom: 1px solid #e5e5e5; text-align: left; vertical-align: top; }
+.lineup-analyzer-row { cursor: pointer; }
+.lineup-analyzer-row:hover { background: #f3f6fb; }
+.lineup-analyzer-player { display: inline-block; margin-right: 8px; white-space: nowrap; }
+.lineup-analyzer-player small { color: #666; }
+.lineup-analyzer-breakdown { display: flex; flex-wrap: wrap; gap: 6px 14px; background: #fafafa; padding: 6px; }
+.lineup-analyzer-breakdown .pos { color: #1b7a3a; }
+.lineup-analyzer-breakdown .neg { color: #b3261e; }
+button.secondary { background: #e2e8f0; color: #1a202c; }
+.lineup-analyzer-stale { background: #fff6dd; border: 1px solid #e6c35c; padding: 6px 10px; border-radius: 6px; font-size: 0.85rem; }
+
+/* Results Tracker */
+.tracker-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin: 10px 0; }
+.tracker-controls label { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; color: #555; }
+.tracker-controls input[type="number"], .tracker-controls label input { width: 90px; }
+.tracker-controls textarea { width: 240px; }
+.tracker-spacer { flex: 1; }
+.tracker-hint { font-size: 0.8rem; color: #777; }
+.tracker-error { color: #b3261e; }
+.tracker-table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; }
+.tracker-grid { border-collapse: collapse; font-size: 0.8rem; white-space: nowrap; width: 100%; }
+.tracker-grid th, .tracker-grid td { padding: 6px 8px; border-bottom: 1px solid #e5e5e5; text-align: right; }
+.tracker-grid th { font-weight: 500; color: #555; background: #f4f4f4; }
+.tracker-grid .tracker-left { text-align: left; font-weight: 500; }
+.tracker-grid .tracker-sep { border-left: 1px solid #bbb; }
+.tracker-cell { cursor: pointer; }
+.tracker-cell:hover { background: #f3f6fb; }
+.tracker-skip { color: #999; text-align: center !important; }
+.tracker-pos { color: #1b7a3a; }
+.tracker-neg { color: #b3261e; }
+.tracker-selected { outline: 2px solid #2b6cb0; outline-offset: -2px; }
+.tracker-total td { font-weight: 500; border-top: 1px solid #bbb; background: #f4f4f4; }
+.tracker-detail { margin-top: 14px; padding: 12px 14px; background: #f4f4f4; border-radius: 12px; }
+.tracker-detail-title { font-weight: 500; margin-bottom: 6px; }
+.tracker-rowlabel { text-align: left !important; color: #666; font-size: 0.72rem; }
+.tracker-selected-top { outline: 2px solid #2b6cb0; outline-offset: -2px; border-bottom-color: transparent !important; }
+.tracker-selected-bottom { outline: 2px solid #2b6cb0; outline-offset: -2px; }
+.tracker-grid td[rowspan] { vertical-align: middle; }
+.tracker-summary { text-align: left !important; border-right: 1px solid #bbb; vertical-align: middle; min-width: 190px; }
+.tracker-summary-name { font-weight: 500; font-size: 0.85rem; margin-bottom: 4px; }
+.tracker-summary-stats { display: grid; grid-template-columns: auto auto; gap: 1px 14px; font-size: 0.72rem; color: #666; }
+.tracker-summary-stats b { font-weight: 500; color: #1a202c; }
+.tracker-summary-stats b.tracker-pos { color: #1b7a3a; }
+.tracker-summary-stats b.tracker-neg { color: #b3261e; }
