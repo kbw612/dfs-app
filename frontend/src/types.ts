@@ -2163,3 +2163,136 @@ export interface ContestTrackerResult {
   total_roi_pct: number | null;
   net: number;
 }
+
+// Exposure panel -- see backend/schemas/exposure/exposure.py. Finished data;
+// the frontend only displays it.
+export interface ExposurePlayer {
+  name: string;
+  team: string;
+  position: string;
+  salary: number;
+  count: number;
+  exposure_pct: number;
+  field_pct: number | null;
+  diff: number | null;
+  pts: number | null;
+  compare_pct: number | null;
+}
+
+export interface ExposureView {
+  scopes: { key: string; label: string; lineup_count: number }[];
+  selected: string;
+  lineup_count: number;
+  flex: { position: string; count: number; pct: number }[];
+  players: ExposurePlayer[];
+  field_label: string;
+  has_pts: boolean;
+  compare_available: boolean;
+}
+
+// Player Groups (Blink) -- see backend/api/player_groups/__init__.py.
+export interface GroupPlayer {
+  id: string;
+  name: string;
+  anchor: boolean;
+}
+
+export interface PlayerGroup {
+  name: string;
+  pct: number;
+  min: number;
+  max: number;
+  players: GroupPlayer[];
+}
+
+export interface GroupSummaryPlayer extends GroupPlayer {
+  salary: number | null;
+  position: string | null;
+}
+
+export interface GroupSummary extends Omit<PlayerGroup, "players"> {
+  players: GroupSummaryPlayer[];
+  player_count: number;
+  salary_total: number;
+  missing_ids: string[];
+}
+
+export interface GroupsState {
+  groups: GroupSummary[];
+  warnings: string[];
+}
+
+export interface PoolPlayer {
+  id: string;
+  name: string;
+  position: string;
+  team: string;
+  opponent: string;
+  salary: number;
+  game_key: string;
+}
+
+export interface GroupGameChip {
+  key: string;
+  label: string;
+  teams: string[];
+}
+
+export interface GroupPoolResult {
+  games: GroupGameChip[];
+  players: PoolPlayer[];
+  min_salaries: Record<string, number>;
+  my_pool_count: number;
+}
+
+// Game Logs Summary FPTS panels -- finished for display by the backend
+// (backend/services/game_logs_summary/position_fpts.py).
+export interface FptsLine {
+  text: string;
+  details: string[];
+}
+
+export interface FptsCell {
+  count: number;
+  lines: FptsLine[];
+}
+
+export interface FptsRow {
+  name: string;
+  team: string;
+  status: string | null;
+  elite: FptsCell;
+  strong: FptsCell;
+}
+
+export interface FptsGroup {
+  opponent: string;
+  row_count: number;
+  allowed_total: number;
+  allowed_elite: FptsCell;
+  allowed_strong: FptsCell;
+  rows: FptsRow[];
+}
+
+export interface PositionFptsSummary {
+  position: string;
+  opponent_label: string;
+  weeks_label: string;
+  elite_label: string;
+  strong_label: string;
+  player_games_elite: number;
+  player_games_strong: number;
+  allowed_elite: number;
+  allowed_strong: number;
+  best_setups: string[];
+  row_count: number;
+  groups: FptsGroup[];
+}
+
+export interface FptsPanelsResult {
+  qb: PositionFptsSummary | null;
+  rb: PositionFptsSummary | null;
+  wr: PositionFptsSummary | null;
+  te: PositionFptsSummary | null;
+  dst: PositionFptsSummary | null;
+}

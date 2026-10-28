@@ -56,6 +56,7 @@ from backend.api.team_factors import router as team_factors_router
 from backend.api.usage_bump import router as usage_bump_router
 from backend.api.usage_bump.players import router as usage_bump_players_router
 from backend.api.contest_tracker import router as contest_tracker_router
+from backend.api.player_groups import router as player_groups_router
 from backend.api.vegas_lines import router as vegas_lines_router
 from backend.api.game_recap import router as game_recap_router
 from backend.api.weather import router as weather_router
@@ -82,6 +83,7 @@ app.include_router(player_defaults_router, prefix="/api")
 app.include_router(platform_settings_router, prefix="/api")
 app.include_router(player_selection_router, prefix="/api")
 app.include_router(vegas_lines_router, prefix="/api")
+app.include_router(player_groups_router, prefix="/api")
 app.include_router(contest_tracker_router, prefix="/api")
 app.include_router(my_player_pool_router, prefix="/api")
 app.include_router(salary_multiplier_router, prefix="/api")

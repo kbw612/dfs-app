@@ -29,6 +29,11 @@ import type {
   LineupAnalyzerResult,
   LineupAnalyzerSaved,
   ContestTrackerResult,
+  ExposureView,
+  FptsPanelsResult,
+  GroupPoolResult,
+  GroupsState,
+  PlayerGroup,
   TrackerEntry,
   GameLogsSummaryResult,
   TopLineupPatternsResult,
@@ -1152,4 +1157,124 @@ export function putTrackerEntry(season: number, entry: TrackerEntry): Promise<Co
 export function deleteTrackerEntry(season: number, contestId: string, week: number): Promise<ContestTrackerResult> {
   const params = new URLSearchParams({ season: String(season), contest_id: contestId, week: String(week) });
   return apiSend<ContestTrackerResult>("DELETE", `/api/contest-tracker/entries?${params.toString()}`);
+}
+
+// Exposure panel data (FLEX counts + player exposure), already calculated.
+export function fetchAnalyzerExposure(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  scope: string,
+  position: string,
+  sort: string
+): Promise<ExposureView | null> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, contest, scope, position, sort });
+  return apiGet<ExposureView | null>(`/api/lineup-analyzer/exposure?${params.toString()}`);
+}
+
+export function fetchContestExposure(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  scope: string,
+  position: string,
+  sort: string,
+  compare: boolean
+): Promise<ExposureView | null> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    contest,
+    scope,
+    position,
+    sort,
+    compare: String(compare),
+  });
+  return apiGet<ExposureView | null>(`/api/contest-results/exposure?${params.toString()}`);
+}
+
+// Player Groups tab (Blink groups) -- see backend/api/player_groups/__init__.py.
+function groupsParams(season: number, week: number, platform: string, contest: string): URLSearchParams {
+  return new URLSearchParams({ season: String(season), week: String(week), platform, contest });
+}
+
+export function fetchPlayerGroups(season: number, week: number, platform: string, contest: string): Promise<GroupsState> {
+  return apiGet<GroupsState>(`/api/player-groups?${groupsParams(season, week, platform, contest).toString()}`);
+}
+
+export function savePlayerGroups(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  groups: PlayerGroup[]
+): Promise<GroupsState> {
+  return apiPut<GroupsState>(`/api/player-groups?${groupsParams(season, week, platform, contest).toString()}`, { groups });
+}
+
+export function fetchGroupPool(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  games: string[],
+  position: string,
+  q: string,
+  myPool: boolean,
+  hideMin: boolean
+): Promise<GroupPoolResult> {
+  const params = groupsParams(season, week, platform, contest);
+  games.forEach((g) => params.append("game", g));
+  params.set("position", position);
+  params.set("q", q);
+  params.set("my_pool", String(myPool));
+  params.set("hide_min", String(hideMin));
+  return apiGet<GroupPoolResult>(`/api/player-groups/pool?${params.toString()}`);
+}
+
+export function importPlayerGroups(
+  season: number,
+  week: number,
+  platform: string,
+  contest: string,
+  file: File,
+  replaceAll: boolean
+): Promise<GroupsState> {
+  const params = groupsParams(season, week, platform, contest);
+  params.set("replace_all", String(replaceAll));
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiPostForm<GroupsState>(`/api/player-groups/import?${params.toString()}`, formData);
+}
+
+export function exportPlayerGroups(week: number, contest: string, groups: PlayerGroup[]): Promise<{ filename: string; csv: string }> {
+  return apiPostJson<{ filename: string; csv: string }>(
+    `/api/player-groups/export?week=${week}&contest=${encodeURIComponent(contest)}`,
+    { groups }
+  );
+}
+
+// Game Logs Summary FPTS panels; the Game/Team chips are applied by the backend.
+export function fetchFptsPanels(
+  season: number,
+  week: number,
+  windowWeeks: number,
+  platform: string,
+  contest: string,
+  game: string | null,
+  teams: string[]
+): Promise<FptsPanelsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    window_weeks: String(windowWeeks),
+    platform,
+    contest,
+  });
+  if (game) params.set("game", game);
+  teams.forEach((t) => params.append("team", t));
+  return apiGet<FptsPanelsResult>(`/api/game-logs-summary/fpts?${params.toString()}`);
 }

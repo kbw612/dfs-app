@@ -21,6 +21,7 @@ docstring for the raw file's own column layout.
 
 from fastapi import APIRouter
 
+from backend.api.contest_results.exposure import router as exposure_router
 from backend.api.contest_results.file_info import router as file_info_router
 from backend.api.contest_results.import_csv import router as import_csv_router
 from backend.api.contest_results.optimal_lineup import router as optimal_lineup_router
@@ -35,3 +36,4 @@ router.include_router(player_results_router)
 router.include_router(optimal_lineup_router)
 router.include_router(optimal_lineup_pools_router)
 router.include_router(file_info_router)
+router.include_router(exposure_router)

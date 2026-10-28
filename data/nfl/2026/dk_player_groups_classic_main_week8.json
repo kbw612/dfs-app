@@ -1,0 +1,57 @@
+{
+  "groups": [
+    {
+      "name": "Det",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664393",
+          "name": "Jared Goff",
+          "anchor": true
+        },
+        {
+          "id": "44664721",
+          "name": "Amon-Ra St. Brown",
+          "anchor": false
+        },
+        {
+          "id": "44664727",
+          "name": "Justin Jefferson",
+          "anchor": false
+        },
+        {
+          "id": "44664743",
+          "name": "Jameson Williams",
+          "anchor": false
+        },
+        {
+          "id": "44664769",
+          "name": "Jordan Addison",
+          "anchor": false
+        },
+        {
+          "id": "44664809",
+          "name": "Jauan Jennings",
+          "anchor": false
+        },
+        {
+          "id": "44664839",
+          "name": "Isaac TeSlaa",
+          "anchor": false
+        },
+        {
+          "id": "44665131",
+          "name": "Sam LaPorta",
+          "anchor": false
+        },
+        {
+          "id": "44665137",
+          "name": "T.J. Hockenson",
+          "anchor": false
+        }
+      ]
+    }
+  ]
+}

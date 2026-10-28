@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { analyzeLineups, fetchLineupAnalyzerInfo, fetchLineupAnalyzerSaved, uploadLineupAnalyzerFiles } from "../api";
+import { analyzeLineups, fetchAnalyzerExposure, fetchLineupAnalyzerInfo, fetchLineupAnalyzerSaved, uploadLineupAnalyzerFiles } from "../api";
 import type { LineupAnalyzerInfo, LineupAnalyzerResult, LineupAnalyzerRow } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
+import { ExposurePanel } from "./ExposurePanel";
 
 interface LineupAnalyzerViewProps {
   season: number;
@@ -354,6 +355,12 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
               </>
             )}
           </div>
+          <ExposurePanel
+            title="FLEX and player exposure"
+            reloadKey={`${season}-${week}-${platform}-${contest}-${savedAt ?? ""}`}
+            load={(scope, position, sort) => fetchAnalyzerExposure(season, week, platform, contest, scope, position, sort)}
+            emptyMessage="Exposure appears after you analyze (re-analyze older saved results)."
+          />
           <LineupTable rows={shown} featureNames={features} />
         </section>
       )}

@@ -7,6 +7,7 @@ import {
   putTrackerEntry,
   renameTrackerContest,
 } from "../api";
+import { ConfirmDialog } from "./ConfirmDialog";
 import type { ContestTrackerResult, TrackerEntry, TrackerTopFinish } from "../types";
 
 interface ContestTrackerViewProps {
@@ -87,6 +88,8 @@ export function ContestTrackerView({ season: headerSeason }: ContestTrackerViewP
   const [finishes, setFinishes] = useState("");
   const [newName, setNewName] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [renameText, setRenameText] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export function ContestTrackerView({ season: headerSeason }: ContestTrackerViewP
 
   const select = (contestId: string, week: number) => {
     const e = entryFor(contestId, week);
+    setRenameText(data?.contests.find((c) => c.id === contestId)?.name ?? "");
     setSelected({ contestId, week });
     setCost(e ? String(e.cost) : "");
     setWon(e ? String(e.won) : "");
@@ -319,31 +323,38 @@ export function ContestTrackerView({ season: headerSeason }: ContestTrackerViewP
             )}
           </div>
           <div className="tracker-controls">
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                const name = window.prompt("Rename contest", selectedContest.name);
-                if (name && name.trim()) run(renameTrackerContest(season, selectedContest.id, name.trim()));
-              }}
-            >
-              Rename contest
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                if (window.confirm(`Delete "${selectedContest.name}" and all its entries?`)) {
-                  run(deleteTrackerContest(season, selectedContest.id));
-                  setSelected(null);
-                }
-              }}
-            >
+            <label>
+              Contest name
+              <input
+                value={renameText}
+                onChange={(e) => setRenameText(e.target.value)}
+                onBlur={() => {
+                  const name = renameText.trim();
+                  if (name && name !== selectedContest.name) run(renameTrackerContest(season, selectedContest.id, name));
+                  else setRenameText(selectedContest.name);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+              />
+            </label>
+            <button type="button" className="secondary" onClick={() => setConfirmDelete(true)}>
               Delete contest
             </button>
             <span className="tracker-hint">Changes save when you leave a field.</span>
           </div>
         </div>
+      )}
+      {confirmDelete && selectedContest && (
+        <ConfirmDialog
+          message={`Delete "${selectedContest.name}" and all its entries? This can't be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => {
+            const id = selectedContest.id;
+            setConfirmDelete(false);
+            setSelected(null);
+            run(deleteTrackerContest(season, id));
+          }}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
     </div>
   );

@@ -339,3 +339,67 @@ class GameLogsSummaryResult(BaseModel):
     rb_multipliers: PositionMultiplierSummary | None = None
     wr_multipliers: PositionMultiplierSummary | None = None
     te_multipliers: PositionMultiplierSummary | None = None
+
+
+# --- FPTS panels (QB, RB, WR, TE, DST) -------------------------------------
+# Everything here is finished for display: counts, preformatted lines, group
+# sizes. The frontend only renders it.
+
+
+class FptsLine(BaseModel):
+    """One game: its display text, plus muted detail lines under it (QB: pass
+    attempts and touchdowns; RB: volume, then production)."""
+
+    text: str
+    details: list[str] = Field(default_factory=list)
+
+
+class FptsCell(BaseModel):
+    """One table cell: how many games, and one display line per game."""
+
+    count: int = 0
+    lines: list[FptsLine] = Field(default_factory=list)
+
+
+class FptsRow(BaseModel):
+    name: str
+    team: str
+    status: str | None = None
+    elite: FptsCell
+    strong: FptsCell
+
+
+class FptsGroup(BaseModel):
+    """The players facing one opponent this week, with that opponent's allowed
+    games shown once for the whole group."""
+
+    opponent: str
+    row_count: int  # number of rows in the group (for the cells that span it)
+    allowed_total: int
+    allowed_elite: FptsCell
+    allowed_strong: FptsCell
+    rows: list[FptsRow]
+
+
+class PositionFptsSummary(BaseModel):
+    position: str
+    # Heading of the opponent columns: "Opp D" (QB/RB/WR/TE) or "Opp offense" (DST).
+    opponent_label: str
+    weeks_label: str  # "Weeks 1-6"
+    elite_label: str  # "27+"
+    strong_label: str  # "22-26.9"
+    player_games_elite: int
+    player_games_strong: int
+    allowed_elite: int
+    allowed_strong: int
+    best_setups: list[str] = Field(default_factory=list)
+    row_count: int
+    groups: list[FptsGroup] = Field(default_factory=list)
+
+
+class FptsPanelsResult(BaseModel):
+    qb: PositionFptsSummary | None = None
+    rb: PositionFptsSummary | None = None
+    wr: PositionFptsSummary | None = None
+    te: PositionFptsSummary | None = None
+    dst: PositionFptsSummary | None = None

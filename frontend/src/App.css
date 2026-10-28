@@ -4138,3 +4138,62 @@ button.secondary { background: #e2e8f0; color: #1a202c; }
 .tracker-summary-stats b { font-weight: 500; color: #1a202c; }
 .tracker-summary-stats b.tracker-pos { color: #1b7a3a; }
 .tracker-summary-stats b.tracker-neg { color: #b3261e; }
+
+/* Exposure panel (Lineup Analyzer + Contest Results) */
+.exposure-panel { margin: 14px 0; }
+.exposure-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+.exposure-label { font-size: 0.8rem; color: #555; margin-right: 4px; }
+.exposure-gap { margin-left: 12px; }
+.exposure-compare { display: flex; gap: 6px; align-items: center; margin-left: auto; font-size: 0.8rem; }
+.exposure-flex { background: #f4f4f4; border-radius: 12px; padding: 10px 14px; margin: 8px 0; }
+.exposure-flex-title { font-weight: 500; margin-bottom: 6px; font-size: 0.85rem; }
+.exposure-flex-bar { display: flex; height: 22px; border-radius: 6px; overflow: hidden; margin-bottom: 6px; }
+.exposure-flex-bar div { display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 500; }
+.exposure-flex-rb { background: #cfe3fa; color: #0c447c; }
+.exposure-flex-wr { background: #cfeed8; color: #1b5e34; }
+.exposure-flex-te { background: #fbe7b5; color: #7a5200; }
+.exposure-flex-legend { display: flex; gap: 18px; font-size: 0.8rem; color: #555; flex-wrap: wrap; }
+.exposure-flex-legend b { color: #1a202c; font-weight: 500; }
+.exposure-table-wrap { overflow-x: auto; border: 1px solid #ddd; border-radius: 8px; }
+.exposure-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; white-space: nowrap; }
+.exposure-table th, .exposure-table td { padding: 5px 8px; border-bottom: 1px solid #e5e5e5; text-align: right; }
+.exposure-table th { font-weight: 500; color: #555; background: #f4f4f4; }
+.exposure-table .exposure-left { text-align: left; }
+.exposure-team { color: #888; }
+.exposure-bar { display: inline-block; height: 8px; border-radius: 2px; background: #5b9bd5; vertical-align: middle; margin-right: 6px; }
+.exposure-pos { color: #1b7a3a; }
+.exposure-neg { color: #b3261e; }
+.exposure-hint { font-size: 0.8rem; color: #777; }
+.exposure-error { color: #b3261e; }
+
+/* Player Groups */
+.pg-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+.pg-bar label { display: flex; gap: 4px; align-items: center; font-size: 0.8rem; color: #555; }
+.pg-bar input[type="number"] { width: 70px; }
+.pg-spacer { flex: 1; }
+.pg-hint { font-size: 0.8rem; color: #777; }
+.pg-error { color: #b3261e; }
+.pg-warning { color: #8a5a00; font-size: 0.85rem; }
+.pg-cols { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 14px; margin: 10px 0; }
+.pg-list { border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+.pg-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #e5e5e5; cursor: pointer; background: #fff; }
+.pg-item.selected { background: #e6f1fb; }
+.pg-item.over { box-shadow: inset 0 2px 0 #2b6cb0; }
+.pg-handle { cursor: grab; color: #999; user-select: none; }
+.pg-name { flex: 1; }
+.pg-x { padding: 0 6px; }
+.pg-empty { padding: 10px; color: #777; font-size: 0.85rem; }
+.pg-new { display: flex; gap: 6px; margin-top: 8px; }
+.pg-new input { flex: 1; min-width: 0; }
+.pg-editor { border: 1px solid #ddd; border-radius: 8px; padding: 10px 12px; }
+.pg-name-input { width: 160px; }
+.pg-table-wrap { border: 1px solid #ddd; border-radius: 8px; overflow: auto; max-height: 420px; }
+.pg-table { border-collapse: collapse; width: 100%; font-size: 0.8rem; white-space: nowrap; }
+.pg-table th, .pg-table td { padding: 5px 8px; border-bottom: 1px solid #e5e5e5; text-align: right; }
+.pg-table th { font-weight: 500; color: #555; background: #f4f4f4; position: sticky; top: 0; }
+.pg-table .pg-left { text-align: left; }
+.pg-blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.pg-block { background: #f4f4f4; border-radius: 12px; padding: 10px 12px; font-size: 0.8rem; }
+.pg-block h4 { margin: 0 0 2px; font-size: 0.9rem; font-weight: 500; }
+.pg-block-player { padding: 1px 0; }
+.fpts-detail { display: block; padding-left: 10px; color: #666; }

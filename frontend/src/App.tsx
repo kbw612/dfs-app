@@ -24,6 +24,7 @@ import { UsageBumpView } from "./components/UsageBumpView";
 import { DepthChartsView } from "./components/DepthChartsView";
 import { InjuryReportView } from "./components/InjuryReportView";
 import { ContestTrackerView } from "./components/ContestTrackerView";
+import { PlayerGroupsView } from "./components/PlayerGroupsView";
 import { LineupAnalyzerView } from "./components/LineupAnalyzerView";
 import { LineupScenariosView } from "./components/LineupScenariosView";
 import { VegasLinesView } from "./components/VegasLinesView";
@@ -55,7 +56,8 @@ type View =
   | "usageBumpPlayers"
   | "lineupScenarios"
   | "lineupAnalyzer"
-  | "contestTracker";
+  | "contestTracker"
+  | "playerGroups";
 
 // How long to wait after the last edit before persisting season/week to
 // the backend (see backend/api/current_week) -- avoids a PUT on every
@@ -280,6 +282,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "playerGroups" ? " selected" : ""}`}
+          aria-pressed={view === "playerGroups"}
+          onClick={() => requestViewChange("playerGroups")}
+        >
+          Player Groups
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "gamePreview" ? " selected" : ""}`}
           aria-pressed={view === "gamePreview"}
           onClick={() => requestViewChange("gamePreview")}
@@ -441,6 +451,9 @@ function App() {
       {view === "dkPlayers" && <DkPlayersView season={season} week={week} platform={platform} />}
       {view === "lineupScenarios" && (
         <LineupScenariosView season={season} week={week} platform={platform} contest={contest} />
+      )}
+      {view === "playerGroups" && (
+        <PlayerGroupsView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "contestTracker" && <ContestTrackerView season={season} />}
       {view === "lineupAnalyzer" && (

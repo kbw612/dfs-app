@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchGameLogsSummary } from "../api";
-import type { GameLogsSummaryResult } from "../types";
+import { fetchFptsPanels, fetchGameLogsSummary } from "../api";
+import type { FptsPanelsResult, GameLogsSummaryResult } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
 import { CollapsibleHint } from "./CollapsibleHint";
 import { ContestFileNotice } from "./ContestFileNotice";
 import { QbPassingPanel } from "./QbPassingPanel";
+import { PositionFptsPanel } from "./PositionFptsPanel";
 import { PositionMultiplierPanel } from "./PositionMultiplierPanel";
 import { RbReceivingPanel } from "./RbReceivingPanel";
 import { RbRushingPanel } from "./RbRushingPanel";
@@ -49,6 +50,7 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
   const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
 
   const [result, setResult] = useState<GameLogsSummaryResult | null>(null);
+  const [fpts, setFpts] = useState<FptsPanelsResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +74,22 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
       cancelled = true;
     };
   }, [season, week, windowWeeks, platform, contest]);
+
+  // FPTS panels come finished from the backend, which applies the Game/Team
+  // chips itself.
+  useEffect(() => {
+    let cancelled = false;
+    fetchFptsPanels(season, week, windowWeeks, platform, contest, selectedGame, [...selectedTeams])
+      .then((data) => {
+        if (!cancelled) setFpts(data);
+      })
+      .catch(() => {
+        if (!cancelled) setFpts(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [season, week, windowWeeks, platform, contest, selectedGame, selectedTeams]);
 
   useEffect(() => {
     const timer = windowDebounce;
@@ -140,6 +158,7 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
           "RB rushing yards: games of 100+ and 75-99 rushing yards by RBs (fullbacks included), and the games defenses have allowed. A defense's games add up all of a team's RBs; each back's own yards are listed beside the total.",
           "TD columns: games with 3+ passing TDs (QBs) or 1+ rushing/receiving TDs (RBs), beside the same games defenses have allowed.",
           "RB receiving: games of 50+ receiving yards by RBs, and the games defenses have allowed to a team's RBs combined.",
+          "FPTS panels (QB, RB, WR, TE, DST): player games in the Elite and Strong fantasy-point bands for the position, and the games each opponent has allowed. DST panels list the opposing offense.",
           "Salary multipliers (QB, RB, WR, TE panels): player games of 4x+, 3-3.99x and non-TD 2.5x+ (fantasy points per $1,000 of salary), and the games defenses have allowed at that position.",
           "The table lists QBs playing this week who have a 265+ game of their own, or who are their team's primary QB facing a defense that has allowed one. Opp D allowed 265+ includes 300+ games.",
         ]}
@@ -188,6 +207,12 @@ export function GameLogsSummaryView({ season, week, platform, contest }: GameLog
 
       {loading && <p className="hint">Loading…</p>}
       {!loading && error && <p className="error">{error}</p>}
+      {/* FPTS panels, in QB, RB, WR, TE, DST order. */}
+      {!loading && !error && fpts?.qb && <PositionFptsPanel data={fpts.qb} />}
+      {!loading && !error && fpts?.rb && <PositionFptsPanel data={fpts.rb} />}
+      {!loading && !error && fpts?.wr && <PositionFptsPanel data={fpts.wr} />}
+      {!loading && !error && fpts?.te && <PositionFptsPanel data={fpts.te} />}
+      {!loading && !error && fpts?.dst && <PositionFptsPanel data={fpts.dst} />}
       {!loading &&
         !error &&
         result !== null &&

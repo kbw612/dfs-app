@@ -1,0 +1,9 @@
+Group,GroupName,Id,Name,AnchorPlayer,MinGroup,MaxGroup,Pct
+0,Det,44664465,Jahmyr Gibbs,false,2,4,1
+0,Det,44664721,Amon-Ra St. Brown,false,2,4,1
+0,Det,44664393,Jared Goff,true,2,4,1
+0,Det,44664743,Jameson Williams,false,2,4,1
+0,Det,44665131,Sam LaPorta,false,2,4,1
+1,Min,44664727,Justin Jefferson,false,1,9,0.80
+1,Min,44665137,T.J. Hockenson,false,1,9,0.80
+1,Min,44664769,Jordan Addison,false,1,9,0.80

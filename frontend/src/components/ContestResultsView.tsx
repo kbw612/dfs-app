@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchContestResultRows, fetchContestTopLineups, fetchOptimalLineupsTop10 } from "../api";
+import { fetchContestExposure, fetchContestResultRows, fetchContestTopLineups, fetchOptimalLineupsTop10 } from "../api";
 import type { ContestResultRow, ContestTopLineup, OptimalLineup } from "../types";
 import { formatExpectedFpts, formatOwnershipPct, formatSalary } from "./playerDisplay";
+import { ExposurePanel } from "./ExposurePanel";
 
 // DK Classic's own salary cap -- fixed for the cached "Optimal Lineups"
 // pool below, since the cache filename itself isn't cap-scoped -- see
@@ -459,6 +460,20 @@ export function ContestResultsView({ season, week, platform, contest }: ContestR
                 </div>
               ))
             ))}
+        </section>
+      )}
+
+      {!loading && !error && lineups && lineups.length > 0 && (
+        <section className="ownership-section">
+          <ExposurePanel
+            title="Exposure in top lineups"
+            reloadKey={`${season}-${week}-${platform}-${contest}`}
+            initialScope="top10"
+            showCompare
+            load={(scope, position, sort, compare) =>
+              fetchContestExposure(season, week, platform, contest, scope, position, sort, compare)
+            }
+          />
         </section>
       )}
 

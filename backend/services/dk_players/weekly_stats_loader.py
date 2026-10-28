@@ -166,7 +166,14 @@ _PASSING_STAT_FLOAT_COLUMNS = {
 # recoveries = total takeaways forced that week) -- added alongside the
 # pre-existing "sacks" rather than merged into one combined key, since the
 # two leaderboards (sacks vs. takeaways) are reported separately.
-_DST_STAT_COLUMNS = {"sacks": "DEF_SCK", "def_int": "DEF_INT", "fumble_recoveries": "FR"}
+_DST_STAT_COLUMNS = {
+    "sacks": "DEF_SCK",
+    "def_int": "DEF_INT",
+    "fumble_recoveries": "FR",
+    "safeties": "SFTY",
+    "def_td": "DEF_TD",
+    "ret_td": "RET_TD",
+}
 
 
 def load_weekly_stat_lines(csv_text: str) -> dict[tuple[str, int], dict[str, int | float | str]]:

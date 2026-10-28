@@ -28,6 +28,8 @@ from backend.repositories.vegas_lines.vegas_lines_repo import load_vegas_lines
 from backend.services.lineup_analyzer.upside_env import team_lines
 from backend.services.lineup_analyzer.live_slate import SlateError, build_live_week
 from backend.services.lineup_analyzer.pool_parser import lineup_key, parse_pool_csv
+from backend.schemas.exposure.exposure import ExposureResult, ExposureView
+from backend.services.exposure.exposure import LineupPlayer, build_exposure, make_view
 from backend.services.lineup_analyzer import scorer
 
 router = APIRouter(prefix="/lineup-analyzer")
@@ -156,6 +158,7 @@ class AnalyzeResult(BaseModel):
     top_1pct_entries: int
     tier_counts: dict[str, int]
     warnings: list[str] = []
+    exposure: list[ExposureResult] = []
     rows: list[AnalyzedLineup]
     portfolio: list[AnalyzedLineup] | None = None
 
@@ -222,6 +225,24 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResult:
         rank_of = {int(i): r + 1 for r, i in enumerate(order)}
         portfolio = [row(rank_of[i], i) for i in chosen]
 
+    def exposure_lineups(indices) -> list[list[LineupPlayer]]:
+        out = []
+        for i in indices:
+            lineup = []
+            for slot, (name, _pid) in zip(SLOTS, sp.lineups[int(i)]):
+                p = week.pool[name]
+                lineup.append(LineupPlayer(slot, name, p.position, p.team, p.salary))
+            out.append(lineup)
+        return out
+
+    field = {n: p.actual_pct for n, p in week.pool.items()}  # projected ownership
+    exposure = [
+        build_exposure("all", f"All {len(sp.lineups)} scored", exposure_lineups(range(len(sp.lineups))), field),
+        build_exposure("top20", "Top 20 ranked", exposure_lineups(order[:20]), field),
+    ]
+    if portfolio is not None:
+        exposure.append(build_exposure("portfolio", f"Portfolio ({len(portfolio)})", exposure_lineups(chosen), field))
+
     warnings = []
     if not stats.extra.has_projections:
         warnings.append("Projections file has no Proj./Ceiling columns -- upside factors are 0 for every lineup.")
@@ -230,6 +251,7 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResult:
     result = AnalyzeResult(
         slate_signature=slate_signature(req.season, req.week, req.platform, req.contest),
         warnings=warnings,
+        exposure=exposure,
         total=len(sp.lineups),
         unresolved=sp.unresolved,
         weights=weights,
@@ -261,3 +283,22 @@ def saved_result(season: int, week: int, platform: str = "DraftKings", contest: 
     """The last analysis saved for this week/contest, or null."""
     data = load_result(settings.nfl_data_dir, season, week, platform, contest)
     return SavedAnalysis(**data) if data else None
+
+
+@router.get("/exposure", response_model=ExposureView | None)
+def saved_exposure(
+    season: int,
+    week: int,
+    platform: str = "DraftKings",
+    contest: str = "Classic Main",
+    scope: str = "all",
+    position: str = "ALL",
+    sort: str = "exposure",
+):
+    """FLEX counts and player exposure from the last saved analysis (null if
+    there is none, or it predates the exposure panel -- re-analyze)."""
+    saved = load_result(settings.nfl_data_dir, season, week, platform, contest)
+    if not saved or not saved["result"].get("exposure"):
+        return None
+    results = [ExposureResult(**r) for r in saved["result"]["exposure"]]
+    return make_view(results, scope, position, sort, "Field own %")
