@@ -56,6 +56,8 @@ class QbPassingRow(BaseModel):
     team: str
     # Depth-chart injury status code (Q/D/O/IR...) when one is set, else None.
     status: str | None = None
+    # This week's salary from the contest salary file; None when unknown.
+    salary: int | None = None
     # This week's opponent (the defense he faces).
     opponent: str
     # His own 300+ games, and his 265-299 games (300+ games are NOT repeated
@@ -161,6 +163,8 @@ class RbRushingRow(BaseModel):
     name: str
     team: str
     status: str | None = None
+    # This week's salary from the contest salary file; None when unknown.
+    salary: int | None = None
     opponent: str
     # His own 100+ games, and his 75-99 games (100+ not repeated), oldest first.
     over_100: list[RbRushingGame] = Field(default_factory=list)
@@ -231,6 +235,8 @@ class RbReceivingRow(BaseModel):
     name: str
     team: str
     status: str | None = None
+    # This week's salary from the contest salary file; None when unknown.
+    salary: int | None = None
     opponent: str
     # His own 50+ receiving-yard games, oldest first.
     games_50: list[RbReceivingGame] = Field(default_factory=list)
@@ -287,6 +293,8 @@ class PositionMultiplierRow(BaseModel):
     name: str
     team: str
     status: str | None = None
+    # This week's salary from the contest salary file; None when unknown.
+    salary: int | None = None
     opponent: str
     # His own 4x+ games and 3-3.99x games (no overlap), oldest first.
     over_4x: list[PositionMultiplierGame] = Field(default_factory=list)
@@ -365,6 +373,8 @@ class FptsRow(BaseModel):
     name: str
     team: str
     status: str | None = None
+    # This week's salary from the contest salary file; None when unknown.
+    salary: int | None = None
     elite: FptsCell
     strong: FptsCell
 

@@ -155,3 +155,16 @@ def test_te_detail_matches_wr_lines():
     from backend.services.game_logs_summary.position_fpts import _details
     line = {"targets": 10, "receptions": 8, "receiving_yards": 96, "rec_td": 2, "rush_att": 1, "rush_yards": 3, "rush_td": 1}
     assert _details("TE", {("Te A", 1): line}, "Te A", 1) == ["10 tgt · 8 rec · 96 rec yds · 2 rec TD", "1 car · 3 rush yds · 1 rush TD"]
+
+
+def test_attach_salaries_fills_flat_and_grouped_rows():
+    from types import SimpleNamespace as NS
+    from backend.services.game_logs_summary.shared import attach_salaries, salary_lookup
+
+    lookup = salary_lookup([NS(player="Justin Herbert", team="LAC", salary=6200)])
+    s = build_position_fpts(ROWS, SCHEDULE, 3, 5, position="QB")
+    attach_salaries([s, None], lookup)
+    assert _row_for(s, "Herbert").salary is None  # not in the salary list
+    flat = NS(rows=[NS(name="Justin Herbert", team="LAC", salary=None)])
+    attach_salaries([flat], lookup)
+    assert flat.rows[0].salary == 6200

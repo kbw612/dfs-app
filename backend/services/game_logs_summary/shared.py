@@ -74,3 +74,23 @@ def depth_status(snapshot: Snapshot | None, team: str, position: str, name: str)
         if player.player == name:
             return player.status
     return None
+
+
+def salary_lookup(players) -> Callable[[str, str], int | None]:
+    """(name, team) -> this week's salary from the contest salary file's
+    players, matching names the way the rest of the app does."""
+    from backend.services.shared.name_match import normalize_player_name
+
+    table = {(normalize_player_name(p.player), p.team): p.salary for p in players}
+    return lambda name, team: table.get((normalize_player_name(name), team))
+
+
+def attach_salaries(summaries, lookup: Callable[[str, str], int | None]) -> None:
+    """Fills `salary` on every row of the given panel summaries (None entries
+    are skipped). FPTS rows are grouped under opponents; the others are flat."""
+    for summary in summaries:
+        if summary is None:
+            continue
+        rows = summary.rows if hasattr(summary, "rows") else [r for g in summary.groups for r in g.rows]
+        for row in rows:
+            row.salary = lookup(row.name, row.team)

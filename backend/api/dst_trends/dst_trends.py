@@ -21,15 +21,26 @@ from fastapi import APIRouter, HTTPException
 
 from backend.config import settings
 from backend.repositories.dk_players.weekly_stats_repo import load_weekly_stats_csv
+from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
 from backend.schemas.dst_trends.dst_trends import DstTrendsResult
 from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lines
+from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.dst_trends.dst_trends_engine import build_dst_trend_leaderboards
 
 router = APIRouter()
 
 
 @router.get("/dst-trends", response_model=DstTrendsResult)
-def dst_trends_endpoint(season: int, week: int, window_weeks: int = 5) -> DstTrendsResult:
+def dst_trends_endpoint(
+    season: int,
+    week: int,
+    window_weeks: int = 5,
+    scope: str = "all",
+    platform: str = "DraftKings",
+    contest: str = "Classic Main",
+) -> DstTrendsResult:
+    """`scope` "contest" narrows the rows to teams in this week's contest
+    salary file; "all" (default, what Game Preview relies on) shows every team."""
     dst_csv = load_weekly_stats_csv(settings.nfl_data_dir, season, "DST")
     if dst_csv is None:
         raise HTTPException(
@@ -40,4 +51,19 @@ def dst_trends_endpoint(season: int, week: int, window_weeks: int = 5) -> DstTre
             ),
         )
     dst_stat_lines = load_weekly_stat_lines(dst_csv)
-    return build_dst_trend_leaderboards(dst_stat_lines, season, week, window_weeks)
+    contest_teams: set[str] | None = None
+    missing = False
+    dst_salaries: dict[str, int] = {}
+    salary_csv = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
+    if salary_csv is None:
+        missing = scope == "contest"
+    else:
+        snapshot, _messages = parse_dk_salary_csv(salary_csv, season, week)
+        dst_salaries = {p.team: p.salary for p in snapshot.players if p.position == "DST"}
+        if scope == "contest":
+            contest_teams = {p.team for p in snapshot.players}
+    result = build_dst_trend_leaderboards(dst_stat_lines, season, week, window_weeks, contest_teams)
+    for row in (*result.forcing, *result.allowing):
+        row.salary = dst_salaries.get(row.team)
+    result.contest_salary_file_missing = missing
+    return result

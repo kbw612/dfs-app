@@ -1348,6 +1348,7 @@ export interface DstTrendTeamRow {
   sacks_per_game: number;
   takeaways: number;
   takeaways_per_game: number;
+  salary: number | null;
 }
 
 // Mirrors backend/schemas/dst_trends/dst_trends.py's DstTrendsResult.
@@ -1360,6 +1361,7 @@ export interface DstTrendsResult {
   window_weeks: number;
   forcing: DstTrendTeamRow[];
   allowing: DstTrendTeamRow[];
+  contest_salary_file_missing: boolean;
 }
 
 // Mirrors backend/schemas/game_preview/game_preview.py exactly. Every
@@ -1588,6 +1590,7 @@ export interface QbPassingRow {
   name: string;
   team: string;
   status: string | null;
+  salary: number | null;
   opponent: string;
   over_300: QbPassingGame[];
   // 265-299 only -- 300+ games are not repeated here.
@@ -1673,6 +1676,7 @@ export interface RbRushingRow {
   name: string;
   team: string;
   status: string | null;
+  salary: number | null;
   opponent: string;
   over_100: RbRushingGame[];
   // 75-99 only -- 100+ games are not repeated here.
@@ -1751,6 +1755,7 @@ export interface RbReceivingRow {
   name: string;
   team: string;
   status: string | null;
+  salary: number | null;
   opponent: string;
   games_50: RbReceivingGame[];
   opponent_allowed: RbReceivingAllowedGame[];
@@ -1792,6 +1797,7 @@ export interface PositionMultiplierRow {
   name: string;
   team: string;
   status: string | null;
+  salary: number | null;
   opponent: string;
   over_4x: PositionMultiplierGame[];
   // 3-3.99x only -- 4x+ games are not repeated here.
@@ -2261,6 +2267,7 @@ export interface FptsRow {
   name: string;
   team: string;
   status: string | null;
+  salary: number | null;
   elite: FptsCell;
   strong: FptsCell;
 }
@@ -2295,4 +2302,67 @@ export interface FptsPanelsResult {
   wr: PositionFptsSummary | null;
   te: PositionFptsSummary | null;
   dst: PositionFptsSummary | null;
+}
+
+// Mirrors backend/schemas/leverage_pivots/leverage_pivots.py exactly.
+export interface LpPlayer {
+  player: string;
+  position: string;
+  team: string;
+  opponent: string;
+  salary: number;
+  ownership_pct: number;
+}
+
+export interface LpRow extends LpPlayer {
+  salary_diff_label: string;
+  less_label: string | null;
+}
+
+export interface LpColumn {
+  title: string;
+  subtitle: string;
+  header: string;
+  rows: LpRow[];
+}
+
+export interface LpSelected {
+  trigger: LpPlayer;
+  game_label: string;
+  leverage: LpColumn;
+  correlated: LpColumn;
+  position_pivot: LpColumn;
+  pricing_pivot: LpColumn;
+  position_counts: [string, number][];
+}
+
+export interface LpChalkGroup {
+  position: string;
+  players: LpPlayer[];
+}
+
+export interface LpReason {
+  kind: string;
+  label: string;
+  text: string;
+}
+
+export interface LpPanelPlayer extends LpPlayer {
+  reasons: LpReason[];
+}
+
+export interface LpPanelGroup {
+  reason_count: number;
+  players: LpPanelPlayer[];
+}
+
+export interface LeveragePivotsResult {
+  season: number;
+  week: number;
+  leverage_point: number;
+  chalk: LpChalkGroup[];
+  panel: LpPanelGroup[];
+  search_names: string[];
+  selected: LpSelected | null;
+  selected_not_found: boolean;
 }

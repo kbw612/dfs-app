@@ -9,6 +9,7 @@ import { DkPlayersView } from "./components/DkPlayersView";
 import { DstTrendsView } from "./components/DstTrendsView";
 import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
 import { GameLogsView } from "./components/GameLogsView";
+import { LeverageAndPivotsView } from "./components/LeverageAndPivotsView";
 import { GameLogsSummaryView } from "./components/GameLogsSummaryView";
 import { GamePreviewView } from "./components/GamePreviewView";
 import { HeaderSettingsPopover } from "./components/HeaderSettingsPopover";
@@ -39,6 +40,7 @@ type View =
   | "bump"
   | "ownership"
   | "ownershipSummary"
+  | "leveragePivots"
   | "salaryBlocks"
   | "playerPool"
   | "vegasLines"
@@ -410,6 +412,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "leveragePivots" ? " selected" : ""}`}
+          aria-pressed={view === "leveragePivots"}
+          onClick={() => requestViewChange("leveragePivots")}
+        >
+          Leverage &amp; Pivots
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "ownership" ? " selected" : ""}`}
           aria-pressed={view === "ownership"}
           onClick={() => requestViewChange("ownership")}
@@ -472,7 +482,7 @@ function App() {
       {view === "multipliers" && (
         <MultipliersView season={season} week={week} platform={platform} contest={contest} />
       )}
-      {view === "dstTrends" && <DstTrendsView season={season} week={week} />}
+      {view === "dstTrends" && <DstTrendsView season={season} week={week} platform={platform} contest={contest} />}
       {view === "compare" && (
         <CompareView refreshSignal={refreshSignal} onScraped={() => setRefreshSignal((n) => n + 1)} />
       )}
@@ -492,6 +502,7 @@ function App() {
       {view === "ownershipSummary" && (
         <OwnershipSummaryView season={season} week={week} platform={platform} contest={contest} />
       )}
+      {view === "leveragePivots" && <LeverageAndPivotsView season={season} week={week} platform={platform} />}
       {view === "ownership" && <OwnershipView season={season} week={week} platform={platform} />}
       {view === "boomBust" && <BoomBustView season={season} week={week} platform={platform} contest={contest} />}
       {view === "playerPool" && <PlayerPoolView season={season} week={week} platform={platform} contest={contest} />}

@@ -89,3 +89,24 @@ def test_build_dst_trend_leaderboards_ignores_rows_with_no_team_or_opponent():
     result = build_dst_trend_leaderboards(lines, season=2026, week=2, window_weeks=5)
     assert result.forcing == []
     assert result.allowing == []
+
+
+def test_contest_teams_narrows_rows_but_not_their_numbers():
+    lines = {
+        ("A", 1): {"team": "AAA", "opponent": "BBB", "sacks": 3, "def_int": 1, "fumble_recoveries": 0},
+        ("B", 1): {"team": "BBB", "opponent": "AAA", "sacks": 1, "def_int": 0, "fumble_recoveries": 0},
+        ("C", 1): {"team": "CCC", "opponent": "DDD", "sacks": 5, "def_int": 0, "fumble_recoveries": 0},
+    }
+    full = build_dst_trend_leaderboards(lines, season=2026, week=2, window_weeks=5)
+    narrowed = build_dst_trend_leaderboards(lines, season=2026, week=2, window_weeks=5, contest_teams={"AAA", "BBB"})
+    assert {r.team for r in full.forcing} == {"AAA", "BBB", "CCC"}
+    assert [r.team for r in narrowed.forcing] == ["AAA", "BBB"]
+    assert [r.team for r in narrowed.allowing] == ["BBB", "AAA"]
+    assert next(r for r in narrowed.forcing if r.team == "AAA") == next(r for r in full.forcing if r.team == "AAA")
+
+
+def test_endpoint_adds_dst_salary_per_team(monkeypatch):
+    from fastapi.testclient import TestClient
+    from backend.main import app
+    j = TestClient(app).get("/api/dst-trends", params=dict(season=2026, week=8, window_weeks=5, scope="contest")).json()
+    assert j["forcing"] and all(r["salary"] is None or r["salary"] >= 2000 for r in j["forcing"])

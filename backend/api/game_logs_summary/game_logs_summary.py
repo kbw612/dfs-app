@@ -31,6 +31,7 @@ from backend.repositories.dk_players.dk_players_repo import load_dk_players_csv
 from backend.services.dk_players.dk_players_csv import parse_dk_players_csv
 from backend.services.game_logs.game_logs_engine import build_game_options
 from backend.services.game_logs_summary.position_multipliers import build_position_multipliers
+from backend.services.game_logs_summary.shared import attach_salaries, salary_lookup
 from backend.services.game_logs_summary.rb_receiving import build_rb_receiving
 from backend.services.game_logs_summary.rb_rushing import build_rb_rushing
 from backend.services.schedule.schedule_loader import parse_schedule_csv
@@ -46,10 +47,12 @@ def game_logs_summary_endpoint(
     schedule_rows = parse_schedule_csv(schedule_csv) if schedule_csv is not None else []
 
     contest_teams: set[str] | None = None
+    lookup = salary_lookup([])
     salary_csv = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
     if salary_csv is not None:
         salary_snapshot, _messages = parse_dk_salary_csv(salary_csv, season, week)
         contest_teams = {p.team for p in salary_snapshot.players}
+        lookup = salary_lookup(salary_snapshot.players)
 
     qb_csv = load_weekly_stats_csv(settings.nfl_data_dir, season, "QB")
     qb_stat_lines = load_weekly_stat_lines(qb_csv) if qb_csv is not None else {}
@@ -63,7 +66,7 @@ def game_logs_summary_endpoint(
     snapshot_path = find_latest_snapshot(settings.snapshots_dir)
     depth_chart_snapshot = load_snapshot(snapshot_path) if snapshot_path is not None else None
 
-    return GameLogsSummaryResult(
+    result = GameLogsSummaryResult(
         season=season,
         week=week,
         window_weeks=window_weeks,
@@ -106,3 +109,16 @@ def game_logs_summary_endpoint(
             for pos in ("QB", "RB", "WR", "TE")
         },
     )
+    attach_salaries(
+        [
+            result.qb_passing,
+            result.rb_rushing,
+            result.rb_receiving,
+            result.qb_multipliers,
+            result.rb_multipliers,
+            result.wr_multipliers,
+            result.te_multipliers,
+        ],
+        lookup,
+    )
+    return result

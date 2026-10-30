@@ -1,0 +1,37 @@
+{
+  "season": 2026,
+  "week": 8,
+  "scraped_at": "2026-10-30T14:56:10-04:00",
+  "games": [
+    {
+      "away_name": "Atlanta Falcons",
+      "home_name": "Tampa Bay Buccaneers",
+      "away_team": "ATL",
+      "home_team": "TB",
+      "game_key": "ATL-TB",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "Scattered downpours in the area. We can't pinpoint this until closer to kickoff, but there's a decent chance of some in-game rain."
+    },
+    {
+      "away_name": "Indianapolis Colts",
+      "home_name": "Jacksonville Jaguars",
+      "away_team": "IND",
+      "home_team": "JAX",
+      "game_key": "IND-JAX",
+      "kickoff_label": "1:00 PM ET",
+      "color": "yellow",
+      "note": "A chance of some showers. If I were to order the 3 Florida potential rain games, this one would be my lowest concern, but there's still a chance of showers."
+    },
+    {
+      "away_name": "New England Patriots",
+      "home_name": "Miami Dolphins",
+      "away_team": "NE",
+      "home_team": "MIA",
+      "game_key": "MIA-NE",
+      "kickoff_label": "4:25 PM ET",
+      "color": "yellow",
+      "note": "Scattered downpours in the area. Pretty good chance of seeing some in-game rain. Winds in all of these Florida games are around 10-15mph sustained, gusts around 20mph, not quite enough to move the needle."
+    }
+  ]
+}

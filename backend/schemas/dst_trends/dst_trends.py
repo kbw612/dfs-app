@@ -39,6 +39,9 @@ class DstTrendTeamRow(BaseModel):
     # generated; allowing: turnovers this team's offense gave up.
     takeaways: int
     takeaways_per_game: float
+    # This team's DST salary from the week's contest salary file; None when
+    # the file isn't saved or the team isn't on that slate.
+    salary: int | None = None
 
 
 class DstTrendsResult(BaseModel):
@@ -63,3 +66,6 @@ class DstTrendsResult(BaseModel):
     # "Team A because they've been sacking the QB and the opponent has
     # been giving up sacks" read the person originally asked for.
     allowing: list[DstTrendTeamRow] = Field(default_factory=list)
+    # True when the Contest scope was asked for but this week's contest
+    # salary file isn't saved, so every team is shown instead.
+    contest_salary_file_missing: bool = False

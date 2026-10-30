@@ -23,6 +23,7 @@ from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lin
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.game_logs.game_logs_engine import build_game_options
 from backend.services.game_logs_summary.position_fpts import build_position_fpts
+from backend.services.game_logs_summary.shared import attach_salaries, salary_lookup
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 
 router = APIRouter()
@@ -42,10 +43,12 @@ def fpts_panels_endpoint(
     schedule_rows = parse_schedule_csv(schedule_csv) if schedule_csv is not None else []
 
     contest_teams: set[str] | None = None
+    lookup = salary_lookup([])
     salary_csv = load_salary_csv(settings.nfl_data_dir, season, week, platform, contest)
     if salary_csv is not None:
         snapshot, _messages = parse_dk_salary_csv(salary_csv, season, week)
         contest_teams = {p.team for p in snapshot.players}
+        lookup = salary_lookup(snapshot.players)
 
     tracker_csv = load_dk_players_csv(settings.nfl_data_dir, season, platform)
     tracker_rows = parse_dk_players_csv(tracker_csv) if tracker_csv is not None else []
@@ -66,7 +69,7 @@ def fpts_panels_endpoint(
     if team:
         team_filter = set(team) if team_filter is None else team_filter & set(team)
 
-    return FptsPanelsResult(
+    panels = FptsPanelsResult(
         **{
             pos.lower(): build_position_fpts(
                 tracker_rows,
@@ -82,3 +85,5 @@ def fpts_panels_endpoint(
             for pos in ("QB", "RB", "WR", "TE", "DST")
         }
     )
+    attach_salaries([panels.qb, panels.rb, panels.wr, panels.te, panels.dst], lookup)
+    return panels

@@ -31,6 +31,7 @@ import type {
   ContestTrackerResult,
   ExposureView,
   FptsPanelsResult,
+  LeveragePivotsResult,
   GroupPoolResult,
   GroupsState,
   PlayerGroup,
@@ -583,11 +584,21 @@ export function fetchGameLogsAgainst(
 // tracker/lookback state -- same "last week's own box score plus trailing
 // Multiplier history" shape as the backend engine returns, just passed
 // through untouched; the tab does its own filtering/sorting client-side.
-export function fetchDstTrends(season: number, week: number, windowWeeks: number): Promise<DstTrendsResult> {
+export function fetchDstTrends(
+  season: number,
+  week: number,
+  windowWeeks: number,
+  scope: "all" | "contest" = "all",
+  platform = "DraftKings",
+  contest = "Classic Main"
+): Promise<DstTrendsResult> {
   const params = new URLSearchParams({
     season: String(season),
     week: String(week),
     window_weeks: String(windowWeeks),
+    scope,
+    platform,
+    contest,
   });
   return apiGet<DstTrendsResult>(`/api/dst-trends?${params.toString()}`);
 }
@@ -1277,4 +1288,25 @@ export function fetchFptsPanels(
   if (game) params.set("game", game);
   teams.forEach((t) => params.append("team", t));
   return apiGet<FptsPanelsResult>(`/api/game-logs-summary/fpts?${params.toString()}`);
+}
+
+export function fetchLeveragePivots(
+  season: number,
+  week: number,
+  platform: string,
+  player: string | null,
+  position: string | null,
+  chalkPct: number,
+  minReasons: number
+): Promise<LeveragePivotsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    chalk_pct: String(chalkPct),
+    min_reasons: String(minReasons),
+  });
+  if (player) params.set("player", player);
+  if (position && position !== "All") params.set("position", position);
+  return apiGet<LeveragePivotsResult>(`/api/leverage-pivots?${params.toString()}`);
 }

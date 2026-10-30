@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchDstTrends } from "../api";
+import { ContestFileNotice } from "./ContestFileNotice";
 import type { DstTrendTeamRow } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
 import { formatCount, formatDecimal } from "./gameLogsShared";
@@ -12,6 +13,8 @@ import { formatCount, formatDecimal } from "./gameLogsShared";
 interface DstTrendsViewProps {
   season: number;
   week: number;
+  platform: string;
+  contest: string;
 }
 
 // How long to wait after the last keystroke in the "Weeks to show" input
@@ -27,6 +30,7 @@ const WINDOW_WEEKS_DEBOUNCE_MS = 800;
 // of two separately-ranked tables -- see mergeDstTrendRows below.
 interface CombinedDstTrendRow {
   team: string;
+  salary: number; // 0 when no salary is known
   games: number;
   sacksForced: number;
   sacksPerGameForced: number;
@@ -52,6 +56,7 @@ function mergeDstTrendRows(forcing: DstTrendTeamRow[], allowing: DstTrendTeamRow
     const a = allowingByTeam.get(team);
     return {
       team,
+      salary: f?.salary ?? a?.salary ?? 0,
       games: f?.games ?? a?.games ?? 0,
       sacksForced: f?.sacks ?? 0,
       sacksPerGameForced: f?.sacks_per_game ?? 0,
@@ -67,6 +72,7 @@ function mergeDstTrendRows(forcing: DstTrendTeamRow[], allowing: DstTrendTeamRow
 
 type SortField =
   | "team"
+  | "salary"
   | "games"
   | "sacksForced"
   | "sacksPerGameForced"
@@ -163,7 +169,7 @@ function SortableTh({
   );
 }
 
-export function DstTrendsView({ season, week }: DstTrendsViewProps) {
+export function DstTrendsView({ season, week, platform, contest }: DstTrendsViewProps) {
   const [windowWeeksInput, setWindowWeeksInput] = useState("5");
   const [windowWeeks, setWindowWeeks] = useState(5);
   const windowDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -174,6 +180,8 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
   const [resultWindowWeeks, setResultWindowWeeks] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scope, setScope] = useState<"all" | "contest">("contest");
+  const [contestFileMissing, setContestFileMissing] = useState(false);
 
   // Defaults to the Forcing preset -- the same order the old Forcing panel
   // (rendered first, above Allowing) showed on load.
@@ -184,12 +192,13 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchDstTrends(season, week, windowWeeks)
+    fetchDstTrends(season, week, windowWeeks, scope, platform, contest)
       .then((result) => {
         setForcing(result.forcing);
         setAllowing(result.allowing);
         setThroughWeek(result.through_week);
         setResultWindowWeeks(result.window_weeks);
+        setContestFileMissing(result.contest_salary_file_missing);
       })
       .catch((err) => {
         setForcing(null);
@@ -198,7 +207,7 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
         setError(err instanceof Error ? err.message : "Failed to load DST trends");
       })
       .finally(() => setLoading(false));
-  }, [season, week, windowWeeks]);
+  }, [season, week, windowWeeks, scope, platform, contest]);
 
   useEffect(() => {
     const timer = windowDebounce;
@@ -282,7 +291,29 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
 
       {!noPriorWeek && (
         <>
+          <ContestFileNotice missing={contestFileMissing} contest={contest} week={week} />
           <div className="filters">
+            <div className="chip-filter">
+              <span className="filter-label">Games</span>
+              <div className="chip-row">
+                <button
+                  type="button"
+                  className={`chip${scope === "all" ? " selected" : ""}`}
+                  aria-pressed={scope === "all"}
+                  onClick={() => setScope("all")}
+                >
+                  All games
+                </button>
+                <button
+                  type="button"
+                  className={`chip${scope === "contest" ? " selected" : ""}`}
+                  aria-pressed={scope === "contest"}
+                  onClick={() => setScope("contest")}
+                >
+                  Contest games
+                </button>
+              </div>
+            </div>
             <div className="chip-filter">
               <span className="filter-label">Sort by</span>
               <div className="chip-row">
@@ -334,6 +365,14 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
                       field="team"
                       label="Team"
                       thClassName="player-pool-grid-sticky player-selection-name-col"
+                      currentField={sortField}
+                      direction={sortDirection}
+                      compoundActive={compoundSort !== null}
+                      onToggle={toggleSort}
+                    />
+                    <SortableTh
+                      field="salary"
+                      label="Salary"
                       currentField={sortField}
                       direction={sortDirection}
                       compoundActive={compoundSort !== null}
@@ -473,6 +512,7 @@ export function DstTrendsView({ season, week }: DstTrendsViewProps) {
                   {sortedRows.map((row) => (
                     <tr key={row.team}>
                       <td className="player-pool-grid-sticky player-selection-name-col">{row.team}</td>
+                      <td className="player-pool-grid-num">{row.salary > 0 ? `$${row.salary.toLocaleString()}` : "—"}</td>
                       <td className="player-pool-grid-num">{formatCount(row.games)}</td>
                       <td className="player-pool-grid-num">{formatCount(row.sacksForced)}</td>
                       <td className="player-pool-grid-num">{formatDecimal(row.sacksPerGameForced)}</td>

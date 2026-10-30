@@ -1,3 +1,4 @@
+import { formatSalary } from "./gameLogsShared";
 import { Fragment, useState } from "react";
 import type { FptsCell, PositionFptsSummary } from "../types";
 import { CountChip } from "./QbPassingPanel";
@@ -82,6 +83,7 @@ export function PositionFptsPanel({ data }: { data: PositionFptsSummary }) {
                       <tr key={`${row.name}-${row.team}`}>
                         <td>
                           {row.name} <span className="qb-passing-team">{row.team}</span>
+{row.salary !== null && <span className="qb-passing-team"> {formatSalary(row.salary)}</span>}
                           {row.status && <span className="qb-passing-status"> {row.status}</span>}
                         </td>
                         <td className="fpts-elite">

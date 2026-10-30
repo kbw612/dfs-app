@@ -46,6 +46,7 @@ def build_dst_trend_leaderboards(
     season: int,
     week: int,
     window_weeks: int = 5,
+    contest_teams: set[str] | None = None,
 ) -> DstTrendsResult:
     """`dst_stat_lines` is load_weekly_stat_lines's own output run against
     FantasyData_DSTs.csv (one line per (DST name, week), each carrying its
@@ -86,6 +87,12 @@ def build_dst_trend_leaderboards(
             entry["games"] += 1
             entry["sacks"] += sacks
             entry["takeaways"] += takeaways
+
+    # `contest_teams` only narrows which teams' rows are returned; every
+    # team's numbers still come from its own games in the window.
+    if contest_teams is not None:
+        forcing_totals = {t: v for t, v in forcing_totals.items() if t in contest_teams}
+        allowing_totals = {t: v for t, v in allowing_totals.items() if t in contest_teams}
 
     return DstTrendsResult(
         season=season,

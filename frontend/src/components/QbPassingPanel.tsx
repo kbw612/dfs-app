@@ -1,3 +1,4 @@
+import { formatSalary } from "./gameLogsShared";
 import { useState } from "react";
 import type { QbAllowedTdGame, QbPassingAllowedGame, QbPassingGame, QbPassingSummary, QbTdGame } from "../types";
 
@@ -136,6 +137,7 @@ export function QbPassingPanel({ data }: QbPassingPanelProps) {
               <tr key={`${row.name}-${row.team}`}>
                 <td>
                   {row.name} <span className="qb-passing-team">{row.team}</span>
+{row.salary !== null && <span className="qb-passing-team"> {formatSalary(row.salary)}</span>}
                   {row.status && <span className="qb-passing-status"> {row.status}</span>}
                 </td>
                 <td>
