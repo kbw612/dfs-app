@@ -63,6 +63,7 @@ from backend.services.dk_players.weekly_stats_loader import load_weekly_stat_lin
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.game_preview.game_preview_engine import build_game_preview
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
+from backend.services.ownership.under_one import DEFAULT_CUTOFF, hide_below_cutoff
 from backend.services.schedule.schedule_loader import parse_schedule_csv
 from backend.services.usage_bump.engine import compute_usage_bumps
 
@@ -150,7 +151,7 @@ def game_preview_endpoint(
         window_weeks,
         tracker_rows=tracker_rows,
         stat_lines_by_position=stat_lines_by_position,
-        ownership_players=ownership_players,
+        ownership_players=hide_below_cutoff(ownership_players, DEFAULT_CUTOFF),
         usage_bumps=usage_bumps,
         depth_chart_snapshot=depth_chart_snapshot,
         star_players=star_players,

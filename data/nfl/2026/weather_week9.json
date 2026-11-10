@@ -1,0 +1,27 @@
+{
+  "season": 2026,
+  "week": 9,
+  "scraped_at": "2026-11-07T11:32:13-05:00",
+  "games": [
+    {
+      "away_name": "Los Angeles Rams",
+      "home_name": "Washington Commanders",
+      "away_team": "LAR",
+      "home_team": "WAS",
+      "game_key": "LAR-WAS",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Sustained winds 10-15mph, gusts around 20. It's worth keeping an eye on to make sure winds don't come in higher than what models are currently showing, but my concern level right now is low."
+    },
+    {
+      "away_name": "New York Giants",
+      "home_name": "Philadelphia Eagles",
+      "away_team": "NYG",
+      "home_team": "PHI",
+      "game_key": "NYG-PHI",
+      "kickoff_label": "1:00 PM ET",
+      "color": "green",
+      "note": "Similar to WASH, we should see 10-15mph sustained winds with gusts around 20mph. That's just not enough to move the needle in fantasy or for sports-betting, even with kickers. I'll keep an eye on things to make sure the forecast doesn't jump higher than that."
+    }
+  ]
+}

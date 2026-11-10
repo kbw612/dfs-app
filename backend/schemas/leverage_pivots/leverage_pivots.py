@@ -16,6 +16,7 @@ class LpPlayer(BaseModel):
     opponent: str
     salary: int
     ownership_pct: float
+    own_label: str  # "<1%" for the placeholder, else "12.3%"
 
 
 class LpRow(LpPlayer):

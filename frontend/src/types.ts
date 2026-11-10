@@ -170,6 +170,8 @@ export interface OwnershipPlayer {
   // depth_rank (not rank) so it doesn't collide with the Player
   // Rankings tab's Total-based score, a wholly different concept.
   depth_rank: number | null;
+  // Injury/availability status code (Q, D, O, IR, ...), null when healthy or unknown.
+  status: string | null;
   // Resolved Salary Multiplier * salary / 1000 (see backend/services/
   // salary_multiplier/engine.py) -- null everywhere OwnershipPlayer shows
   // up except Salary Blocks (the only view that resolves a platform's
@@ -342,6 +344,8 @@ export interface PlayerPoolPlayer {
   // Named depth_rank (not rank) so it doesn't collide with the Player
   // Rankings tab's Total-based score, a wholly different concept.
   depth_rank: number | null;
+  // Injury/availability status code (Q, D, O, IR, ...), null when healthy or unknown.
+  status: string | null;
   game_environment: number | null;
   game_environment_override: number | null;
   game_environment_suggested: number | null;
@@ -811,6 +815,7 @@ export interface PlayerSelectionRow {
   opponent: string;
   is_home: boolean | null;
   selected: boolean;
+  status: string | null;
 }
 
 export interface PlayerSelectionResult {
@@ -2093,6 +2098,36 @@ export interface LineupAnalyzerPlayer {
   own: number;
 }
 
+export interface LineupFlag {
+  code: string;
+  severity: "error" | "warning" | "note";
+  label: string;
+  text: string;
+}
+
+export interface FlagSummary {
+  code: string;
+  severity: "error" | "warning" | "note";
+  label: string;
+  count: number;
+}
+
+export interface FlagSettings {
+  low_total: number;
+  underdog_spread: number;
+  punt_salary: number;
+  punt_count: number;
+  own_slice_pct: number;
+}
+
+export const DEFAULT_FLAG_SETTINGS: FlagSettings = {
+  low_total: 40,
+  underdog_spread: 7,
+  punt_salary: 3500,
+  punt_count: 3,
+  own_slice_pct: 10,
+};
+
 export interface LineupAnalyzerRow {
   rank: number;
   score: number;
@@ -2104,6 +2139,7 @@ export interface LineupAnalyzerRow {
   players: LineupAnalyzerPlayer[];
   contributions: Record<string, number>;
   features: Record<string, number>;
+  flags: LineupFlag[];
 }
 
 export interface LineupAnalyzerResult {
@@ -2117,6 +2153,9 @@ export interface LineupAnalyzerResult {
   tier_counts: Record<string, number>;
   rows: LineupAnalyzerRow[];
   portfolio: LineupAnalyzerRow[] | null;
+  flag_summary: FlagSummary[];
+  flag_counts: Record<string, number>;
+  flagged: LineupAnalyzerRow[];
 }
 
 export interface LineupAnalyzerPortfolioRequest {
@@ -2131,6 +2170,7 @@ export interface LineupAnalyzerSaved {
     field_size: number;
     weights: Record<string, number> | null;
     portfolio: LineupAnalyzerPortfolioRequest | null;
+    flag_settings?: FlagSettings;
   };
   result: LineupAnalyzerResult;
 }
@@ -2312,6 +2352,7 @@ export interface LpPlayer {
   opponent: string;
   salary: number;
   ownership_pct: number;
+  own_label: string;
 }
 
 export interface LpRow extends LpPlayer {
@@ -2365,4 +2406,50 @@ export interface LeveragePivotsResult {
   search_names: string[];
   selected: LpSelected | null;
   selected_not_found: boolean;
+}
+
+// Player Pool Signals tab -- mirrors backend/schemas/player_signals/player_signals.py
+export interface SignalChip {
+  family: "usage" | "matchup" | "game" | "role" | "price";
+  polarity: "up" | "down";
+  text: string;
+  detail: string[];
+}
+
+export interface SignalPlayer {
+  player: string;
+  position: string;
+  team: string;
+  opponent: string;
+  salary: number;
+  ownership_pct: number | null;
+  status: string | null;
+  pts_last_x: number | null;
+  games_used: number;
+  up: number;
+  down: number;
+  net: number;
+  signals: SignalChip[];
+}
+
+export interface SignalThreshold {
+  key: string;
+  label: string;
+  group: string;
+  value: number;
+  default: number;
+}
+
+export interface PlayerSignalsResult {
+  season: number;
+  week: number;
+  last_weeks: number;
+  min_net: number;
+  opponent_scope: string;
+  ownership_missing: boolean;
+  first_week: number;
+  through_week: number;
+  total_players: number;
+  players: SignalPlayer[];
+  thresholds: SignalThreshold[];
 }

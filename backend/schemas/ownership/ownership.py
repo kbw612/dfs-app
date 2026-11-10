@@ -49,6 +49,10 @@ class OwnershipPlayer(BaseModel):
     # different concept -- this is a fixed depth-chart slot, not a
     # computed quality score.
     depth_rank: Optional[int] = None
+    # Injury/availability status code (Q, D, O, IR, ...) from the latest
+    # depth-chart snapshot, matched by name like depth_rank; None when healthy
+    # or unknown.
+    status: Optional[str] = None
     # Resolved Salary Multiplier * salary / 1000 (see backend/services/
     # salary_multiplier/engine.py) -- None everywhere OwnershipPlayer is
     # used except Salary Blocks (backend/api/ownership/position_blocks.py),

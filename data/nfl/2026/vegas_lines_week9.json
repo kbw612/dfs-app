@@ -1,0 +1,278 @@
+{
+  "season": 2026,
+  "week": 9,
+  "initial_scraped_at": "2026-11-02T20:46:54-05:00",
+  "current_scraped_at": "2026-11-07T11:32:10-05:00",
+  "games": [
+    {
+      "away_name": "Jaguars",
+      "home_name": "Ravens",
+      "away_team": "JAX",
+      "home_team": "BAL",
+      "game_key": "BAL-JAX",
+      "kickoff_label": "Thursday, Nov 5th 8:15pm Eastern",
+      "initial": {
+        "over_under": 42.5,
+        "home_implied_total": 16.5,
+        "away_implied_total": 26.0
+      },
+      "current": {
+        "over_under": 40.0,
+        "home_implied_total": 15.25,
+        "away_implied_total": 24.75
+      }
+    },
+    {
+      "away_name": "Bengals",
+      "home_name": "Falcons",
+      "away_team": "CIN",
+      "home_team": "ATL",
+      "game_key": "ATL-CIN",
+      "kickoff_label": "Sunday, Nov 8th 9:30am Eastern",
+      "initial": {
+        "over_under": 52.0,
+        "home_implied_total": 24.5,
+        "away_implied_total": 27.5
+      },
+      "current": {
+        "over_under": 53.0,
+        "home_implied_total": 24.75,
+        "away_implied_total": 28.25
+      }
+    },
+    {
+      "away_name": "Cowboys",
+      "home_name": "Colts",
+      "away_team": "DAL",
+      "home_team": "IND",
+      "game_key": "DAL-IND",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 51.5,
+        "home_implied_total": 22.75,
+        "away_implied_total": 28.75
+      },
+      "current": {
+        "over_under": 51.5,
+        "home_implied_total": 23.75,
+        "away_implied_total": 27.75
+      }
+    },
+    {
+      "away_name": "Jets",
+      "home_name": "Chiefs",
+      "away_team": "NYJ",
+      "home_team": "KC",
+      "game_key": "KC-NYJ",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 46.0,
+        "home_implied_total": 27.75,
+        "away_implied_total": 18.25
+      },
+      "current": {
+        "over_under": 48.0,
+        "home_implied_total": 28.25,
+        "away_implied_total": 19.75
+      }
+    },
+    {
+      "away_name": "Lions",
+      "home_name": "Dolphins",
+      "away_team": "DET",
+      "home_team": "MIA",
+      "game_key": "DET-MIA",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 49.5,
+        "home_implied_total": 21.25,
+        "away_implied_total": 28.25
+      },
+      "current": {
+        "over_under": 50.0,
+        "home_implied_total": 21.75,
+        "away_implied_total": 28.25
+      }
+    },
+    {
+      "away_name": "Browns",
+      "home_name": "Saints",
+      "away_team": "CLE",
+      "home_team": "NO",
+      "game_key": "CLE-NO",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 43.5,
+        "home_implied_total": 23.0,
+        "away_implied_total": 20.5
+      },
+      "current": {
+        "over_under": 42.5,
+        "home_implied_total": 22.75,
+        "away_implied_total": 19.75
+      }
+    },
+    {
+      "away_name": "Giants",
+      "home_name": "Eagles",
+      "away_team": "NYG",
+      "home_team": "PHI",
+      "game_key": "NYG-PHI",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 40.0,
+        "home_implied_total": 18.5,
+        "away_implied_total": 21.5
+      },
+      "current": {
+        "over_under": 38.5,
+        "home_implied_total": 17.75,
+        "away_implied_total": 20.75
+      }
+    },
+    {
+      "away_name": "Rams",
+      "home_name": "WFT",
+      "away_team": "LAR",
+      "home_team": "WAS",
+      "game_key": "LAR-WAS",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 47.5,
+        "home_implied_total": 21.0,
+        "away_implied_total": 26.5
+      },
+      "current": {
+        "over_under": 48.0,
+        "home_implied_total": 21.75,
+        "away_implied_total": 26.25
+      }
+    },
+    {
+      "away_name": "Broncos",
+      "home_name": "Panthers",
+      "away_team": "DEN",
+      "home_team": "CAR",
+      "game_key": "CAR-DEN",
+      "kickoff_label": "Sunday, Nov 8th 1:00pm Eastern",
+      "initial": {
+        "over_under": 44.0,
+        "home_implied_total": 20.5,
+        "away_implied_total": 23.5
+      },
+      "current": {
+        "over_under": 44.5,
+        "home_implied_total": 21.0,
+        "away_implied_total": 23.5
+      }
+    },
+    {
+      "away_name": "Texans",
+      "home_name": "Chargers",
+      "away_team": "HOU",
+      "home_team": "LAC",
+      "game_key": "HOU-LAC",
+      "kickoff_label": "Sunday, Nov 8th 4:05pm Eastern",
+      "initial": {
+        "over_under": 40.5,
+        "home_implied_total": 17.75,
+        "away_implied_total": 22.75
+      },
+      "current": {
+        "over_under": 40.5,
+        "home_implied_total": 17.5,
+        "away_implied_total": 23.0
+      }
+    },
+    {
+      "away_name": "Raiders",
+      "home_name": "49ers",
+      "away_team": "LV",
+      "home_team": "SF",
+      "game_key": "LV-SF",
+      "kickoff_label": "Sunday, Nov 8th 4:25pm Eastern",
+      "initial": {
+        "over_under": 51.5,
+        "home_implied_total": 30.75,
+        "away_implied_total": 20.75
+      },
+      "current": {
+        "over_under": 52.0,
+        "home_implied_total": 30.75,
+        "away_implied_total": 21.25
+      }
+    },
+    {
+      "away_name": "Packers",
+      "home_name": "Patriots",
+      "away_team": "GB",
+      "home_team": "NE",
+      "game_key": "GB-NE",
+      "kickoff_label": "Sunday, Nov 8th 4:25pm Eastern",
+      "initial": {
+        "over_under": 47.0,
+        "home_implied_total": 25.0,
+        "away_implied_total": 22.0
+      },
+      "current": {
+        "over_under": 44.5,
+        "home_implied_total": 23.75,
+        "away_implied_total": 20.75
+      }
+    },
+    {
+      "away_name": "Cards",
+      "home_name": "Hawks",
+      "away_team": "ARI",
+      "home_team": "SEA",
+      "game_key": "ARI-SEA",
+      "kickoff_label": "Sunday, Nov 8th 4:25pm Eastern",
+      "initial": {
+        "over_under": 44.5,
+        "home_implied_total": 28.0,
+        "away_implied_total": 16.5
+      },
+      "current": {
+        "over_under": 39.0,
+        "home_implied_total": 23.75,
+        "away_implied_total": 15.25
+      }
+    },
+    {
+      "away_name": "Bucs",
+      "home_name": "Bears",
+      "away_team": "TB",
+      "home_team": "CHI",
+      "game_key": "CHI-TB",
+      "kickoff_label": "Sunday, Nov 8th 8:20pm Eastern",
+      "initial": {
+        "over_under": 46.5,
+        "home_implied_total": 26.0,
+        "away_implied_total": 20.5
+      },
+      "current": {
+        "over_under": 47.5,
+        "home_implied_total": 26.75,
+        "away_implied_total": 20.75
+      }
+    },
+    {
+      "away_name": "Bills",
+      "home_name": "Vikings",
+      "away_team": "BUF",
+      "home_team": "MIN",
+      "game_key": "BUF-MIN",
+      "kickoff_label": "Monday, Nov 9th 8:15pm Eastern",
+      "initial": {
+        "over_under": 46.0,
+        "home_implied_total": 21.5,
+        "away_implied_total": 24.5
+      },
+      "current": {
+        "over_under": 44.0,
+        "home_implied_total": 20.5,
+        "away_implied_total": 23.5
+      }
+    }
+  ]
+}

@@ -1,54 +1,978 @@
 {
   "groups": [
     {
-      "name": "Det",
+      "name": "QB",
       "pct": 100.0,
       "min": 1,
       "max": 9,
       "players": [
         {
-          "id": "44664393",
-          "name": "Jared Goff",
-          "anchor": true
-        },
-        {
-          "id": "44664721",
-          "name": "Amon-Ra St. Brown",
+          "id": "44664397",
+          "name": "Trevor Lawrence",
           "anchor": false
         },
         {
-          "id": "44664727",
-          "name": "Justin Jefferson",
+          "id": "44664399",
+          "name": "Jacoby Brissett",
           "anchor": false
         },
         {
-          "id": "44664743",
-          "name": "Jameson Williams",
+          "id": "44664401",
+          "name": "Kirk Cousins",
           "anchor": false
         },
         {
-          "id": "44664769",
-          "name": "Jordan Addison",
+          "id": "44664404",
+          "name": "Geno Smith",
           "anchor": false
         },
         {
-          "id": "44664809",
-          "name": "Jauan Jennings",
+          "id": "44664391",
+          "name": "Joe Burrow",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "RB",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664481",
+          "name": "Ashton Jeanty",
           "anchor": false
         },
         {
-          "id": "44664839",
-          "name": "Isaac TeSlaa",
+          "id": "44664485",
+          "name": "Bucky Irving",
           "anchor": false
         },
         {
-          "id": "44665131",
-          "name": "Sam LaPorta",
+          "id": "44664487",
+          "name": "Chase Brown",
+          "anchor": false
+        },
+        {
+          "id": "44664495",
+          "name": "Bhayshul Tuten",
+          "anchor": false
+        },
+        {
+          "id": "44664507",
+          "name": "Jeremiyah Love",
+          "anchor": false
+        },
+        {
+          "id": "44664547",
+          "name": "Jonah Coleman",
+          "anchor": false
+        },
+        {
+          "id": "44664503",
+          "name": "Rhamondre Stevenson",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "WR",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": []
+    },
+    {
+      "name": "TE",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        },
+        {
+          "id": "44665127",
+          "name": "Trey McBride",
           "anchor": false
         },
         {
           "id": "44665137",
           "name": "T.J. Hockenson",
+          "anchor": false
+        },
+        {
+          "id": "44665139",
+          "name": "Kyle Pitts Sr.",
+          "anchor": false
+        },
+        {
+          "id": "44665141",
+          "name": "Hunter Henry",
+          "anchor": false
+        },
+        {
+          "id": "44665151",
+          "name": "Tyler Higbee",
+          "anchor": false
+        },
+        {
+          "id": "44665155",
+          "name": "Michael Mayer",
+          "anchor": false
+        },
+        {
+          "id": "44665165",
+          "name": "Mason Taylor",
+          "anchor": false
+        },
+        {
+          "id": "44665171",
+          "name": "Colby Parkinson",
+          "anchor": false
+        },
+        {
+          "id": "44665163",
+          "name": "Eli Raridon",
+          "anchor": false
+        },
+        {
+          "id": "44665185",
+          "name": "Davis Allen",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Empty",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Empty 2",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Bal",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664479",
+          "name": "Derrick Henry",
+          "anchor": false
+        },
+        {
+          "id": "44664725",
+          "name": "Zay Flowers",
+          "anchor": false
+        },
+        {
+          "id": "44664835",
+          "name": "Ja'Kobi Lane",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Buf",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44665129",
+          "name": "Dalton Kincaid",
+          "anchor": false
+        },
+        {
+          "id": "44664471",
+          "name": "James Cook III",
+          "anchor": false
+        },
+        {
+          "id": "44664749",
+          "name": "DJ Moore",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Buf ZF DH",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664390",
+          "name": "Josh Allen",
+          "anchor": true
+        },
+        {
+          "id": "44664725",
+          "name": "Zay Flowers",
+          "anchor": false
+        },
+        {
+          "id": "44664479",
+          "name": "Derrick Henry",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Bal LJ ZF",
+      "pct": 90.0,
+      "min": 2,
+      "max": 2,
+      "players": [
+        {
+          "id": "44664392",
+          "name": "Lamar Jackson",
+          "anchor": true
+        },
+        {
+          "id": "44664725",
+          "name": "Zay Flowers",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Bal LJ JC",
+      "pct": 75.0,
+      "min": 2,
+      "max": 2,
+      "players": [
+        {
+          "id": "44664392",
+          "name": "Lamar Jackson",
+          "anchor": true
+        },
+        {
+          "id": "44664471",
+          "name": "James Cook III",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Bal JL",
+      "pct": 90.0,
+      "min": 2,
+      "max": 2,
+      "players": [
+        {
+          "id": "44664835",
+          "name": "Ja'Kobi Lane",
+          "anchor": true
+        },
+        {
+          "id": "44664390",
+          "name": "Josh Allen",
+          "anchor": false
+        },
+        {
+          "id": "44664392",
+          "name": "Lamar Jackson",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Bal MA",
+      "pct": 90.0,
+      "min": 2,
+      "max": 2,
+      "players": [
+        {
+          "id": "44664390",
+          "name": "Josh Allen",
+          "anchor": false
+        },
+        {
+          "id": "44664392",
+          "name": "Lamar Jackson",
+          "anchor": false
+        },
+        {
+          "id": "44665371",
+          "name": "Josh Cuevas",
+          "anchor": true
+        }
+      ]
+    },
+    {
+      "name": "Bal ZF DH",
+      "pct": 90.0,
+      "min": 1,
+      "max": 2,
+      "players": [
+        {
+          "id": "44664725",
+          "name": "Zay Flowers",
+          "anchor": false
+        },
+        {
+          "id": "44664479",
+          "name": "Derrick Henry",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "NYJ",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664739",
+          "name": "Garrett Wilson",
+          "anchor": false
+        },
+        {
+          "id": "44664777",
+          "name": "Omar Cooper Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44665165",
+          "name": "Mason Taylor",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "NYJ GS",
+      "pct": 80.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664404",
+          "name": "Geno Smith",
+          "anchor": true
+        },
+        {
+          "id": "44664739",
+          "name": "Garrett Wilson",
+          "anchor": false
+        },
+        {
+          "id": "44664777",
+          "name": "Omar Cooper Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44665165",
+          "name": "Mason Taylor",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "NYJ KC",
+      "pct": 90.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664401",
+          "name": "Kirk Cousins",
+          "anchor": false
+        },
+        {
+          "id": "44664739",
+          "name": "Garrett Wilson",
+          "anchor": false
+        },
+        {
+          "id": "44664777",
+          "name": "Omar Cooper Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44665165",
+          "name": "Mason Taylor",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "LV",
+      "pct": 80.0,
+      "min": 1,
+      "max": 3,
+      "players": [
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        },
+        {
+          "id": "44665155",
+          "name": "Michael Mayer",
+          "anchor": false
+        },
+        {
+          "id": "44664753",
+          "name": "Tre Tucker",
+          "anchor": false
+        },
+        {
+          "id": "44664481",
+          "name": "Ashton Jeanty",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "LV QB",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664401",
+          "name": "Kirk Cousins",
+          "anchor": true
+        },
+        {
+          "id": "44664481",
+          "name": "Ashton Jeanty",
+          "anchor": false
+        },
+        {
+          "id": "44664753",
+          "name": "Tre Tucker",
+          "anchor": false
+        },
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        },
+        {
+          "id": "44665155",
+          "name": "Michael Mayer",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "LV GS",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664404",
+          "name": "Geno Smith",
+          "anchor": true
+        },
+        {
+          "id": "44664481",
+          "name": "Ashton Jeanty",
+          "anchor": false
+        },
+        {
+          "id": "44664753",
+          "name": "Tre Tucker",
+          "anchor": false
+        },
+        {
+          "id": "44665125",
+          "name": "Brock Bowers",
+          "anchor": false
+        },
+        {
+          "id": "44665155",
+          "name": "Michael Mayer",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Dal",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664719",
+          "name": "CeeDee Lamb",
+          "anchor": false
+        },
+        {
+          "id": "44664733",
+          "name": "George Pickens",
+          "anchor": false
+        },
+        {
+          "id": "44664477",
+          "name": "Javonte Williams",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Ari",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664507",
+          "name": "Jeremiyah Love",
+          "anchor": false
+        },
+        {
+          "id": "44664741",
+          "name": "Michael Wilson",
+          "anchor": false
+        },
+        {
+          "id": "44664805",
+          "name": "Kendrick Bourne",
+          "anchor": false
+        },
+        {
+          "id": "44665127",
+          "name": "Trey McBride",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Ari DP",
+      "pct": 80.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664396",
+          "name": "Dak Prescott",
+          "anchor": true
+        },
+        {
+          "id": "44664507",
+          "name": "Jeremiyah Love",
+          "anchor": false
+        },
+        {
+          "id": "44664741",
+          "name": "Michael Wilson",
+          "anchor": false
+        },
+        {
+          "id": "44664805",
+          "name": "Kendrick Bourne",
+          "anchor": false
+        },
+        {
+          "id": "44665127",
+          "name": "Trey McBride",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Dal JB",
+      "pct": 80.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664399",
+          "name": "Jacoby Brissett",
+          "anchor": true
+        },
+        {
+          "id": "44664477",
+          "name": "Javonte Williams",
+          "anchor": false
+        },
+        {
+          "id": "44664719",
+          "name": "CeeDee Lamb",
+          "anchor": false
+        },
+        {
+          "id": "44664733",
+          "name": "George Pickens",
+          "anchor": false
+        },
+        {
+          "id": "44664785",
+          "name": "Ryan Flournoy",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Dal DP",
+      "pct": 80.0,
+      "min": 2,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664396",
+          "name": "Dak Prescott",
+          "anchor": true
+        },
+        {
+          "id": "44664719",
+          "name": "CeeDee Lamb",
+          "anchor": false
+        },
+        {
+          "id": "44664733",
+          "name": "George Pickens",
+          "anchor": false
+        },
+        {
+          "id": "44664785",
+          "name": "Ryan Flournoy",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Cin",
+      "pct": 80.0,
+      "min": 1,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664487",
+          "name": "Chase Brown",
+          "anchor": false
+        },
+        {
+          "id": "44664723",
+          "name": "Ja'Marr Chase",
+          "anchor": false
+        },
+        {
+          "id": "44664731",
+          "name": "Tee Higgins",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Cin JB",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664391",
+          "name": "Joe Burrow",
+          "anchor": true
+        },
+        {
+          "id": "44664723",
+          "name": "Ja'Marr Chase",
+          "anchor": false
+        },
+        {
+          "id": "44664731",
+          "name": "Tee Higgins",
+          "anchor": false
+        },
+        {
+          "id": "44664487",
+          "name": "Chase Brown",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Jax",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664735",
+          "name": "Parker Washington",
+          "anchor": false
+        },
+        {
+          "id": "44664791",
+          "name": "Jakobi Meyers",
+          "anchor": false
+        },
+        {
+          "id": "44665147",
+          "name": "Brenton Strange",
+          "anchor": false
+        },
+        {
+          "id": "44664495",
+          "name": "Bhayshul Tuten",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "LAR",
+      "pct": 80.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664717",
+          "name": "Puka Nacua",
+          "anchor": false
+        },
+        {
+          "id": "44665151",
+          "name": "Tyler Higbee",
+          "anchor": false
+        },
+        {
+          "id": "44665171",
+          "name": "Colby Parkinson",
+          "anchor": false
+        },
+        {
+          "id": "44665185",
+          "name": "Davis Allen",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "NE",
+      "pct": 100.0,
+      "min": 1,
+      "max": 9,
+      "players": [
+        {
+          "id": "44664795",
+          "name": "DeMario Douglas",
+          "anchor": false
+        },
+        {
+          "id": "44664833",
+          "name": "Efton Chism III",
+          "anchor": false
+        },
+        {
+          "id": "44664841",
+          "name": "Kyle Williams",
+          "anchor": false
+        },
+        {
+          "id": "44665141",
+          "name": "Hunter Henry",
+          "anchor": false
+        },
+        {
+          "id": "44665163",
+          "name": "Eli Raridon",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Cle",
+      "pct": 100.0,
+      "min": 2,
+      "max": 4,
+      "players": [
+        {
+          "id": "44664505",
+          "name": "Quinshon Judkins",
+          "anchor": false
+        },
+        {
+          "id": "44664775",
+          "name": "Germie Bernard",
+          "anchor": false
+        },
+        {
+          "id": "44664781",
+          "name": "KC Concepcion Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44665143",
+          "name": "Harold Fannin Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44664402",
+          "name": "Deshaun Watson",
+          "anchor": true
+        }
+      ]
+    },
+    {
+      "name": "Pit",
+      "pct": 100.0,
+      "min": 2,
+      "max": 4,
+      "players": [
+        {
+          "id": "44664757",
+          "name": "DK Metcalf",
+          "anchor": false
+        },
+        {
+          "id": "44664763",
+          "name": "Denzel Boston",
+          "anchor": false
+        },
+        {
+          "id": "44665149",
+          "name": "Pat Freiermuth",
+          "anchor": false
+        },
+        {
+          "id": "44665181",
+          "name": "Darnell Washington",
+          "anchor": false
+        },
+        {
+          "id": "44664407",
+          "name": "Aaron Rodgers",
+          "anchor": true
+        },
+        {
+          "id": "44664483",
+          "name": "Jaylen Warren",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Cle AR",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664407",
+          "name": "Aaron Rodgers",
+          "anchor": true
+        },
+        {
+          "id": "44664505",
+          "name": "Quinshon Judkins",
+          "anchor": false
+        },
+        {
+          "id": "44664763",
+          "name": "Denzel Boston",
+          "anchor": false
+        },
+        {
+          "id": "44664781",
+          "name": "KC Concepcion Jr.",
+          "anchor": false
+        },
+        {
+          "id": "44665143",
+          "name": "Harold Fannin Jr.",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Pit DW",
+      "pct": 100.0,
+      "min": 2,
+      "max": 3,
+      "players": [
+        {
+          "id": "44664402",
+          "name": "Deshaun Watson",
+          "anchor": true
+        },
+        {
+          "id": "44664757",
+          "name": "DK Metcalf",
+          "anchor": false
+        },
+        {
+          "id": "44664775",
+          "name": "Germie Bernard",
+          "anchor": false
+        },
+        {
+          "id": "44665149",
+          "name": "Pat Freiermuth",
+          "anchor": false
+        },
+        {
+          "id": "44665181",
+          "name": "Darnell Washington",
+          "anchor": false
+        },
+        {
+          "id": "44664483",
+          "name": "Jaylen Warren",
+          "anchor": false
+        }
+      ]
+    },
+    {
+      "name": "Dal GP CL",
+      "pct": 100.0,
+      "min": 1,
+      "max": 1,
+      "players": [
+        {
+          "id": "44664719",
+          "name": "CeeDee Lamb",
+          "anchor": false
+        },
+        {
+          "id": "44664733",
+          "name": "George Pickens",
+          "anchor": true
+        }
+      ]
+    },
+    {
+      "name": "Dal CL GP",
+      "pct": 100.0,
+      "min": 1,
+      "max": 1,
+      "players": [
+        {
+          "id": "44664719",
+          "name": "CeeDee Lamb",
+          "anchor": true
+        },
+        {
+          "id": "44664733",
+          "name": "George Pickens",
           "anchor": false
         }
       ]

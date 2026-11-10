@@ -161,6 +161,8 @@ class PlayerPoolPlayer(BaseModel):
     # (not rank) to avoid colliding with the Player Rankings tab's
     # Total-based score, a wholly different concept.
     depth_rank: Optional[int] = None
+    # Injury/availability status code (Q, D, O, IR, ...), same source as OwnershipPlayer.status.
+    status: Optional[str] = None
 
     game_environment: _Score = None
     game_environment_override: _Score = None

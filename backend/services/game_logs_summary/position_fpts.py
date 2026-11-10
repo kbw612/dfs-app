@@ -36,7 +36,7 @@ from backend.services.schedule.schedule_loader import ScheduleRow, opponent_and_
 
 # (elite_min, strong_min)
 FPTS_BANDS: dict[str, tuple[float, float]] = {
-    "QB": (27.0, 22.0),
+    "QB": (27.0, 20.0),
     "RB": (23.0, 16.0),
     "WR": (21.0, 15.0),
     "TE": (18.0, 12.0),

@@ -18,7 +18,10 @@ from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
 from backend.repositories.player_selection.player_selection_repo import load_overrides
 from backend.schemas.player_selection.player_selection import PlayerSelectionResult, PlayerSelectionRow
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
+from backend.repositories.depth_charts.snapshot_repo import find_latest_snapshot, load_snapshot
+from backend.services.ownership.depth_rank import build_status_lookup
 from backend.services.player_selection.engine import resolve_selected
+from backend.services.shared.name_match import normalize_player_name
 
 router = APIRouter()
 
@@ -38,6 +41,8 @@ def player_selection_latest_endpoint(
         )
     salary_snapshot, _messages = parse_dk_salary_csv(csv_text, season, week)
     overrides = load_overrides(settings.nfl_data_dir, season, week, platform, contest)
+    depth_path = find_latest_snapshot(settings.snapshots_dir)
+    statuses = build_status_lookup(load_snapshot(depth_path) if depth_path else None)
 
     rows = [
         PlayerSelectionRow(
@@ -48,6 +53,7 @@ def player_selection_latest_endpoint(
             opponent=p.opponent,
             is_home=p.is_home,
             selected=resolve_selected(p.player, p.position, p.salary, overrides),
+            status=statuses.get(normalize_player_name(p.player)),
         )
         for p in salary_snapshot.players
         if p.position != "DST"

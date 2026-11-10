@@ -16,6 +16,7 @@ import io
 from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
 from backend.services.lineup_analyzer.history_loader import HistoricalPlayer, HistoricalWeek
+from backend.services.ownership.parsing import UNDER_ONE_ANALYZER_PCT, is_under_one_placeholder
 
 
 class SlateError(ValueError):
@@ -43,6 +44,11 @@ def build_live_week(
             id_to_name[pid] = name
             name_to_id[name] = pid
 
+    # The "<1%" placeholder (0.001) counts as UNDER_ONE_ANALYZER_PCT in the field.
+    players = [
+        p.model_copy(update={"ownership_pct": UNDER_ONE_ANALYZER_PCT}) if is_under_one_placeholder(p.ownership_pct) else p
+        for p in players
+    ]
     projected = [p.ownership_pct for p in players if p.ownership_pct is not None]
     if not projected:
         raise SlateError("Ownership projections did not match any player in the salary file.")

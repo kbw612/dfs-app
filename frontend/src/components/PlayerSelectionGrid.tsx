@@ -150,7 +150,10 @@ export function PlayerSelectionGrid({ season, week, platform, contest, refreshTo
                       </span>
                     </label>
                   </td>
-                  <td className="player-pool-grid-sticky player-selection-name-col">{row.player}</td>
+                  <td className="player-pool-grid-sticky player-selection-name-col">
+                    {row.player}
+                    {row.status && <span className="player-status"> {row.status}</span>}
+                  </td>
                   <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
                   <td>{row.team}</td>
                   <td>{opponentLabel(row)}</td>

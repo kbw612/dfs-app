@@ -29,6 +29,19 @@ function plain(groups: PlayerGroup[]): PlayerGroup[] {
   }));
 }
 
+// Why these groups can't be saved yet, or null. Names must be filled in and
+// different from each other (Blink identifies a group by its name).
+function nameProblemFor(groups: PlayerGroup[]): string | null {
+  const seen = new Set<string>();
+  for (const g of groups) {
+    const name = g.name.trim().toLowerCase();
+    if (name === "") return "Enter a group name.";
+    if (seen.has(name)) return `Another group is already named "${g.name.trim()}".`;
+    seen.add(name);
+  }
+  return null;
+}
+
 export function PlayerGroupsView({ season, week, platform, contest }: PlayerGroupsViewProps) {
   const [groups, setGroups] = useState<PlayerGroup[]>([]);
   const [summaries, setSummaries] = useState<GroupSummary[]>([]);
@@ -88,8 +101,11 @@ export function PlayerGroupsView({ season, week, platform, contest }: PlayerGrou
   const edit = (next: PlayerGroup[], nextSelected = selected) => {
     setGroups(next);
     setSelected(nextSelected);
-    setSaveState("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
+    // A blank or repeated group name isn't saved; the editor says why and
+    // saving resumes as soon as the name is fixed.
+    if (nameProblemFor(next) !== null) return;
+    setSaveState("saving");
     saveTimer.current = window.setTimeout(() => {
       savePlayerGroups(season, week, platform, contest, plain(next))
         .then((s) => {
@@ -263,7 +279,10 @@ export function PlayerGroupsView({ season, week, platform, contest }: PlayerGrou
           {current ? (
             <>
               <div className="pg-bar">
-                <input value={current.name} onChange={(e) => update({ name: e.target.value })} className="pg-name-input" aria-label="Group name" />
+                <label>
+                  Group name{" "}
+                  <input value={current.name} onChange={(e) => update({ name: e.target.value })} className="pg-name-input" aria-label="Group name" />
+                </label>
                 <label>
                   Pct <input type="number" min={0} max={100} value={current.pct} onChange={(e) => update({ pct: Number(e.target.value) })} />
                 </label>
@@ -274,6 +293,7 @@ export function PlayerGroupsView({ season, week, platform, contest }: PlayerGrou
                   Max <input type="number" min={0} value={current.max} onChange={(e) => update({ max: Number(e.target.value) })} />
                 </label>
               </div>
+              {nameProblemFor(groups) !== null && <p className="error">{nameProblemFor(groups)} Changes aren't saved until this is fixed.</p>}
               <table className="pg-table">
                 <thead>
                   <tr>

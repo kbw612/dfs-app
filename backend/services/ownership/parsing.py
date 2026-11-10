@@ -58,3 +58,16 @@ def parse_ownership_pct(raw: str | None) -> float | None:
     if not stripped:
         return None
     return float(stripped.rstrip("%"))
+
+
+# OWS lists players owned under 1% in a separate "Under 1% Owned" table with
+# no number ("<1%"). The scraper saves them at this placeholder (a value no
+# real projection uses); a value equal to it means "<1%". If OWS later shows
+# real decimals (0.25, 0.75, ...) those are saved as the numbers.
+UNDER_ONE_PCT = 0.001
+# What the Lineup Analyzer's simulated field counts the placeholder as.
+UNDER_ONE_ANALYZER_PCT = 0.1
+
+
+def is_under_one_placeholder(pct: float | None) -> bool:
+    return pct is not None and abs(pct - UNDER_ONE_PCT) < 1e-9

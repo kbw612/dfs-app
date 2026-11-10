@@ -876,7 +876,10 @@ export function PlayerPoolView({ season, week, platform, contest }: PlayerPoolVi
                       const values = editValues[key] ?? {};
                       return (
                         <tr key={key} className={dirtyKeys.has(key) ? "player-pool-row-dirty" : undefined}>
-                          <td className="player-pool-grid-sticky">{row.player}</td>
+                          <td className="player-pool-grid-sticky">
+                            {row.player}
+                            {row.status && <span className="player-status"> {row.status}</span>}
+                          </td>
                           <td className="player-pool-grid-num">{formatSalary(row.salary)}</td>
                           <td className="player-pool-grid-num">{formatExpectedFpts(row.expected_fpts)}</td>
                           <td>{row.team}</td>

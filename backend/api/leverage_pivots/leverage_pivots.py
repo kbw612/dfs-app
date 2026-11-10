@@ -3,7 +3,7 @@ GET /leverage-pivots?season=&week=&platform=&player=&position= (mounted at
 /api/leverage-pivots). Reads the same Settings-uploaded ownership projections
 file as Ownership Pivots and returns the whole Leverage & Pivots tab finished:
 chalk chips (`chalk_pct`, default 15% -- owned at or above it), the
-multi-reason panel (every owned player is a trigger; `min_reasons`, default 3, is the fewest reasons a listed player needs), and -- when `player` is given -- the four columns for
+multi-reason panel (every owned player is a trigger; `min_reasons`, default 4, is the fewest reasons a listed player needs), and -- when `player` is given -- the four columns for
 that player, narrowed to `position` when set. See
 backend/services/leverage_pivots/engine.py for the rules.
 """
@@ -22,6 +22,7 @@ from backend.services.leverage_pivots.engine import (
     owned_players,
 )
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
+from backend.services.ownership.under_one import DEFAULT_CUTOFF, hide_below_cutoff
 from backend.services.shared.name_match import normalize_player_name
 
 router = APIRouter()
@@ -35,7 +36,8 @@ def leverage_pivots_endpoint(
     player: str | None = None,
     position: str | None = None,
     chalk_pct: float = 15.0,
-    min_reasons: int = 3,
+    min_reasons: int = 4,
+    hide_below: float = DEFAULT_CUTOFF,
 ) -> LeveragePivotsResult:
     try:
         csv_text = load_projections_csv(settings.nfl_data_dir, season, week, platform)
@@ -54,7 +56,7 @@ def leverage_pivots_endpoint(
         raise HTTPException(status_code=400, detail="chalk_pct must be between 0 and 100")
     leverage_point = chalk_pct
 
-    players = owned_players(raw_players)
+    players = owned_players(hide_below_cutoff(raw_players, hide_below))  # RB/WR/TE owned below the cutoff; QB/DST never
     chalk = [p for p in players if p.ownership_pct >= leverage_point]
 
     result = LeveragePivotsResult(

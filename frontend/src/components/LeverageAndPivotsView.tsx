@@ -13,7 +13,6 @@ interface Props {
 }
 
 const money = (n: number) => `$${n.toLocaleString()}`;
-const pct = (n: number) => `${n.toFixed(1)}%`;
 
 function Column({ column }: { column: LpColumn }) {
   return (
@@ -24,7 +23,8 @@ function Column({ column }: { column: LpColumn }) {
       </div>
       <div className="lp-col-head">
         <span>{column.header}</span>
-        <span>Price · Owned</span>
+        <span className="lp-right">Price</span>
+        <span className="lp-right">Owned</span>
       </div>
       {column.rows.length === 0 && <div className="lp-empty">None</div>}
       {column.rows.map((r) => (
@@ -40,7 +40,7 @@ function Column({ column }: { column: LpColumn }) {
             <div className="lp-sub">{r.salary_diff_label}</div>
           </div>
           <div className="lp-right">
-            <span className={`lp-own${r.less_label === null ? " lp-own-corr" : ""}`}>{pct(r.ownership_pct)}</span>
+            <span className={`lp-own${column.title === "Correlated" ? " lp-own-corr" : ""}`}>{r.own_label}</span>
             {r.less_label && <div className="lp-sub">{r.less_label}</div>}
           </div>
         </div>
@@ -56,8 +56,10 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
   const [position, setPosition] = useState("All");
   const [chalkInput, setChalkInput] = useState("15");
   const [chalkPct, setChalkPct] = useState(15);
-  const [minInput, setMinInput] = useState("3");
-  const [minReasons, setMinReasons] = useState(3);
+  const [hideInput, setHideInput] = useState("1");
+  const [hideBelow, setHideBelow] = useState(1);
+  const [minInput, setMinInput] = useState("4");
+  const [minReasons, setMinReasons] = useState(4);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -65,14 +67,14 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetchLeveragePivots(season, week, platform, selectedName, position, chalkPct, minReasons)
+    fetchLeveragePivots(season, week, platform, selectedName, position, chalkPct, minReasons, hideBelow)
       .then(setData)
       .catch((err) => {
         setData(null);
         setError(err instanceof Error ? err.message : "Failed to load leverage and pivots");
       })
       .finally(() => setLoading(false));
-  }, [season, week, platform, selectedName, position, chalkPct, minReasons]);
+  }, [season, week, platform, selectedName, position, chalkPct, minReasons, hideBelow]);
 
   function select(player: LpPlayer | string) {
     const name = typeof player === "string" ? player : player.player;
@@ -87,6 +89,15 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
       setChalkPct(parsed);
     } else {
       setChalkInput(String(chalkPct));
+    }
+  }
+
+  function commitHide(value: string) {
+    const parsed = Number(value);
+    if (value.trim() !== "" && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100) {
+      setHideBelow(parsed);
+    } else {
+      setHideInput(String(hideBelow));
     }
   }
 
@@ -128,6 +139,20 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
           />
         </label>
         <label className="game-logs-lookback-field">
+          Hide RB/WR/TE owned below (%)
+          <input
+            type="text"
+            inputMode="decimal"
+            className="lp-chalk-input"
+            value={hideInput}
+            onChange={(e) => setHideInput(e.target.value)}
+            onBlur={(e) => commitHide(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitHide(hideInput);
+            }}
+          />
+        </label>
+        <label className="game-logs-lookback-field">
           Minimum leverage/pivot reasons
           <input
             type="text"
@@ -165,8 +190,11 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
                           </span>
                           <span className="lp-badge">{p.reasons.length} players</span>
                         </div>
-                        <div className="lp-right">
-                          {money(p.salary)} <span className="lp-own">{pct(p.ownership_pct)}</span>
+                        <div className="lp-prow-nums">
+                          <span className="lp-right">{money(p.salary)}</span>
+                          <span className="lp-right">
+                            <span className="lp-own">{p.own_label}</span>
+                          </span>
                         </div>
                       </div>
                       {open && (
@@ -199,7 +227,7 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
                     aria-pressed={selectedName === p.player}
                     onClick={() => select(p)}
                   >
-                    {p.player} <span className="lp-chip-own">{pct(p.ownership_pct)}</span>
+                    {p.player} <span className="lp-chip-own">{p.own_label}</span>
                   </button>
                 ))}
               </div>
@@ -235,7 +263,7 @@ export function LeverageAndPivotsView({ season, week, platform }: Props) {
                   </div>
                 </div>
                 <div className="lp-banner-own">
-                  {pct(selected.trigger.ownership_pct)}
+                  {selected.trigger.own_label}
                   <span className="lp-sub"> owned</span>
                 </div>
               </div>

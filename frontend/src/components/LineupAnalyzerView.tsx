@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { analyzeLineups, fetchAnalyzerExposure, fetchLineupAnalyzerInfo, fetchLineupAnalyzerSaved, uploadLineupAnalyzerFiles } from "../api";
-import type { LineupAnalyzerInfo, LineupAnalyzerResult, LineupAnalyzerRow } from "../types";
+import { DEFAULT_FLAG_SETTINGS } from "../types";
+import type { FlagSettings, LineupAnalyzerInfo, LineupAnalyzerResult, LineupAnalyzerRow, LineupFlag } from "../types";
 import { CollapsibleHint } from "./CollapsibleHint";
 import { ExposurePanel } from "./ExposurePanel";
 
@@ -49,10 +50,37 @@ function download(filename: string, text: string) {
   URL.revokeObjectURL(url);
 }
 
+const SEVERITY_LABELS: Record<string, string> = { error: "Error", warning: "Warning", note: "Note" };
+
+function FlagBadges({ flags }: { flags: LineupFlag[] }) {
+  return (
+    <>
+      {(["error", "warning", "note"] as const).map((sev) => {
+        const mine = flags.filter((f) => f.severity === sev);
+        if (mine.length === 0) return null;
+        return (
+          <span key={sev} className={`la-badge la-${sev}`} title={mine.map((f) => `${f.label}: ${f.text}`).join("\n")}>
+            {sev === "error" ? "E" : sev === "warning" ? "W" : "N"} {mine.length}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 function LineupRows({ row, featureNames }: { row: LineupAnalyzerRow; featureNames: string[] }) {
   return (
     <tr className="lineup-analyzer-detail">
-      <td colSpan={7}>
+      <td colSpan={8}>
+        {row.flags.length > 0 && (
+          <div className="la-flag-list">
+            {row.flags.map((f) => (
+              <div key={f.code + f.text}>
+                <span className={`la-badge la-${f.severity}`}>{f.label}</span> {f.text}
+              </div>
+            ))}
+          </div>
+        )}
         <div className="lineup-analyzer-breakdown">
           {featureNames.map((f) => {
             const c = row.contributions[f] ?? 0;
@@ -70,7 +98,7 @@ function LineupRows({ row, featureNames }: { row: LineupAnalyzerRow; featureName
 }
 
 function LineupTable({ rows, featureNames }: { rows: LineupAnalyzerRow[]; featureNames: string[] }) {
-  const [open, setOpen] = useState<number | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
   return (
     <div className="lineup-analyzer-table-wrap">
       <table className="lineup-analyzer-table">
@@ -83,12 +111,14 @@ function LineupTable({ rows, featureNames }: { rows: LineupAnalyzerRow[]; featur
             <th>Players (salary, own %)</th>
             <th>Unused</th>
             <th>Own sum</th>
+            <th>Flags</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <FragmentRow key={r.rank} row={r} featureNames={featureNames} open={open === r.rank} onToggle={() => setOpen(open === r.rank ? null : r.rank)} />
-          ))}
+          {rows.map((r) => {
+            const id = `${r.rank}-${r.players.map((p) => p.dk_id).join("-")}`;
+            return <FragmentRow key={id} row={r} featureNames={featureNames} open={open === id} onToggle={() => setOpen(open === id ? null : id)} />;
+          })}
         </tbody>
       </table>
     </div>
@@ -99,9 +129,9 @@ function FragmentRow({ row, featureNames, open, onToggle }: { row: LineupAnalyze
   return (
     <>
       <tr className="lineup-analyzer-row" onClick={onToggle}>
-        <td>{row.rank}</td>
-        <td>{row.score.toFixed(2)}</td>
-        <td>{row.percentile.toFixed(1)}</td>
+        <td>{row.rank > 0 ? row.rank : "–"}</td>
+        <td>{row.rank > 0 ? row.score.toFixed(2) : "–"}</td>
+        <td>{row.rank > 0 ? row.percentile.toFixed(1) : "–"}</td>
         <td>{row.tier}</td>
         <td>
           {row.players.map((p) => (
@@ -112,6 +142,9 @@ function FragmentRow({ row, featureNames, open, onToggle }: { row: LineupAnalyze
         </td>
         <td>${row.unused}</td>
         <td>{row.own_sum}</td>
+        <td>
+          <FlagBadges flags={row.flags} />
+        </td>
       </tr>
       {open && <LineupRows row={row} featureNames={featureNames} />}
     </>
@@ -133,11 +166,16 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [tab, setTab] = useState<"ranked" | "portfolio">("ranked");
+  const [flagSettings, setFlagSettings] = useState<FlagSettings>(DEFAULT_FLAG_SETTINGS);
+  const [sevFilter, setSevFilter] = useState<Set<string>>(new Set());
+  const [codeFilter, setCodeFilter] = useState<string | null>(null);
 
   useEffect(() => {
     setResult(null);
     setSavedAt(null);
     setError(null);
+    setSevFilter(new Set());
+    setCodeFilter(null);
     // Pool info + defaults first, then the last saved analysis (which also
     // restores the weights/portfolio settings it was run with).
     fetchLineupAnalyzerInfo(season, week, platform, contest)
@@ -150,6 +188,7 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
         setSavedAt(saved.saved_at);
         setFieldSize(saved.request.field_size);
         setWeights({ ...i.default_weights, ...(saved.request.weights ?? {}) });
+        setFlagSettings({ ...DEFAULT_FLAG_SETTINGS, ...(saved.request.flag_settings ?? {}) });
         const pf = saved.request.portfolio;
         setPortfolioOn(pf !== null);
         if (pf) {
@@ -193,6 +232,7 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
         weights: currentWeights,
         limit: 300,
         portfolio: portfolioOn ? { size, max_exposure_pct: exposure, max_overlap: overlap } : null,
+        flag_settings: flagSettings,
       });
       setResult(res);
       setSavedAt(new Date().toISOString());
@@ -221,7 +261,37 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
   };
 
   const features = info?.feature_names ?? [];
-  const shown = useMemo(() => (tab === "portfolio" ? result?.portfolio ?? [] : result?.rows ?? []), [tab, result]);
+  const baseRows = useMemo(() => (tab === "portfolio" ? result?.portfolio ?? [] : result?.rows ?? []), [tab, result]);
+  const filtering = sevFilter.size > 0 || codeFilter !== null;
+  // Ranked tab: flag filters search every flagged lineup (not just the top
+  // rows); Clean (no flags) can only be judged on the rows shown. Portfolio
+  // tab: the portfolio's own rows.
+  const shown = useMemo(() => {
+    if (!result || !filtering) return baseRows;
+    const matches = (r: LineupAnalyzerRow) =>
+      (codeFilter === null || r.flags.some((f) => f.code === codeFilter)) &&
+      (sevFilter.size === 0 ||
+        r.flags.some((f) => sevFilter.has(f.severity)) ||
+        (sevFilter.has("clean") && r.flags.length === 0));
+    if (tab === "portfolio") return baseRows.filter(matches);
+    const flaggedHits = (result.flagged ?? []).filter(matches);
+    const cleanHits = sevFilter.has("clean") && codeFilter === null ? baseRows.filter((r) => r.flags.length === 0) : [];
+    return [...flaggedHits, ...cleanHits].sort((a, b) => (a.rank || 1e9) - (b.rank || 1e9));
+  }, [baseRows, result, filtering, sevFilter, codeFilter, tab]);
+
+  const toggleSeverity = (sev: string) => {
+    setCodeFilter(null);
+    setSevFilter((cur) => {
+      const next = new Set(cur);
+      if (next.has(sev)) next.delete(sev);
+      else next.add(sev);
+      return next;
+    });
+  };
+  const pickCode = (code: string) => {
+    setSevFilter(new Set());
+    setCodeFilter((cur) => (cur === code ? null : code));
+  };
 
   return (
     <div className="lineup-analyzer">
@@ -286,6 +356,31 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
             </>
           )}
         </div>
+        <details>
+          <summary>Flag thresholds</summary>
+          <div className="lineup-analyzer-controls">
+            <label>
+              Low game total below{" "}
+              <input type="number" min={0} value={flagSettings.low_total} onChange={(e) => setFlagSettings({ ...flagSettings, low_total: Number(e.target.value) })} />
+            </label>
+            <label>
+              Underdog by{" "}
+              <input type="number" min={0} value={flagSettings.underdog_spread} onChange={(e) => setFlagSettings({ ...flagSettings, underdog_spread: Number(e.target.value) })} />
+            </label>
+            <label>
+              Punt salary{" "}
+              <input type="number" min={0} step={100} value={flagSettings.punt_salary} onChange={(e) => setFlagSettings({ ...flagSettings, punt_salary: Number(e.target.value) })} />
+            </label>
+            <label>
+              Punts to flag{" "}
+              <input type="number" min={1} value={flagSettings.punt_count} onChange={(e) => setFlagSettings({ ...flagSettings, punt_count: Number(e.target.value) })} />
+            </label>
+            <label>
+              Ownership extreme slice %{" "}
+              <input type="number" min={0} max={50} value={flagSettings.own_slice_pct} onChange={(e) => setFlagSettings({ ...flagSettings, own_slice_pct: Number(e.target.value) })} />
+            </label>
+          </div>
+        </details>
         <details>
           <summary>Factor weights ({features.length})</summary>
           <p className="lineup-analyzer-note">
@@ -355,6 +450,52 @@ export function LineupAnalyzerView({ season, week, platform, contest }: LineupAn
               </>
             )}
           </div>
+          <section className="la-flags">
+            <h4>Lineup flags</h4>
+            <div className="chip-row">
+              {([["error", "Errors"], ["warning", "Warnings"], ["note", "Notes"], ["clean", "Clean"]] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`chip${sevFilter.has(key) ? " selected" : ""}`}
+                  aria-pressed={sevFilter.has(key)}
+                  onClick={() => toggleSeverity(key)}
+                >
+                  {label} <span className="lp-chip-own">{(result.flag_counts ?? {})[key] ?? 0}</span>
+                </button>
+              ))}
+              {filtering && (
+                <button type="button" className="secondary" onClick={() => { setSevFilter(new Set()); setCodeFilter(null); }}>
+                  Show all
+                </button>
+              )}
+            </div>
+            {(result.flag_summary ?? []).filter((f) => f.count > 0).length === 0 ? (
+              <p className="lineup-analyzer-note">No lineup is flagged{(result.flag_summary ?? []).length === 0 ? " (re-analyze to check flags on this older result)" : ""}.</p>
+            ) : (
+              <table className="la-flag-table">
+                <tbody>
+                  {(result.flag_summary ?? [])
+                    .filter((f) => f.count > 0)
+                    .map((f) => (
+                      <tr key={f.code} className={codeFilter === f.code ? "selected" : ""} onClick={() => pickCode(f.code)}>
+                        <td>
+                          <span className={`la-badge la-${f.severity}`}>{SEVERITY_LABELS[f.severity]}</span>
+                        </td>
+                        <td>{f.label}</td>
+                        <td className="la-count">{f.count} lineup{f.count === 1 ? "" : "s"}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            )}
+            {filtering && (
+              <p className="lineup-analyzer-note">
+                Showing {shown.length} lineup{shown.length === 1 ? "" : "s"}
+                {codeFilter ? ` with “${(result.flag_summary ?? []).find((f) => f.code === codeFilter)?.label}”` : ` matching ${[...sevFilter].join(" / ")}`}.
+              </p>
+            )}
+          </section>
           <ExposurePanel
             title="FLEX and player exposure"
             reloadKey={`${season}-${week}-${platform}-${contest}-${savedAt ?? ""}`}

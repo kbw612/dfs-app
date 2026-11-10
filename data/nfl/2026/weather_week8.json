@@ -1,7 +1,7 @@
 {
   "season": 2026,
   "week": 8,
-  "scraped_at": "2026-10-30T14:56:10-04:00",
+  "scraped_at": "2026-11-01T12:51:32-05:00",
   "games": [
     {
       "away_name": "Atlanta Falcons",
@@ -11,7 +11,7 @@
       "game_key": "ATL-TB",
       "kickoff_label": "1:00 PM ET",
       "color": "yellow",
-      "note": "Scattered downpours in the area. We can't pinpoint this until closer to kickoff, but there's a decent chance of some in-game rain."
+      "note": "Sunday 11am - I think there's a good chance for rain here, with legitimate \"downpour\" potential. Some of the latest model have trended a bit drier, so it's going to be a close call between \"rain nearby\" and \"rain over the stadium\"."
     },
     {
       "away_name": "Indianapolis Colts",
@@ -21,7 +21,7 @@
       "game_key": "IND-JAX",
       "kickoff_label": "1:00 PM ET",
       "color": "yellow",
-      "note": "A chance of some showers. If I were to order the 3 Florida potential rain games, this one would be my lowest concern, but there's still a chance of showers."
+      "note": "Sunday 11am - A pretty good chance of light-to-moderate rain. JAX might not have the thunderstorm potential some of the other games have, but there's still likely some rain impact here."
     },
     {
       "away_name": "New England Patriots",
@@ -31,7 +31,7 @@
       "game_key": "MIA-NE",
       "kickoff_label": "4:25 PM ET",
       "color": "yellow",
-      "note": "Scattered downpours in the area. Pretty good chance of seeing some in-game rain. Winds in all of these Florida games are around 10-15mph sustained, gusts around 20mph, not quite enough to move the needle."
+      "note": "Sunday 11am - Scattered downpours in the area. Pretty good chance of seeing some in-game rain, with a potential for a downpour and/or lightning delay. Winds in all of these Florida games are around 10-15mph sustained, gusts around 20mph, not quite enough to move the needle. NOTE - ALL of these games will come down to a last minute radar check... you just can't pinpoint pop-up storms much in advance of kickoff."
     }
   ]
 }

@@ -29,10 +29,12 @@ def _team_ranks(team: Team) -> dict[str, int]:
     """Normalized player name -> 1-indexed rank within their position
     group, for one team."""
     ranks: dict[str, int] = {}
-    ordered_positions = sorted(
-        team.positions.items(), key=lambda item: item[0] not in _OFFENSE_FANTASY_POSITIONS
-    )
-    for _position, players in ordered_positions:
+    # Offensive fantasy positions only: matching is by name alone, so a defender who shares
+    # a name with a skill player (e.g. CLE linebacker Justin Jefferson vs. MIN WR Justin
+    # Jefferson) must not hand him a rank or an injury status.
+    for _position, players in team.positions.items():
+        if _position not in _OFFENSE_FANTASY_POSITIONS:
+            continue
         for i, player in enumerate(players):
             ranks.setdefault(normalize_player_name(player.player), i + 1)
     return ranks
@@ -51,4 +53,22 @@ def build_depth_rank_lookup(depth_snapshot: Snapshot | None) -> dict[str, int]:
     for team in depth_snapshot.teams:
         for name, rank in _team_ranks(team).items():
             lookup.setdefault(name, rank)
+    return lookup
+
+
+def build_status_lookup(depth_snapshot: Snapshot | None) -> dict[str, str]:
+    """Normalized player name -> injury/availability status code (Q, D, O, IR,
+    ...) from the latest depth-chart snapshot, only for players who carry one.
+    Same name-only matching and "no entry means unknown/healthy" convention as
+    build_depth_rank_lookup."""
+    lookup: dict[str, str] = {}
+    if depth_snapshot is None:
+        return lookup
+    for team in depth_snapshot.teams:
+        for position, players in team.positions.items():
+            if position not in _OFFENSE_FANTASY_POSITIONS:
+                continue
+            for player in players:
+                if player.status:
+                    lookup.setdefault(normalize_player_name(player.player), player.status)
     return lookup

@@ -53,6 +53,7 @@ from backend.repositories.ownership.projections_repo import (
 )
 from backend.schemas.ownership.ownership import OwnershipProjectionsPlayer
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
+from backend.services.ownership.under_one import DEFAULT_CUTOFF, hide_below_cutoff
 
 router = APIRouter()
 
@@ -73,7 +74,9 @@ class OwnershipProjectionsResult(BaseModel):
 
 
 @router.get("/projections", response_model=OwnershipProjectionsResult)
-def ownership_projections_endpoint(season: int, week: int, platform: str = "DraftKings") -> OwnershipProjectionsResult:
+def ownership_projections_endpoint(
+    season: int, week: int, platform: str = "DraftKings", hide_below: float = DEFAULT_CUTOFF
+) -> OwnershipProjectionsResult:
     try:
         current_path = projections_csv_path(settings.nfl_data_dir, season, week, platform)
         current_csv_text = load_projections_csv(settings.nfl_data_dir, season, week, platform)
@@ -88,6 +91,7 @@ def ownership_projections_endpoint(season: int, week: int, platform: str = "Draf
             ),
         )
     current_players, _messages = parse_ownership_projections_csv(current_csv_text)
+    current_players = hide_below_cutoff(current_players, hide_below)  # RB/WR/TE owned below the cutoff; QB/DST never
 
     initial_path = initial_projections_csv_path(settings.nfl_data_dir, season, week, platform)
     # Fall back to the current file's own text when there's no separate

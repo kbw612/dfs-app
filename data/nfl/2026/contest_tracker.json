@@ -136,6 +136,46 @@
       "cost": 5.0,
       "won": 1.5,
       "top_finishes": []
+    },
+    {
+      "contest_id": "minimax",
+      "week": 8,
+      "cost": 50.0,
+      "won": 27.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 8,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "minimax",
+      "week": 9,
+      "cost": 0.5,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 10,
+      "cost": 1.0,
+      "won": 0.0,
+      "top_finishes": []
+    },
+    {
+      "contest_id": "dailydollar",
+      "week": 9,
+      "cost": 1.0,
+      "won": 3.0,
+      "top_finishes": [
+        {
+          "place": 458,
+          "payout": 3.0
+        }
+      ]
     }
   ]
 }

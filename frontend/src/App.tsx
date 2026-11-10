@@ -10,6 +10,7 @@ import { DstTrendsView } from "./components/DstTrendsView";
 import { GameLogsAgainstView } from "./components/GameLogsAgainstView";
 import { GameLogsView } from "./components/GameLogsView";
 import { LeverageAndPivotsView } from "./components/LeverageAndPivotsView";
+import { PlayerSignalsView } from "./components/PlayerSignalsView";
 import { GameLogsSummaryView } from "./components/GameLogsSummaryView";
 import { GamePreviewView } from "./components/GamePreviewView";
 import { HeaderSettingsPopover } from "./components/HeaderSettingsPopover";
@@ -41,6 +42,7 @@ type View =
   | "ownership"
   | "ownershipSummary"
   | "leveragePivots"
+  | "playerSignals"
   | "salaryBlocks"
   | "playerPool"
   | "vegasLines"
@@ -420,6 +422,14 @@ function App() {
         </button>
         <button
           type="button"
+          className={`view-tab${view === "playerSignals" ? " selected" : ""}`}
+          aria-pressed={view === "playerSignals"}
+          onClick={() => requestViewChange("playerSignals")}
+        >
+          Player Signals
+        </button>
+        <button
+          type="button"
           className={`view-tab${view === "ownership" ? " selected" : ""}`}
           aria-pressed={view === "ownership"}
           onClick={() => requestViewChange("ownership")}
@@ -503,6 +513,7 @@ function App() {
         <OwnershipSummaryView season={season} week={week} platform={platform} contest={contest} />
       )}
       {view === "leveragePivots" && <LeverageAndPivotsView season={season} week={week} platform={platform} />}
+      {view === "playerSignals" && <PlayerSignalsView season={season} week={week} platform={platform} />}
       {view === "ownership" && <OwnershipView season={season} week={week} platform={platform} />}
       {view === "boomBust" && <BoomBustView season={season} week={week} platform={platform} contest={contest} />}
       {view === "playerPool" && <PlayerPoolView season={season} week={week} platform={platform} contest={contest} />}

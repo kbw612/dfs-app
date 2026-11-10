@@ -24,7 +24,10 @@ export function formatExpectedFpts(value: number): string {
 // few days -- see OwnershipPlayer.ownership_pct in types.ts) rather than
 // crashing on null.toFixed() or silently showing "0.0%", which would read
 // as a real (very low) ownership figure instead of "not loaded yet".
+// The scraper saves OWS's "<1%" players at 0.001 (see backend/services/
+// ownership/parsing.py's UNDER_ONE_PCT); that value reads "<1%".
 export function formatOwnershipPct(pct: number | null): string {
+  if (pct !== null && Math.abs(pct - 0.001) < 1e-9) return "<1%";
   return pct === null ? "-" : `${pct.toFixed(2)}%`;
 }
 

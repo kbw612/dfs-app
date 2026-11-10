@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { fetchContestResultRows, fetchOwnershipProjections, fetchOwnershipSummary, fetchPlayerPool, fetchVegasLines } from "../api";
+import { HideBelowField } from "./HideBelowField";
 import type {
   GameOwnershipRollup,
   OwnershipProjectionsPlayer,
@@ -352,10 +353,12 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
   // covered by the tab still working normally otherwise).
   const [actualOwnershipByPlayer, setActualOwnershipByPlayer] = useState<Map<string, number>>(new Map());
 
+  const [hideBelow, setHideBelow] = useState(1);
+
   useEffect(() => {
     setFetchLoading(true);
     setFetchError(null);
-    fetchOwnershipProjections(season, week, platform)
+    fetchOwnershipProjections(season, week, platform, hideBelow)
       .then((result) => {
         setPlayers(result.players);
         setInitialUploadedAt(result.initial_uploaded_at);
@@ -371,7 +374,7 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
         setFetchError(err instanceof Error ? err.message : "Failed to load ownership data");
       })
       .finally(() => setFetchLoading(false));
-  }, [season, week, platform]);
+  }, [season, week, platform, hideBelow]);
 
   useEffect(() => {
     fetchVegasLines(season, week)
@@ -521,6 +524,7 @@ export function OwnershipSummaryView({ season, week, platform, contest }: Owners
             <CollapsibleHeader title="Players" expanded={playersExpanded} onToggle={() => setPlayersExpanded((v) => !v)} />
             {playersExpanded && (
               <>
+                <HideBelowField value={hideBelow} onChange={setHideBelow} />
                 <p className="hint">
                   {players.length} players with a projected ownership% this week.
                   {initialUploadedAt && currentUploadedAt && (

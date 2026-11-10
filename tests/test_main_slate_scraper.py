@@ -109,3 +109,43 @@ def test_scrape_main_slate_missing_table_hints_at_bad_credentials_when_configure
             csv_text, _, messages = scrape_main_slate("https://oneweekseason.com/draftkings-main-slate/")
     assert csv_text is None
     assert any("Logged in with the configured OWS credentials" in m.message for m in messages)
+
+
+LOW_OWNED_HTML = (Path(__file__).parent / "fixtures" / "sample_main_slate_low_owned.html").read_text()
+
+
+def _rows(csv_text):
+    return list(csv.DictReader(io.StringIO(csv_text)))
+
+
+def test_low_owned_table_rows_are_added_at_the_placeholder_and_not_confused_with_main_table():
+    csv_text, _ = parse_main_slate_csv(LOW_OWNED_HTML)
+    rows = _rows(csv_text)
+    assert [r["Player"] for r in rows][:2] == ["Chase Brown", "Rashee Rice"]
+    assert "Should Not Be Scraped" not in csv_text
+    rice = next(r for r in rows if r["Player"] == "Rashee Rice")
+    assert rice["% ownership"] == "0.001%" and rice["Position"] == "WR" and rice["Salary"] == "$6,400"
+    assert rice["Proj."] == "12.06" and rice["Tm Own"] == ""  # the low table has no Tm Own column
+    players, _ = parse_ownership_projections_csv(csv_text)
+    assert next(p for p in players if p.player == "Rashee Rice").ownership_pct == 0.001
+
+
+def test_low_owned_position_comes_from_the_salary_file_lookup():
+    lookup = {("Brandon Smith", "PIT"): "WR"}.get
+    csv_text, messages = parse_main_slate_csv(LOW_OWNED_HTML, lambda name, team: lookup((name, team)))
+    smith = next(r for r in _rows(csv_text) if r["Player"] == "Brandon Smith")
+    assert smith["Position"] == "WR"
+    assert any("Brandon Smith LB→WR" in m.message for m in messages if m.level == "info")
+
+
+def test_low_owned_row_with_an_invalid_position_and_no_lookup_match_is_skipped_with_a_warning():
+    csv_text, messages = parse_main_slate_csv(LOW_OWNED_HTML)
+    names = [r["Player"] for r in _rows(csv_text)]
+    assert "Brandon Smith" not in names and "Mystery Man" not in names
+    assert sum("isn't a DraftKings position" in m.message for m in messages) == 2
+
+
+def test_low_owned_team_abbreviations_are_normalized():
+    csv_text, _ = parse_main_slate_csv(LOW_OWNED_HTML, lambda n, t: "WR" if n == "Mystery Man" else None)
+    mystery = next(r for r in _rows(csv_text) if r["Player"] == "Mystery Man")
+    assert mystery["Team"] == "LAR" and mystery["Opponent"] == "LAC"

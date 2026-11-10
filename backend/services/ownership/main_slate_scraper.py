@@ -47,13 +47,14 @@ from __future__ import annotations
 import csv
 import io
 import re
+from collections.abc import Callable
 
 import requests
 from bs4 import BeautifulSoup
 
 from backend.config import settings
 from backend.schemas.depth_charts.snapshot import Message
-from backend.services.ownership.parsing import normalize_team_abbrev
+from backend.services.ownership.parsing import UNDER_ONE_PCT, normalize_team_abbrev
 from backend.services.ownership.site_login import login
 
 # Same defensive header set as vegas_lines/scraper.py and depth_charts/
@@ -83,6 +84,17 @@ _HEADER_RENAMES = {
 _TEAM_ABBREV_COLUMNS = {"Team", "Opp"}
 
 _WEEK_RE = re.compile(r"Week\s+(\d+)", re.IGNORECASE)
+
+# The page's "Under 1% Owned" table (`ows-low-owned-table`) lists projected
+# players the main table leaves out, every one shown as "<1%". They are saved
+# at the UNDER_ONE_PCT placeholder (see parsing.py). It has no Tm Own column, and its Pos can be wrong (a PIT
+# WR once came through as "LB"), so each row's position comes from the week's
+# DK salary file when a lookup is given.
+LOW_OWNED_PCT = f"{UNDER_ONE_PCT:g}%"  # placeholder for "<1%"
+VALID_POSITIONS = {"QB", "RB", "WR", "TE", "DST"}
+
+# (player name, team) -> DK position, from the week's salary file.
+PositionLookup = Callable[[str, str], str | None]
 
 
 def build_session() -> requests.Session:
@@ -120,7 +132,9 @@ def extract_displayed_week(html: str) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def parse_main_slate_csv(html: str) -> tuple[str | None, list[Message]]:
+def parse_main_slate_csv(
+    html: str, position_lookup: PositionLookup | None = None
+) -> tuple[str | None, list[Message]]:
     """Builds raw CSV text (same shape save_projections_csv/
     parse_ownership_projections_csv expect, just with extra columns the
     app doesn't consume) from the page's all-positions table. Returns
@@ -128,7 +142,7 @@ def parse_main_slate_csv(html: str) -> tuple[str | None, list[Message]]:
     problem (too few cells) skips just that row with a warning rather than
     failing the whole scrape."""
     soup = BeautifulSoup(html, "html.parser")
-    table = soup.select_one("table.ows-main-table--all")
+    table = soup.select_one("table.ows-main-table--all:not(.ows-low-owned-table)")
     if table is None:
         return None, [
             Message(
@@ -175,6 +189,10 @@ def parse_main_slate_csv(html: str) -> tuple[str | None, list[Message]]:
                 values[i] = normalize_team_abbrev(values[i])
         csv_rows.append(values)
 
+    low_rows, low_messages = _parse_low_owned_rows(soup, header_cells, position_lookup)
+    csv_rows.extend(low_rows)
+    messages.extend(low_messages)
+
     if not csv_rows:
         messages.append(Message(level="warning", step="scrape-main-slate", message="No player rows parsed from table"))
 
@@ -185,7 +203,72 @@ def parse_main_slate_csv(html: str) -> tuple[str | None, list[Message]]:
     return buffer.getvalue(), messages
 
 
-def scrape_main_slate(url: str) -> tuple[str | None, int | None, list[Message]]:
+def _parse_low_owned_rows(
+    soup: BeautifulSoup, header_cells: list[str], position_lookup: PositionLookup | None
+) -> tuple[list[list[str]], list[Message]]:
+    """Rows of the "Under 1% Owned" table, shaped like the main table's rows
+    (same columns, missing ones such as Tm Own left blank), each at
+    LOW_OWNED_PCT. The position is the salary file's when known, else the
+    site's if it is a real DK position; otherwise the row is skipped with a
+    warning. Text is read with textContent semantics (get_text) since the
+    table can be hidden on the page."""
+    table = soup.select_one("table.ows-low-owned-table")
+    if table is None:
+        return [], []
+
+    low_headers = [th.get_text(strip=True).lower() for th in table.select("thead th")]
+    messages: list[Message] = []
+    rows: list[list[str]] = []
+    fixed: list[str] = []
+    for tr in table.select("tbody tr"):
+        cells = [td.get_text(strip=True) for td in tr.select("td")]
+        if len(cells) != len(low_headers):
+            continue
+        by_header = dict(zip(low_headers, cells))
+        name = by_header.get("player", "")
+        team = normalize_team_abbrev(by_header.get("team", ""))
+        site_pos = by_header.get("pos", "").upper()
+
+        position = (position_lookup(name, team) if position_lookup else None) or site_pos
+        if position not in VALID_POSITIONS:
+            messages.append(
+                Message(
+                    level="warning",
+                    step="scrape-main-slate",
+                    message=f"Skipped {name!r} ({team}): position {site_pos!r} isn't a DraftKings position and wasn't found in the salary file",
+                )
+            )
+            continue
+        if position != site_pos:
+            fixed.append(f"{name} {site_pos}\u2192{position}")
+
+        out = []
+        for header in header_cells:
+            key = header.lower()
+            if key == "pos":
+                out.append(position)
+            elif key == "own":
+                out.append(LOW_OWNED_PCT)
+            elif key in ("team", "opp"):
+                out.append(normalize_team_abbrev(by_header.get(key, "")))
+            else:
+                out.append(by_header.get(key, ""))
+        rows.append(out)
+
+    if fixed:
+        messages.append(
+            Message(
+                level="info",
+                step="scrape-main-slate",
+                message="Under-1% players given their salary-file position: " + ", ".join(fixed),
+            )
+        )
+    return rows, messages
+
+
+def scrape_main_slate(
+    url: str, position_lookup: PositionLookup | None = None
+) -> tuple[str | None, int | None, list[Message]]:
     """Orchestrates login (if configured) -> fetch -> parse for the main
     slate page. Callers are responsible for the week cross-check and for
     persisting the result (see backend/api/ownership/scrape_main_slate.py)
@@ -194,7 +277,7 @@ def scrape_main_slate(url: str) -> tuple[str | None, int | None, list[Message]]:
     session = build_session()
     html = fetch_main_slate_html(session, url)
     displayed_week = extract_displayed_week(html)
-    csv_text, messages = parse_main_slate_csv(html)
+    csv_text, messages = parse_main_slate_csv(html, position_lookup)
 
     if csv_text is None:
         has_credentials = bool(settings.ownership_source_username and settings.ownership_source_password)

@@ -77,3 +77,16 @@ def test_matches_despite_suffix_and_initial_period_differences():
 
     assert lookup[normalize_player_name("Michael Pittman")] == 1
     assert lookup[normalize_player_name("DJ Montgomery")] == 2
+
+
+def test_defender_with_a_skill_players_name_does_not_leak_status_or_rank():
+    from backend.services.ownership.depth_rank import build_status_lookup
+
+    teams = [
+        Team(team_abbrev="CLE", team_name="Browns", positions={"SLB": [Player(player="Justin Jefferson", status="O")]}),
+        Team(team_abbrev="MIN", team_name="Vikings", positions={"WR": [Player(player="Justin Jefferson")]}),
+    ]
+    snap = make_depth_snapshot(teams)
+    key = normalize_player_name("Justin Jefferson")
+    assert key not in build_status_lookup(snap)
+    assert build_depth_rank_lookup(snap)[key] == 1

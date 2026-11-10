@@ -46,6 +46,7 @@ from backend.repositories.ownership.leverage_tiers_repo import load_leverage_tie
 from backend.repositories.ownership.projections_repo import load_projections_csv, projections_csv_path
 from backend.schemas.ownership.ownership import GameLeverageGroup, MultiLeveragePlayer, OwnershipPlayer, PivotGroup
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
+from backend.services.ownership.under_one import DEFAULT_CUTOFF, hide_below_cutoff
 from backend.services.ownership.depth_rank import build_depth_rank_lookup
 from backend.services.ownership.engine import (
     compute_game_leverage,
@@ -85,7 +86,9 @@ class OwnershipLatestResult(BaseModel):
 
 
 @router.get("/latest", response_model=OwnershipLatestResult)
-def ownership_latest_endpoint(season: int, week: int, platform: str = "DraftKings") -> OwnershipLatestResult:
+def ownership_latest_endpoint(
+    season: int, week: int, platform: str = "DraftKings", hide_below: float = DEFAULT_CUTOFF
+) -> OwnershipLatestResult:
     try:
         current_path = projections_csv_path(settings.nfl_data_dir, season, week, platform)
         csv_text = load_projections_csv(settings.nfl_data_dir, season, week, platform)
@@ -101,6 +104,7 @@ def ownership_latest_endpoint(season: int, week: int, platform: str = "DraftKing
         )
 
     raw_players, _messages = parse_ownership_projections_csv(csv_text)
+    raw_players = hide_below_cutoff(raw_players, hide_below)  # RB/WR/TE owned below the cutoff; QB/DST never
     tiers = load_leverage_tiers(settings.ownership_leverage_tiers_json)
 
     players = _enrich_with_depth_rank(raw_players)

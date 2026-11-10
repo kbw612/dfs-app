@@ -37,6 +37,8 @@ class PlayerSelectionRow(BaseModel):
     opponent: str
     is_home: Optional[bool] = None
     selected: bool
+    # Injury/availability status code (Q, D, O, IR, ...) from the latest depth chart.
+    status: Optional[str] = None
 
 
 class PlayerSelectionResult(BaseModel):

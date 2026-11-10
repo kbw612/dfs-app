@@ -39,7 +39,7 @@ from backend.repositories.ownership.projections_repo import load_projections_csv
 from backend.schemas.ownership.ownership import OwnershipPlayer
 from backend.services.dk_salary.ownership_enrich import enrich_with_ownership_pct
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
-from backend.services.ownership.depth_rank import build_depth_rank_lookup
+from backend.services.ownership.depth_rank import build_depth_rank_lookup, build_status_lookup
 from backend.services.shared.name_match import normalize_player_name
 
 
@@ -67,8 +67,14 @@ def enrich_players_for_week(
     depth_snapshot_path = find_latest_depth_chart_snapshot(settings.snapshots_dir)
     depth_snapshot = load_depth_chart_snapshot(depth_snapshot_path) if depth_snapshot_path else None
     rank_lookup = build_depth_rank_lookup(depth_snapshot)
+    status_lookup = build_status_lookup(depth_snapshot)
     enriched = [
-        player.model_copy(update={"depth_rank": rank_lookup.get(normalize_player_name(player.player))})
+        player.model_copy(
+            update={
+                "depth_rank": rank_lookup.get(normalize_player_name(player.player)),
+                "status": status_lookup.get(normalize_player_name(player.player)),
+            }
+        )
         for player in enriched
     ]
     return enriched, ownership_players is not None

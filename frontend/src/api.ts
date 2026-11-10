@@ -30,8 +30,10 @@ import type {
   LineupAnalyzerSaved,
   ContestTrackerResult,
   ExposureView,
+  FlagSettings,
   FptsPanelsResult,
   LeveragePivotsResult,
+  PlayerSignalsResult,
   GroupPoolResult,
   GroupsState,
   PlayerGroup,
@@ -240,8 +242,13 @@ export function fetchUsageBumpsLatest(): Promise<UsageBumpsResult> {
 // /api/ownership/projections reads for Ownership Summary (see
 // backend/api/ownership/latest.py's docstring) -- so there's no separate
 // "load"/import step here anymore.
-export function fetchOwnershipLatest(season: number, week: number, platform: string): Promise<OwnershipLatestResult> {
-  const params = new URLSearchParams({ season: String(season), week: String(week), platform });
+export function fetchOwnershipLatest(
+  season: number,
+  week: number,
+  platform: string,
+  hideBelow = 1
+): Promise<OwnershipLatestResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, hide_below: String(hideBelow) });
   return apiGet<OwnershipLatestResult>(`/api/ownership/latest?${params.toString()}`);
 }
 
@@ -928,8 +935,13 @@ export function fetchDkSalaryFileInfo(
 // Ownership Summary tab; distinct from fetchOwnershipLatest, which reads
 // the older mock-scrape/live-scrape snapshot instead (Ownership Pivots,
 // and the ownership_pct merged into Player Pool/Salary Blocks).
-export function fetchOwnershipProjections(season: number, week: number, platform: string): Promise<OwnershipProjectionsResult> {
-  const params = new URLSearchParams({ season: String(season), week: String(week), platform });
+export function fetchOwnershipProjections(
+  season: number,
+  week: number,
+  platform: string,
+  hideBelow = 1
+): Promise<OwnershipProjectionsResult> {
+  const params = new URLSearchParams({ season: String(season), week: String(week), platform, hide_below: String(hideBelow) });
   return apiGet<OwnershipProjectionsResult>(`/api/ownership/projections?${params.toString()}`);
 }
 
@@ -1127,6 +1139,7 @@ export function analyzeLineups(body: {
   weights: Record<string, number>;
   limit: number;
   portfolio: LineupAnalyzerPortfolioRequest | null;
+  flag_settings: FlagSettings;
 }): Promise<LineupAnalyzerResult> {
   return apiPostJson<LineupAnalyzerResult>("/api/lineup-analyzer/analyze", body);
 }
@@ -1297,7 +1310,8 @@ export function fetchLeveragePivots(
   player: string | null,
   position: string | null,
   chalkPct: number,
-  minReasons: number
+  minReasons: number,
+  hideBelow: number
 ): Promise<LeveragePivotsResult> {
   const params = new URLSearchParams({
     season: String(season),
@@ -1305,8 +1319,32 @@ export function fetchLeveragePivots(
     platform,
     chalk_pct: String(chalkPct),
     min_reasons: String(minReasons),
+    hide_below: String(hideBelow),
   });
   if (player) params.set("player", player);
   if (position && position !== "All") params.set("position", position);
   return apiGet<LeveragePivotsResult>(`/api/leverage-pivots?${params.toString()}`);
+}
+
+export function fetchPlayerSignals(
+  season: number,
+  week: number,
+  platform: string,
+  lastWeeks: number,
+  minNet: number,
+  hideBelow: number,
+  overrides: Record<string, number>,
+  opponentScope: string
+): Promise<PlayerSignalsResult> {
+  const params = new URLSearchParams({
+    season: String(season),
+    week: String(week),
+    platform,
+    last_weeks: String(lastWeeks),
+    min_net: String(minNet),
+    hide_below: String(hideBelow),
+    opponent_scope: opponentScope,
+  });
+  if (Object.keys(overrides).length > 0) params.set("thresholds", JSON.stringify(overrides));
+  return apiGet<PlayerSignalsResult>(`/api/player-signals?${params.toString()}`);
 }

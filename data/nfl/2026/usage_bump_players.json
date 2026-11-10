@@ -1,6 +1,31 @@
 {
   "teams": [
     {
+      "teamAbbrev": "BAL",
+      "players": [
+        {
+          "name": "Zay Flowers",
+          "moreUsagePlayers": [
+            "Mark Andrews",
+            "Rashod Bateman",
+            "Derrick Henry",
+            "Devontez Walker",
+            "Ja'Kobi Lane"
+          ]
+        },
+        {
+          "name": "Ja'Kobi Lane",
+          "moreUsagePlayers": [
+            "Rashod Bateman",
+            "Zay Flowers",
+            "Mark Andrews",
+            "Derrick Henry",
+            "Devontez Walker"
+          ]
+        }
+      ]
+    },
+    {
       "teamAbbrev": "CAR",
       "players": [
         {
@@ -11,6 +36,61 @@
             "David Moore",
             "Hunter Renfrow",
             "Ja'Tavion Sanders"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "HOU",
+      "players": [
+        {
+          "name": "Nico Collins",
+          "moreUsagePlayers": [
+            "Dalton Schultz",
+            "David Montgomery",
+            "Xavier Hutchinson",
+            "Kayshon Boutte",
+            "Jaylin Noel"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "LV",
+      "players": [
+        {
+          "name": "Brock Bowers",
+          "moreUsagePlayers": [
+            "Michael Mayer",
+            "Ashton Jeanty",
+            "Tre Tucker",
+            "Jalen Nailor",
+            "Jack Bech"
+          ]
+        },
+        {
+          "name": "Ashton Jeanty",
+          "moreUsagePlayers": [
+            "Mike Washington",
+            "Brock Bowers",
+            "Tre Tucker",
+            "Jalen Nailor",
+            "Michael Mayer"
+          ]
+        }
+      ]
+    },
+    {
+      "teamAbbrev": "NE",
+      "players": [
+        {
+          "name": "TreVeyon Henderson",
+          "moreUsagePlayers": [
+            "Rhamondre Stevenson",
+            "Corey Kiner",
+            "A.J. Brown",
+            "Hunter Henry",
+            "DeMario Douglas"
           ]
         }
       ]
@@ -46,71 +126,6 @@
             "Chris Godwin",
             "Kenny Gainwell",
             "Jalen McMillan"
-          ]
-        }
-      ]
-    },
-    {
-      "teamAbbrev": "LV",
-      "players": [
-        {
-          "name": "Brock Bowers",
-          "moreUsagePlayers": [
-            "Michael Mayer",
-            "Ashton Jeanty",
-            "Tre Tucker",
-            "Jalen Nailor",
-            "Jack Bech"
-          ]
-        },
-        {
-          "name": "Ashton Jeanty",
-          "moreUsagePlayers": [
-            "Mike Washington",
-            "Brock Bowers",
-            "Tre Tucker",
-            "Jalen Nailor",
-            "Michael Mayer"
-          ]
-        }
-      ]
-    },
-    {
-      "teamAbbrev": "BAL",
-      "players": [
-        {
-          "name": "Zay Flowers",
-          "moreUsagePlayers": [
-            "Mark Andrews",
-            "Rashod Bateman",
-            "Derrick Henry",
-            "Devontez Walker",
-            "Ja'Kobi Lane"
-          ]
-        },
-        {
-          "name": "Ja'Kobi Lane",
-          "moreUsagePlayers": [
-            "Rashod Bateman",
-            "Zay Flowers",
-            "Mark Andrews",
-            "Derrick Henry",
-            "Devontez Walker"
-          ]
-        }
-      ]
-    },
-    {
-      "teamAbbrev": "HOU",
-      "players": [
-        {
-          "name": "Nico Collins",
-          "moreUsagePlayers": [
-            "Dalton Schultz",
-            "David Montgomery",
-            "Xavier Hutchinson",
-            "Kayshon Boutte",
-            "Jaylin Noel"
           ]
         }
       ]

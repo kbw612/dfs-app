@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 266.86,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49300,
+      "total_fpts": 265.36,
+      "salary_leftover": 700
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Jordan Love",
+          "position": "QB",
+          "salary": 6300,
+          "fpts": 39.18
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 265.18,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Audric Estime",
+          "position": "RB",
+          "salary": 4000,
+          "fpts": 14.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 264.86,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Packers",
+          "position": "DST",
+          "salary": 2400,
+          "fpts": 12.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 263.96,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Javonte Williams",
+          "position": "RB",
+          "salary": 7300,
+          "fpts": 25.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 7500,
+          "fpts": 33.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 2800,
+          "fpts": 13.0
+        }
+      ],
+      "total_salary": 49700,
+      "total_fpts": 263.56,
+      "salary_leftover": 300
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Christian Watson",
+          "position": "WR",
+          "salary": 7500,
+          "fpts": 33.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 263.06,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kaleb Johnson",
+          "position": "RB",
+          "salary": 4000,
+          "fpts": 12.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "CeeDee Lamb",
+          "position": "WR",
+          "salary": 8300,
+          "fpts": 37.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 262.96,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Jonah Coleman",
+          "position": "RB",
+          "salary": 5300,
+          "fpts": 18.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "Giants",
+          "position": "DST",
+          "salary": 2800,
+          "fpts": 13.0
+        }
+      ],
+      "total_salary": 49000,
+      "total_fpts": 262.86,
+      "salary_leftover": 1000
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "C.J. Stroud",
+          "position": "QB",
+          "salary": 5900,
+          "fpts": 39.36
+        },
+        {
+          "roster_position": "RB",
+          "player": "Kenneth Walker III",
+          "position": "RB",
+          "salary": 9000,
+          "fpts": 39.3
+        },
+        {
+          "roster_position": "RB",
+          "player": "Audric Estime",
+          "position": "RB",
+          "salary": 4000,
+          "fpts": 14.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Puka Nacua",
+          "position": "WR",
+          "salary": 8800,
+          "fpts": 39.0
+        },
+        {
+          "roster_position": "WR",
+          "player": "Matthew Golden",
+          "position": "WR",
+          "salary": 7000,
+          "fpts": 35.4
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tank Dell",
+          "position": "WR",
+          "salary": 3500,
+          "fpts": 23.5
+        },
+        {
+          "roster_position": "TE",
+          "player": "Darren Waller",
+          "position": "TE",
+          "salary": 3300,
+          "fpts": 23.0
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Kayshon Boutte",
+          "position": "WR",
+          "salary": 3400,
+          "fpts": 31.5
+        },
+        {
+          "roster_position": "DST",
+          "player": "49ers",
+          "position": "DST",
+          "salary": 3600,
+          "fpts": 17.0
+        }
+      ],
+      "total_salary": 48500,
+      "total_fpts": 262.76,
+      "salary_leftover": 1500
+    }
+  ]
+}

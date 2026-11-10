@@ -1,0 +1,704 @@
+{
+  "lineups": [
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 3700,
+          "fpts": 20.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 301.38,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 19.0
+        }
+      ],
+      "total_salary": 49500,
+      "total_fpts": 300.38,
+      "salary_leftover": 500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2900,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49100,
+      "total_fpts": 299.38,
+      "salary_leftover": 900
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 6200,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 19.0
+        }
+      ],
+      "total_salary": 49900,
+      "total_fpts": 298.48,
+      "salary_leftover": 100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Emmett Johnson",
+          "position": "RB",
+          "salary": 4800,
+          "fpts": 28.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 3700,
+          "fpts": 20.0
+        }
+      ],
+      "total_salary": 48900,
+      "total_fpts": 297.98,
+      "salary_leftover": 1100
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 6200,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Buccaneers",
+          "position": "DST",
+          "salary": 2900,
+          "fpts": 18.0
+        }
+      ],
+      "total_salary": 49500,
+      "total_fpts": 297.48,
+      "salary_leftover": 500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 6200,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 19.0
+        }
+      ],
+      "total_salary": 49800,
+      "total_fpts": 297.28,
+      "salary_leftover": 200
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Michael Wilson",
+          "position": "WR",
+          "salary": 6200,
+          "fpts": 29.8
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 3700,
+          "fpts": 20.0
+        }
+      ],
+      "total_salary": 48400,
+      "total_fpts": 297.08,
+      "salary_leftover": 1600
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Bhayshul Tuten",
+          "position": "RB",
+          "salary": 5900,
+          "fpts": 32.9
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Emmett Johnson",
+          "position": "RB",
+          "salary": 4800,
+          "fpts": 28.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Steelers",
+          "position": "DST",
+          "salary": 3300,
+          "fpts": 19.0
+        }
+      ],
+      "total_salary": 48500,
+      "total_fpts": 296.98,
+      "salary_leftover": 1500
+    },
+    {
+      "players": [
+        {
+          "roster_position": "QB",
+          "player": "Joe Burrow",
+          "position": "QB",
+          "salary": 7000,
+          "fpts": 45.48
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tony Pollard",
+          "position": "RB",
+          "salary": 5800,
+          "fpts": 31.7
+        },
+        {
+          "roster_position": "RB",
+          "player": "Tyler Allgeier",
+          "position": "RB",
+          "salary": 4900,
+          "fpts": 39.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Ja'Marr Chase",
+          "position": "WR",
+          "salary": 7700,
+          "fpts": 34.1
+        },
+        {
+          "roster_position": "WR",
+          "player": "Tee Higgins",
+          "position": "WR",
+          "salary": 6700,
+          "fpts": 40.5
+        },
+        {
+          "roster_position": "WR",
+          "player": "Adonai Mitchell",
+          "position": "WR",
+          "salary": 4000,
+          "fpts": 30.2
+        },
+        {
+          "roster_position": "TE",
+          "player": "Harold Fannin Jr.",
+          "position": "TE",
+          "salary": 4200,
+          "fpts": 27.4
+        },
+        {
+          "roster_position": "FLEX",
+          "player": "Emmett Johnson",
+          "position": "RB",
+          "salary": 4800,
+          "fpts": 28.3
+        },
+        {
+          "roster_position": "DST",
+          "player": "Jaguars",
+          "position": "DST",
+          "salary": 3700,
+          "fpts": 20.0
+        }
+      ],
+      "total_salary": 48800,
+      "total_fpts": 296.78,
+      "salary_leftover": 1200
+    }
+  ]
+}

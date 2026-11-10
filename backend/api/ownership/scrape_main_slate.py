@@ -26,10 +26,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from backend.config import settings
+from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
 from backend.repositories.ownership.projections_repo import save_projections_csv
 from backend.schemas.depth_charts.snapshot import Message
+from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
 from backend.services.ownership.main_slate_scraper import scrape_main_slate
+from backend.services.shared.name_match import normalize_player_name
 
 router = APIRouter()
 
@@ -45,7 +48,16 @@ class OwnershipMainSlateScrapeResult(BaseModel):
 
 @router.post("/scrape-main-slate", response_model=OwnershipMainSlateScrapeResult)
 def scrape_main_slate_endpoint(season: int, week: int, platform: str = "DraftKings") -> OwnershipMainSlateScrapeResult:
-    csv_text, displayed_week, scrape_messages = scrape_main_slate(settings.oneweekseason_main_slate_url)
+    # The "Under 1% Owned" table's positions come from this week's DK salary
+    # file (Classic Main) when it has been saved.
+    position_lookup = None
+    salary_csv = load_salary_csv(settings.nfl_data_dir, season, week, platform, "Classic Main")
+    if salary_csv is not None:
+        snapshot, _salary_messages = parse_dk_salary_csv(salary_csv, season, week)
+        table = {(normalize_player_name(p.player), p.team): p.position for p in snapshot.players}
+        position_lookup = lambda name, team: table.get((normalize_player_name(name), team))  # noqa: E731
+
+    csv_text, displayed_week, scrape_messages = scrape_main_slate(settings.oneweekseason_main_slate_url, position_lookup)
     if csv_text is None:
         raise HTTPException(
             status_code=502, detail="; ".join(m.message for m in scrape_messages) or "Scrape failed"

@@ -373,6 +373,7 @@ def compute_player_pool(
                 salary=player.salary,
                 ownership_pct=ownership_pct,
                 depth_rank=player.depth_rank,
+                status=player.status,
                 game_environment=effective_env,
                 game_environment_override=override_env,
                 game_environment_suggested=suggested_env,

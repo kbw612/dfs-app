@@ -19,7 +19,7 @@ def _row(name, team, week, salary, fpts, position="QB"):
 
 ROWS = [
     _row("Herbert", "LAC", 1, 6000, 28.0),  # Elite (27+); allowed by DEN
-    _row("Herbert", "LAC", 2, 6000, 22.0),  # Strong (22-26.9); allowed by KC
+    _row("Herbert", "LAC", 2, 6000, 22.0),  # Strong (20-26.9); allowed by KC
     _row("Nix", "DEN", 1, 5800, 24.5),  # Strong; allowed by LAC
     _row("Nix", "DEN", 2, 5800, 10.0),  # below both bands
     _row("Mahomes", "KC", 2, 7000, 27.0),  # exactly 27 -> Elite; allowed by LAC
@@ -37,7 +37,7 @@ def _row_for(summary, name):
 
 def test_bands_counts_and_labels():
     s = _build()
-    assert (s.elite_label, s.strong_label, s.opponent_label) == ("27+", "22-26.9", "Opp D")
+    assert (s.elite_label, s.strong_label, s.opponent_label) == ("27+", "20-26.9", "Opp D")
     assert s.weeks_label == "Weeks 1-2"
     assert (s.player_games_elite, s.player_games_strong) == (2, 2)
     assert (s.allowed_elite, s.allowed_strong) == (2, 2)
@@ -57,7 +57,7 @@ def test_rows_group_by_this_weeks_opponent_with_allowed_lines_once():
     assert [l.text for l in den.allowed_elite.lines] == ["Week 1: Herbert vs LAC 28.0 ($6.0K)"]  # DEN was at home, so "vs"
     lac = by_opp["LAC"]  # LAC allowed Nix 24.5 (week 1) and Mahomes 27.0 (week 2)
     assert (lac.allowed_elite.count, lac.allowed_strong.count, lac.allowed_total) == (1, 1, 2)
-    assert s.best_setups == ["Nix vs LAC (2 allowed 22+)"]
+    assert s.best_setups == ["Nix vs LAC (2 allowed 20+)"]
     assert [g.opponent for g in s.groups][0] == "LAC"  # most allowed first
 
 

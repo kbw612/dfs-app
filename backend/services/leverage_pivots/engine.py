@@ -27,6 +27,7 @@ from backend.schemas.leverage_pivots.leverage_pivots import (
     LpSelected,
 )
 from backend.schemas.ownership.ownership import OwnershipPlayer
+from backend.services.ownership.parsing import is_under_one_placeholder
 
 SALARY_TOLERANCE = 500
 OWNERSHIP_GAP = 10.0
@@ -38,10 +39,17 @@ def _game(p: OwnershipPlayer) -> frozenset[str]:
     return frozenset({p.team, p.opponent})
 
 
+def _own_label(pct: float | None) -> str:
+    if is_under_one_placeholder(pct):
+        return "<1%"
+    return f"{(pct if pct is not None else 0.0):.1f}%"
+
+
 def _card(p: OwnershipPlayer) -> LpPlayer:
     return LpPlayer(
         player=p.player, position=p.position, team=p.team, opponent=p.opponent,
         salary=p.salary, ownership_pct=p.ownership_pct if p.ownership_pct is not None else 0.0,
+        own_label=_own_label(p.ownership_pct),
     )
 
 
@@ -58,7 +66,7 @@ def _diff_label(candidate: int, trigger: int) -> str:
 
 def _less_label(candidate: OwnershipPlayer, trigger: OwnershipPlayer) -> str | None:
     own, base = candidate.ownership_pct or 0.0, trigger.ownership_pct or 0.0
-    if base <= 0:
+    if base <= 0 or is_under_one_placeholder(candidate.ownership_pct):  # "<1%" has no meaningful fraction
         return None
     pct = round((base - own) / base * 100)
     n = round(base / own) if own > 0 else 0

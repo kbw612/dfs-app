@@ -8,6 +8,7 @@ import type {
   PivotGroup,
 } from "../types";
 import { ChipMultiSelect } from "./ChipMultiSelect";
+import { HideBelowField } from "./HideBelowField";
 import { HeaderInfoPopover } from "./HeaderInfoPopover";
 import {
   formatOwnershipPct,
@@ -60,6 +61,7 @@ interface OwnershipViewProps {
 
 export function OwnershipView({ season, week, platform }: OwnershipViewProps) {
   const [data, setData] = useState<OwnershipLatestResult | null>(null);
+  const [hideBelow, setHideBelow] = useState(1);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
 
@@ -98,7 +100,7 @@ export function OwnershipView({ season, week, platform }: OwnershipViewProps) {
   useEffect(() => {
     setFetchLoading(true);
     setFetchError(null);
-    fetchOwnershipLatest(season, week, platform)
+    fetchOwnershipLatest(season, week, platform, hideBelow)
       .then((result) => setData(result))
       .catch((err) => {
         setData(null);
@@ -108,7 +110,7 @@ export function OwnershipView({ season, week, platform }: OwnershipViewProps) {
         setFetchError(err instanceof Error ? err.message : "Failed to load ownership data");
       })
       .finally(() => setFetchLoading(false));
-  }, [season, week, platform]);
+  }, [season, week, platform, hideBelow]);
 
   const isNotFound = fetchError !== null && fetchError.includes("No ownership projections file uploaded yet");
 
@@ -153,6 +155,7 @@ export function OwnershipView({ season, week, platform }: OwnershipViewProps) {
           </p>
 
           <div className="filters">
+            <HideBelowField value={hideBelow} onChange={setHideBelow} />
             <ChipMultiSelect label="Filter by team" options={teamOptions} selected={teamFilter} onChange={setTeamFilter} />
             <ChipMultiSelect
               label="Filter by position"
