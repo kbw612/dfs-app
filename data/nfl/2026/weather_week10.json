@@ -1,0 +1,17 @@
+{
+  "season": 2026,
+  "week": 10,
+  "scraped_at": "2026-11-12T12:48:27-05:00",
+  "games": [
+    {
+      "away_name": "Washington Commanders",
+      "home_name": "New York Giants",
+      "away_team": "WAS",
+      "home_team": "NYG",
+      "game_key": "NYG-WAS",
+      "kickoff_label": "8:15 PM ET",
+      "color": "yellow",
+      "note": "Rain looks likely for TNF. Some of the latest high-res models keep the very heavy stuff during the afternoon, and leave gametime with more scattered light-to-moderate showers. That would still be impactful, but not a complete and total washout. If radar looks more ominous pregame I'll bump the impact up."
+    }
+  ]
+}

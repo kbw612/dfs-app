@@ -264,7 +264,7 @@ export function PlayerSignalsView({ season, week, platform }: Props) {
       {error && <p className="error">{error}</p>}
       {data && !loading && (
         <p className="hint">
-          {rows.length} of {data.total_players} players at net {data.min_net} or more. Usage from weeks {data.first_week}
+          {rows.length} of {data.total_players} Settings player pool players at net {data.min_net} or more. Usage from weeks {data.first_week}
           –{data.through_week}; opponent history is {data.opponent_scope === "season" ? "the whole season" : "the same weeks"}. Tap a chip with ⓘ for the games behind it.
         </p>
       )}

@@ -137,6 +137,51 @@ class Context:
                 per[r.opp][r.week] += r.g("fpts")
             avg = {d: mean(w.values()) for d, w in per.items() if len(w) >= int(th["min_games"]) - 1}
             self.allowed_pg[p] = avg
+        # DK points per game over the last X weeks, ranked within the position (league-wide, min games)
+        self.ppg_rank: dict[tuple[str, str], tuple[int, float]] = {}
+        for pos in POSITIONS:
+            groups: dict[str, list[Row]] = defaultdict(list)
+            for r in self.window[pos]:
+                groups[r.team if pos == "DST" else r.norm].append(r)
+            avgs = {k: mean(x.g("fpts") for x in v) for k, v in groups.items() if len(v) >= int(th["min_games"]) - 1}
+            for i, k in enumerate(sorted(avgs, key=lambda k: -avgs[k])):
+                self.ppg_rank[(pos, k)] = (i + 1, avgs[k])
+
+        # rushing TDs allowed per defense: {defense: {week: [(scorer, tds)]}}, every position's rush TDs
+        self.rush_td_allowed: dict[str, dict[int, list[tuple[str, int]]]] = defaultdict(lambda: defaultdict(list))
+        self.def_weeks: dict[str, set[int]] = defaultdict(set)
+        for pos in ("QB", "RB", "WR", "TE"):
+            for r in opp_rows[pos]:
+                self.def_weeks[r.opp].add(r.week)
+                if r.g("rushing_td") > 0:
+                    self.rush_td_allowed[r.opp][r.week].append((r.name, int(r.g("rushing_td"))))
+
+        # combined points and (estimated) offensive plays per team-game, last X weeks
+        pts_for: dict[tuple[str, int], float] = {}
+        pts_against: dict[tuple[str, int], float] = {}
+        opp_of: dict[tuple[str, int], str] = {}
+        for r in self.window["DST"]:
+            if "opp_pts" in r.s:
+                pts_against[(r.team, r.week)] = r.s["opp_pts"]
+                pts_for[(r.opp, r.week)] = r.s["opp_pts"]
+                opp_of[(r.team, r.week)] = r.opp
+        self.combined_games: dict[str, list[tuple[int, str, float, float]]] = defaultdict(list)
+        for (team, wk), against in pts_against.items():
+            if (team, wk) in pts_for:
+                self.combined_games[team].append((wk, opp_of[(team, wk)], pts_for[(team, wk)], against))
+        plays: dict[tuple[str, int], list[float]] = defaultdict(lambda: [0.0, 0.0, 0.0])  # pass att, sacks, rushes
+        for pos in ("QB", "RB", "WR", "TE"):
+            for r in self.window[pos]:
+                acc = plays[(r.team, r.week)]
+                acc[2] += r.g("rushing_att")
+                if pos == "QB":
+                    acc[0] += r.g("passing_att")
+                    acc[1] += r.g("sck")
+        opp_by_team_week = {(r.team, r.week): r.opp for pos in ("QB", "RB", "WR", "TE") for r in self.window[pos]}
+        self.play_games: dict[str, list[tuple[int, str, float, float, float]]] = defaultdict(list)
+        for (team, wk), (att, sck, rush) in plays.items():
+            if att > 0:
+                self.play_games[team].append((wk, opp_by_team_week.get((team, wk), ""), att, sck, rush))
         self.implied: dict[str, tuple[float | None, float | None]] = {}
         for g in (vegas.games if vegas else []):
             total = g.current.over_under
@@ -184,6 +229,14 @@ def _trend(rows: list[Row], key, min_level: float, label: str) -> list[SignalChi
     return []
 
 
+def _target_lines(rows: list[Row]) -> list[str]:
+    return [
+        f"W{r.week} vs {r.opp}: {_num(r.g('receiving_tgts'))} targets ({_num(r.s['tgt_share'])}%)"
+        for r in rows
+        if "tgt_share" in r.s
+    ]
+
+
 def usage_rb(rows: list[Row], team_carries, p: OwnershipPlayer, th, n: int) -> list[SignalChip]:
     out: list[SignalChip] = []
     if len(rows) < 2:
@@ -192,16 +245,21 @@ def usage_rb(rows: list[Row], team_carries, p: OwnershipPlayer, th, n: int) -> l
     team = sum(team_carries.get((r.team, r.week), 0.0) for r in rows)
     if team >= 20:
         share = 100 * carries / team
+        per_game = []
+        for r in rows:
+            t = team_carries.get((r.team, r.week), 0.0)
+            pct = f" ({_num(100 * r.g('rushing_att') / t)}%)" if t else ""
+            per_game.append(f"W{r.week} vs {r.opp}: {_num(r.g('rushing_att'))} of {_num(t)} carries{pct}")
         if share >= th["rb_carry_share"]:
-            out.append(_chip("usage", True, f"Carry share {_num(share)}% last {len(rows)}"))
+            out.append(_chip("usage", True, f"Carry share {_num(share)}% last {len(rows)}", per_game))
         elif share < 40 and p.salary >= 4500:
-            out.append(_chip("usage", False, f"Carry share {_num(share)}% (committee) at ${p.salary:,}"))
+            out.append(_chip("usage", False, f"Carry share {_num(share)}% (committee) at ${p.salary:,}", per_game))
     k = int(th["streak_games"])
     if _streak(rows, lambda r: r.touches, th["rb_touch_streak"], k):
         out.append(_chip("usage", True, f"{_num(th['rb_touch_streak'])}+ touches in each of last {k}"))
     tgt = [r.s["tgt_share"] for r in rows if "tgt_share" in r.s]
     if tgt and mean(tgt) >= th["rb_tgt_share"]:
-        out.append(_chip("usage", True, f"Target share {_num(mean(tgt))}% last {len(tgt)}"))
+        out.append(_chip("usage", True, f"Target share {_num(mean(tgt))}% last {len(tgt)}", _target_lines(rows)))
     out += _trend(rows, lambda r: r.g("rushing_att"), 8, "Carries")
     out += _boom(rows, th, n)
     return out
@@ -218,9 +276,9 @@ def usage_pass_catcher(rows: list[Row], p: OwnershipPlayer, th, n: int) -> list[
     if tgt:
         s = mean(tgt)
         if s >= share_floor:
-            out.append(_chip("usage", True, f"Target share {_num(s)}% last {len(tgt)}"))
+            out.append(_chip("usage", True, f"Target share {_num(s)}% last {len(tgt)}", _target_lines(rows)))
         elif s < 12 and p.salary >= 5500:
-            out.append(_chip("usage", False, f"Target share {_num(s)}% at ${p.salary:,}"))
+            out.append(_chip("usage", False, f"Target share {_num(s)}% at ${p.salary:,}", _target_lines(rows)))
     tpg = mean(r.g("receiving_tgts") for r in rows)
     if tpg >= tpg_floor:
         out.append(_chip("usage", True, f"{_num(tpg)} targets per game"))
@@ -243,7 +301,7 @@ def usage_qb(rows: list[Row], th, n: int) -> list[SignalChip]:
         out.append(_chip("usage", False, f"Averages {_num(mean(r.g('passing_att') for r in rows))} pass attempts"))
     ry = mean(r.g("rushing_yds") for r in rows)
     if ry >= th["qb_rush_yds"]:
-        out.append(_chip("usage", True, f"Rushes {_num(ry)} yds per game"))
+        out.append(_chip("usage", True, f"Rushes {_num(ry)} yds per game", [f"W{r.week} vs {r.opp}: {_num(r.g('rushing_yds'))} yds on {_num(r.g('rushing_att'))} carries" for r in rows]))
     out += _boom(rows, th, n)
     return out
 
@@ -291,6 +349,30 @@ def matchup_rules(ctx: Context, p: OwnershipPlayer) -> list[SignalChip]:
             out.append(_chip("matchup", True, f"{opp} allows #{rank} most FPTS to {pos} ({_num(avg[opp])}/game)", week_lines))
         elif rank > n_def - top:
             out.append(_chip("matchup", False, f"{opp} allows #{n_def - rank + 1} fewest FPTS to {pos} ({_num(avg[opp])}/game)", week_lines))
+    if pos == "RB":
+        per_game = {
+            d: sum(t for lst in weeks.values() for _n, t in lst) / len(ctx.def_weeks[d])
+            for d, weeks in ctx.rush_td_allowed.items()
+            if len(ctx.def_weeks[d]) >= th["min_games"] - 1
+        }
+        for d in ctx.def_weeks:  # defenses that allowed none
+            if d not in per_game and len(ctx.def_weeks[d]) >= th["min_games"] - 1:
+                per_game[d] = 0.0
+        if opp in per_game:
+            total = sum(t for lst in ctx.rush_td_allowed[opp].values() for _n, t in lst)
+            games_n = len(ctx.def_weeks[opp])
+            lines = [
+                f"W{w} vs {next((r.team for r in ctx.vs_opp['RB'].get(opp, []) if r.week == w), '')}: "
+                f"{sum(t for _n, t in ctx.rush_td_allowed[opp][w])} rush TD ({', '.join(n for n, _t in ctx.rush_td_allowed[opp][w])})"
+                for w in sorted(ctx.def_weeks[opp])
+                if ctx.rush_td_allowed[opp].get(w)
+            ]
+            out += _rank_chip(
+                "matchup", opp, per_game, int(th["rank_top_n"]),
+                lambda r, v: f"{opp} allowed #{r} most rushing TDs ({total} in {games_n} games)",
+                lambda r, v: f"{opp} allowed #{r} fewest rushing TDs ({total} in {games_n} games)",
+                lines,
+            )
     rows = ctx.vs_opp[pos].get(opp, [])
     games = sorted({r.week for r in rows})
     g = len(games)
@@ -341,6 +423,19 @@ def matchup_rules(ctx: Context, p: OwnershipPlayer) -> list[SignalChip]:
 
 # ------------------------------------------------------------- game environment
 
+def _rank_chip(family: str, team: str, per_team: dict[str, float], top: int, hi_text, lo_text, detail) -> list[SignalChip]:
+    """Rank `team` among all teams (highest value = rank 1); a chip for the top N (up) or bottom N (down)."""
+    if team not in per_team:
+        return []
+    ranked = sorted(per_team, key=lambda t: -per_team[t])
+    rank, n = ranked.index(team) + 1, len(ranked)
+    if rank <= top:
+        return [_chip(family, True, hi_text(rank, per_team[team]), detail)]
+    if rank > n - top:
+        return [_chip(family, False, lo_text(n - rank + 1, per_team[team]), detail)]
+    return []
+
+
 def _games(items: list[tuple[int, str, float]], label: str) -> list[str]:
     return [f"W{w} vs {o}: {_num(pts)} {label}" for w, o, pts in sorted(items)]
 
@@ -380,6 +475,21 @@ def game_rules(ctx: Context, p: OwnershipPlayer) -> list[SignalChip]:
             out.append(_chip("game", True, f"Game total {_num(total)}"))
         elif total <= th["total_low"]:
             out.append(_chip("game", False, f"Game total {_num(total)}"))
+    mg = int(th["min_games"]) - 1
+    combined = {t: mean(a + b for _w, _o, a, b in g) for t, g in ctx.combined_games.items() if len(g) >= mg}
+    out += _rank_chip(
+        "game", p.team, combined, int(th["rank_top_n"]),
+        lambda r, v: f"{p.team} games average {_num(v)} combined points (#{r})",
+        lambda r, v: f"{p.team} games average {_num(v)} combined points (#{r} lowest)",
+        [f"W{w} vs {o}: {_num(a)}-{_num(b)} ({_num(a + b)} total)" for w, o, a, b in ctx.combined_games.get(p.team, [])],
+    )
+    play_avg = {t: mean(att + sck + rush for _w, _o, att, sck, rush in g) for t, g in ctx.play_games.items() if len(g) >= mg}
+    out += _rank_chip(
+        "game", p.team, play_avg, int(th["rank_top_n"]),
+        lambda r, v: f"{p.team} runs ~{_num(v)} plays/game (#{r} most)",
+        lambda r, v: f"{p.team} runs ~{_num(v)} plays/game (#{r} fewest)",
+        [f"W{w} vs {o}: ~{_num(att + sck + rush)} plays ({_num(att)} pass att, {_num(sck)} sacks, {_num(rush)} rushes)" for w, o, att, sck, rush in ctx.play_games.get(p.team, [])],
+    )
     allowed = ctx.allowed.get(p.opponent, [])
     if len(allowed) >= th["min_games"]:
         c = sum(1 for x in allowed if x >= th["opp_pts_allowed"])
@@ -442,6 +552,10 @@ def build_player_signals(players: list[OwnershipPlayer], ctx: Context) -> list[S
         chips += game_rules(ctx, p)
         chips += role_rules(ctx, p)
 
+        key = (p.position, p.team if p.position == "DST" else normalize_player_name(p.player))
+        if key in ctx.ppg_rank and ctx.ppg_rank[key][0] <= th["ppg_rank_top_n"]:
+            rank, avg = ctx.ppg_rank[key]
+            chips.append(_chip("usage", True, f"#{rank} {p.position} in DK pts per game ({_num(avg)}) last {n}", [f"W{r.week} vs {r.opp}: {_num(r.g('fpts'))} pts" for r in rows]))
         pts = mean(r.g("fpts") for r in rows) if rows else None
         if pts is not None and p.salary and p.position != "DST" and pts >= 8 and pts / (p.salary / 1000) >= th["value_pts_per_k"]:
             chips.append(_chip("price", True, f"Last {n} avg {_num(pts)} pts = {pts / (p.salary / 1000):.1f}x at ${p.salary:,}"))

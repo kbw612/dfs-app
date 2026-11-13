@@ -6,8 +6,9 @@ come from the Classic Main DK salary file and `ownership_missing` is true (no ow
 so the low-ownership chip and the hide-below filter don't apply); stats come
 from the weekly FantasyData files, Vegas lines and the depth-chart snapshot.
 `thresholds` is an optional JSON object of overrides -- see
-backend/services/player_signals/thresholds.py. Only players whose net signal
-count (positive chips minus negative chips) is >= `min_net` are returned.
+backend/services/player_signals/thresholds.py. Only players in the Settings player pool
+(DST always included) are listed, and only those whose net signal count
+(positive chips minus negative chips) is >= `min_net` are returned.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from backend.config import settings
 from backend.repositories.depth_charts.snapshot_repo import find_latest_snapshot, load_snapshot
 from backend.repositories.dk_players.weekly_stats_repo import load_weekly_stats_csv
 from backend.repositories.dk_salary.salary_snapshot_repo import load_salary_csv
+from backend.repositories.player_selection.player_selection_repo import load_overrides
 from backend.repositories.ownership.projections_repo import load_projections_csv
 from backend.repositories.vegas_lines.vegas_lines_repo import load_vegas_lines
 from backend.schemas.player_signals.player_signals import PlayerSignalsResult
@@ -27,6 +29,7 @@ from backend.services.dk_salary.dk_salary_loader import parse_dk_salary_csv
 from backend.services.ownership.csv_loader import parse_ownership_projections_csv
 from backend.services.ownership.depth_rank import build_status_lookup
 from backend.services.ownership.under_one import DEFAULT_CUTOFF, hide_below_cutoff
+from backend.services.player_selection.engine import resolve_selected
 from backend.services.player_signals.engine import POSITIONS, Context, build_player_signals, load_rows
 from backend.services.player_signals.thresholds import describe, resolve
 from backend.services.shared.name_match import normalize_player_name
@@ -77,6 +80,13 @@ def player_signals_endpoint(
             )
         snapshot, _messages = parse_dk_salary_csv(salary_csv, season, week)
         players = list(snapshot.players)
+
+    # Only players in the Settings player pool (selected on the player pool grid); DST isn't part of
+    # that grid, so every DST stays.
+    overrides_saved = load_overrides(settings.nfl_data_dir, season, week, platform, "Classic Main")
+    players = [
+        p for p in players if p.position == "DST" or resolve_selected(p.player, p.position, p.salary, overrides_saved)
+    ]
 
     snapshot_path = find_latest_snapshot(settings.snapshots_dir)
     statuses = build_status_lookup(load_snapshot(snapshot_path) if snapshot_path else None)

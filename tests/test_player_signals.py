@@ -44,6 +44,8 @@ def test_carry_share_streak_and_net_count():
     (sp,) = build_player_signals([player("Back One")], c)
     t = texts(sp)
     assert ("up", "Carry share 81.2% last 3") in t
+    chip = next(c for c in sp.signals if c.text.startswith("Carry share"))
+    assert chip.detail[0] == "W5 vs BBB: 26 of 32 carries (81.2%)" and len(chip.detail) == 3
     assert ("up", "25+ touches in each of last 2") in t
     assert sp.net == sp.up - sp.down and sp.up >= 3
     assert sp.games_used == 3 and sp.pts_last_x == 25.0
@@ -166,3 +168,68 @@ def test_endpoint_falls_back_to_salary_file_without_ownership(tmp_path, monkeypa
     assert body["ownership_missing"] is True and body["total_players"] == 1
     assert body["players"][0]["ownership_pct"] is None
     assert real is repo.load_salary_csv
+
+
+def test_endpoint_only_lists_settings_pool_players(tmp_path, monkeypatch):
+    from backend.config import settings
+
+    (tmp_path / "2026").mkdir()
+    monkeypatch.setattr(settings, "nfl_data_dir", tmp_path)
+    monkeypatch.setattr(
+        "backend.api.player_signals.player_signals.load_salary_csv",
+        lambda *a: "Position,Name + ID,Name,ID,Roster Position,Salary,Game Info,TeamAbbrev,AvgPointsPerGame\n"
+        "RB,A B (1),A B,1,RB/FLEX,5000,AAA@BBB 01:00PM ET,AAA,10\n"
+        "RB,C D (2),C D,2,RB/FLEX,5000,AAA@BBB 01:00PM ET,AAA,10\n",
+    )
+    monkeypatch.setattr("backend.api.player_signals.player_signals.load_overrides", lambda *a: {"C D": False})
+    body = TestClient(app).get("/api/player-signals", params={"season": 2026, "week": 9, "min_net": -9}).json()
+    assert [p["player"] for p in body["players"]] == ["A B"] and body["total_players"] == 1
+
+
+def test_combined_points_plays_and_rushing_tds_chips():
+    teams = ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH", "III", "JJJ"]
+    dst, rb, qb = [], [], []
+    for i, t in enumerate(teams):
+        o = teams[(i + 1) % len(teams)]
+        for w in (3, 4, 5):
+            dst.append(f"D {t},{t},DST,{w},{o},1,0,0,{10 + 3 * i},5")  # points the opponent scored on t
+            rb.append(f"RB {t} {w},{o},RB,{w},{t},20,80,{2 if t == 'BBB' else 0},1,1,5,0,10,5")
+            qb.append(f"QB {t},{o},QB,{w},{t},{20 + 3 * i},2,3,15")
+    rows = {
+        "RB": load_rows(rb_csv(rb), "RB"),
+        "QB": load_rows("NAME,TEAM,POS,WK,OPP,PASSING_ATT,SCK,RUSHING_ATT,FPTS\n" + "\n".join(qb) + "\n", "QB"),
+        "WR": [], "TE": [],
+        "DST": load_rows(DST_HEADER + "\n".join(dst) + "\n", "DST"),
+    }
+    c = Context(rows, None, {}, 6, 5, resolve({"rank_top_n": 2, "min_games": 3}))
+    sp = build_player_signals([player("Mine", team="JJJ", opp="BBB")], c)[0]
+    t = [x for _p, x in texts(sp)]
+    combined = next(x for x in t if "combined points" in x)
+    assert combined.startswith("JJJ games average 71 combined points (#1)")
+    assert any(x.startswith("BBB allowed #1 most rushing TDs (6 in 3 games)") for x in t)
+    chip = next(c for c in sp.signals if "rushing TDs" in c.text)
+    assert len(chip.detail) == 3 and chip.detail[0].startswith("W5 ")
+    plays = next(x for x in t if "plays/game" in x)
+    assert plays.startswith("JJJ runs ~") and "most)" in plays
+
+
+def test_points_per_game_rank_chip_within_position():
+    lines = []
+    for i, name in enumerate(["Top Back", "Mid Back", "Low Back"]):
+        for w in (3, 4, 5):
+            lines.append(f"{name},AAA,RB,{w},BBB,10,40,0,1,1,5,0,{30 - 10 * i},5")
+    c = ctx(lines, overrides={"ppg_rank_top_n": 1, "min_games": 3})
+    top, low = build_player_signals([player("Top Back"), player("Low Back")], c)[0], None
+    assert any(x.startswith("#1 RB in DK pts per game (30)") for _p, x in texts(top))
+    low = next(s for s in build_player_signals([player("Low Back")], c))
+    assert not any("pts per game" in x for _p, x in texts(low))
+    chip = next(c for c in top.signals if "pts per game" in c.text)
+    assert chip.detail[0] == "W5 vs BBB: 30 pts"
+
+
+def test_qb_rush_yards_chip_lists_games():
+    from backend.services.player_signals.engine import usage_qb
+
+    qb = load_rows("NAME,TEAM,POS,WK,OPP,PASSING_ATT,RUSHING_ATT,RUSHING_YDS,FPTS\n" + "\n".join(f"Q,AAA,QB,{w},BBB,30,6,{30 + w},15" for w in (3, 4, 5)) + "\n", "QB")
+    chip = next(c for c in usage_qb(qb, resolve(None), 5) if c.text.startswith("Rushes"))
+    assert chip.detail[0] == "W5 vs BBB: 35 yds on 6 carries" and len(chip.detail) == 3

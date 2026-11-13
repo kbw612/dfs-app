@@ -33,6 +33,7 @@ _SPEC: list[tuple[str, str, str, float]] = [
     ("total_low", "Game total low", "All", 41),
     ("opp_pts_allowed", "Opp allowed points (per game)", "All", 24),
     ("rank_top_n", "Matchup rank cutoff (top N)", "All", 8),
+    ("ppg_rank_top_n", "Points-per-game rank cutoff (top N in position)", "All", 10),
     ("matchup_share", "Opponent history share of games (%)", "All", 60),
     ("min_games", "Min games for opponent history", "All", 4),
     ("low_own", "Low ownership at most (%)", "All", 10),
